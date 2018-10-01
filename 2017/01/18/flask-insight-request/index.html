@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html CN>
+
+
+
+
+
+
+
+<head>
+	
+	
+	<link rel="stylesheet" href="/css/allinone.min.css"> 
+
+	
+
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+	<title>flask 源码解析：请求 | Cizixs Write Here</title>
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta name="generator" content="hexo">
+	<meta name="author" content="Cizixs Wu">
+	<meta name="description" content="">
+
+	
+	<meta name="keywords" content="">
+	
+
+	
+	<link rel="shortcut icon" href="https://i.loli.net/2017/11/26/5a19c0b50432e.png">
+	
+
+	
+	<meta name="theme-color" content="#3c484e">
+	<meta name="msapplication-TileColor" content="#3c484e">
+	
+
+	
+
+	
+
+	<meta property="og:site_name" content="Cizixs Write Here">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="flask 源码解析：请求 | Cizixs Write Here">
+	<meta property="og:description" content="">
+	<meta property="og:url" content="http://cizixs.com/2017/01/18/flask-insight-request/">
+
+	
+	<meta property="article:published_time" content="2017-01-18T00:01:00+08:00"/> 
+	<meta property="article:author" content="Cizixs Wu">
+	<meta property="article:published_first" content="Cizixs Write Here, /2017/01/18/flask-insight-request/" />
+	
+
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	
+
+	
+	<script src="https://cdn.staticfile.org/highlight.js/9.10.0/highlight.min.js"></script>
+	
+
+	
+	
+</head>
+<body class="post-template">
+    <div class="site-wrapper">
+        
+
+
+
+
+<header class="site-header outer" style="z-index: 999">
+    <div class="inner">
+        
+<nav class="site-nav"> 
+    <div class="site-nav-left">
+        <ul class="nav">
+            <li>
+                
+                <a href="/" title="Home">Home</a>
+                
+            </li>
+            
+            
+            <li>
+                <a href="/about" title="About">About</a>
+            </li>
+            
+            <li>
+                <a href="/archives" title="Archives">Archives</a>
+            </li>
+            
+            
+        </ul> 
+    </div>
+    <div class="site-nav-right">
+        
+<div class="social-links" >
+    
+    
+    
+    
+    <a class="social-link" title="twitter" href="https://twitter.com/cizixs" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30.063 7.313c-.813 1.125-1.75 2.125-2.875 2.938v.75c0 1.563-.188 3.125-.688 4.625a15.088 15.088 0 0 1-2.063 4.438c-.875 1.438-2 2.688-3.25 3.813a15.015 15.015 0 0 1-4.625 2.563c-1.813.688-3.75 1-5.75 1-3.25 0-6.188-.875-8.875-2.625.438.063.875.125 1.375.125 2.688 0 5.063-.875 7.188-2.5-1.25 0-2.375-.375-3.375-1.125s-1.688-1.688-2.063-2.875c.438.063.813.125 1.125.125.5 0 1-.063 1.5-.25-1.313-.25-2.438-.938-3.313-1.938a5.673 5.673 0 0 1-1.313-3.688v-.063c.813.438 1.688.688 2.625.688a5.228 5.228 0 0 1-1.875-2c-.5-.875-.688-1.813-.688-2.75 0-1.063.25-2.063.75-2.938 1.438 1.75 3.188 3.188 5.25 4.25s4.313 1.688 6.688 1.813a5.579 5.579 0 0 1 1.5-5.438c1.125-1.125 2.5-1.688 4.125-1.688s3.063.625 4.188 1.813a11.48 11.48 0 0 0 3.688-1.375c-.438 1.375-1.313 2.438-2.563 3.188 1.125-.125 2.188-.438 3.313-.875z"/></svg>
+
+    </a>
+    
+    
+</div>
+    </div>
+</nav>
+    </div>
+</header>
+
+
+<main id="site-main" class="site-main outer" role="main">
+    <div class="inner">
+        <header class="post-full-header">
+            <section class="post-full-meta">
+                <time  class="post-full-meta-date" datetime="2017-01-17T16:00:00.000Z" itemprop="datePublished">
+                    2017-01-18
+                </time>
+                
+                <span class="date-divider">/</span>
+                
+                <a href="/categories/blog/">blog</a>&nbsp;&nbsp;
+                
+                
+            </section>
+            <h1 class="post-full-title">flask 源码解析：请求</h1>
+        </header>
+        <article class="post-full no-image">
+            
+            <section class="post-full-content">
+                <div id="lightgallery" class="markdown-body">
+                    <p>这是 flask 源码解析系列文章的其中一篇，本系列所有文章列表：</p>
+<ul>
+<li><a href="http://cizixs.com/2017/01/10/flask-insight-introduction">flask 源码解析：简介</a></li>
+<li><a href="http://cizixs.com/2017/01/11/flask-insight-start-process">flask 源码解析：应用启动流程</a></li>
+<li><a href="http://cizixs.com/2017/01/12/flask-insight-routing">flask 源码解析：路由</a></li>
+<li><a href="http://cizixs.com/2017/01/13/flask-insight-context">flask 源码解析：上下文</a></li>
+<li><a href="http://cizixs.com/2017/01/18/flask-insight-request">flask 源码解析：请求</a></li>
+<li><a href="http://cizixs.com/2017/01/22/flask-insight-response">flask 源码解析：响应</a></li>
+<li><a href="http://cizixs.com/2017/03/08/flask-insight-session">flask 源码解析：session</a></li>
+</ul>
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>对于物理链路来说，请求只是不同电压信号，它根本不知道也不需要知道请求格式和内容到底是怎样的；<br>对于 TCP 层来说，请求就是传输的数据（二进制的数据流），它只要发送给对应的应用程序就行了；<br>对于 HTTP 层的服务器来说，请求必须是符合 HTTP 协议的内容；<br>对于 WSGI server 来说，请求又变成了文件流，它要读取其中的内容，把 HTTP 请求包含的各种信息保存到一个字典中，调用 WSGI app；<br>对于 flask app 来说，请求就是一个对象，当需要某些信息的时候，只需要读取该对象的属性或者方法就行了。</p>
+<p>可以看到，虽然是同样的请求数据，在不同的阶段和不同组件看来，是完全不同的形式。因为每个组件都有它本身的目的和功能，这和生活中的事情一个道理：对于同样的事情，不同的人或者同一个人不同人生阶段的理解是不一样的。</p>
+<p>这篇文章呢，我们只考虑最后一个内容，flask 怎么看待请求。</p>
+<h2 id="请求"><a href="#请求" class="headerlink" title="请求"></a>请求</h2><p>我们知道要访问 flask 的请求对象非常简单，只需要 <code>from flask import request</code>：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> flask <span class="keyword">import</span> request</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> app.request_context(environ):</span><br><span class="line">    <span class="keyword">assert</span> request.method == <span class="string">'POST'</span></span><br></pre></td></tr></table></figure>
+<p>前面<a href="http://cizixs.com/2017/01/13/flask-insight-context">一篇文章</a> 已经介绍了这个神奇的变量是怎么工作的，它最后对应了 <code>flask.wrappers:Request</code> 类的对象。<br>这个类内部的实现虽然我们还不清楚，但是我们知道它接受 WSGI server 传递过来的 <code>environ</code> 字典变量，并提供了很多常用的属性和方法可以使用，比如请求的 method、path、args 等。<br>请求还有一个不那么明显的特性——它不能被应用修改，应用只能读取请求的数据。</p>
+<p>这个类的定义很简单，它继承了 <code>werkzeug.wrappers:Request</code>，然后添加了一些属性，这些属性和 flask 的逻辑有关，比如 view_args、blueprint、json 处理等。它的代码如下：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> werkzeug.wrappers <span class="keyword">import</span> Request <span class="keyword">as</span> RequestBase</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Request</span><span class="params">(RequestBase)</span>:</span></span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    The request object is a :class:`~werkzeug.wrappers.Request` subclass and</span></span><br><span class="line"><span class="string">    provides all of the attributes Werkzeug defines plus a few Flask</span></span><br><span class="line"><span class="string">    specific ones.</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#: The internal URL rule that matched the request.  This can be</span></span><br><span class="line">    <span class="comment">#: useful to inspect which methods are allowed for the URL from</span></span><br><span class="line">    <span class="comment">#: a before/after handler (``request.url_rule.methods``) etc.</span></span><br><span class="line">    url_rule = <span class="keyword">None</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#: A dict of view arguments that matched the request.  If an exception</span></span><br><span class="line">    <span class="comment">#: happened when matching, this will be ``None``.</span></span><br><span class="line">    view_args = <span class="keyword">None</span></span><br><span class="line"></span><br><span class="line"><span class="meta">    @property</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">max_content_length</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="string">"""Read-only view of the ``MAX_CONTENT_LENGTH`` config key."""</span></span><br><span class="line">        ctx = _request_ctx_stack.top</span><br><span class="line">        <span class="keyword">if</span> ctx <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>:</span><br><span class="line">            <span class="keyword">return</span> ctx.app.config[<span class="string">'MAX_CONTENT_LENGTH'</span>]</span><br><span class="line"></span><br><span class="line"><span class="meta">    @property</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">endpoint</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="string">"""The endpoint that matched the request.  This in combination with</span></span><br><span class="line"><span class="string">        :attr:`view_args` can be used to reconstruct the same or a</span></span><br><span class="line"><span class="string">        modified URL.  If an exception happened when matching, this will</span></span><br><span class="line"><span class="string">        be ``None``.</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        <span class="keyword">if</span> self.url_rule <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>:</span><br><span class="line">            <span class="keyword">return</span> self.url_rule.endpoint</span><br><span class="line"></span><br><span class="line"><span class="meta">    @property</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">blueprint</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="string">"""The name of the current blueprint"""</span></span><br><span class="line">        <span class="keyword">if</span> self.url_rule <span class="keyword">and</span> <span class="string">'.'</span> <span class="keyword">in</span> self.url_rule.endpoint:</span><br><span class="line">            <span class="keyword">return</span> self.url_rule.endpoint.rsplit(<span class="string">'.'</span>, <span class="number">1</span>)[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line"><span class="meta">    @property</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">is_json</span><span class="params">(self)</span>:</span></span><br><span class="line">        mt = self.mimetype</span><br><span class="line">        <span class="keyword">if</span> mt == <span class="string">'application/json'</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">True</span></span><br><span class="line">        <span class="keyword">if</span> mt.startswith(<span class="string">'application/'</span>) <span class="keyword">and</span> mt.endswith(<span class="string">'+json'</span>):</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">True</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">False</span></span><br></pre></td></tr></table></figure>
+<p>这段代码没有什难理解的地方，唯一需要说明的就是 <code>@property</code> 装饰符能够把类的方法变成属性，这是 python 中经常见到的用法。</p>
+<p>接着我们就要看 <code>werkzeug.wrappers:Request</code>：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Request</span><span class="params">(BaseRequest, AcceptMixin, ETagRequestMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">              UserAgentMixin, AuthorizationMixin,</span></span></span><br><span class="line"><span class="class"><span class="params">              CommonRequestDescriptorsMixin)</span>:</span></span><br><span class="line"></span><br><span class="line">    <span class="string">"""Full featured request object implementing the following mixins:</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    - :class:`AcceptMixin` for accept header parsing</span></span><br><span class="line"><span class="string">    - :class:`ETagRequestMixin` for etag and cache control handling</span></span><br><span class="line"><span class="string">    - :class:`UserAgentMixin` for user agent introspection</span></span><br><span class="line"><span class="string">    - :class:`AuthorizationMixin` for http auth handling</span></span><br><span class="line"><span class="string">    - :class:`CommonRequestDescriptorsMixin` for common headers</span></span><br><span class="line"><span class="string">    """</span></span><br></pre></td></tr></table></figure>
+<p>这个方法有一点比较特殊，它没有任何的 body。但是有多个基类，第一个是 <code>BaseRequest</code>，其他的都是各种 <code>Mixin</code>。<br>这里要讲一下 Mixin 机制，这是 python 多继承的一种方式，如果你希望某个类可以自行组合它的特性（比如这里的情况），或者希望某个特性用在多个类中，就可以使用 Mixin。<br>如果我们只需要能处理各种 <code>Accept</code> 头部的请求，可以这样做：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Request</span><span class="params">(BaseRequest, AcceptMixin)</span></span></span><br><span class="line"><span class="class">    <span class="title">pass</span></span></span><br></pre></td></tr></table></figure>
+<p>但是不要滥用 Mixin，在大多数情况下子类继承了父类，然后实现需要的逻辑就能满足需求。</p>
+<p>我们先来看看 <code>BaseRequest</code>:</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BaseRequest</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, environ, populate_request=True, shallow=False)</span>:</span></span><br><span class="line">        self.environ = environ</span><br><span class="line">        <span class="keyword">if</span> populate_request <span class="keyword">and</span> <span class="keyword">not</span> shallow:</span><br><span class="line">            self.environ[<span class="string">'werkzeug.request'</span>] = self</span><br><span class="line">        self.shallow = shallow</span><br></pre></td></tr></table></figure>
+<p>能看到实例化需要的唯一变量是 <code>environ</code>，它只是简单地把变量保存下来，并没有做进一步的处理。<code>Request</code> 的内容很多，其中相当一部分是被 <code>@cached_property</code> 装饰的方法，比如下面这种：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="meta">@cached_property</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">args</span><span class="params">(self)</span>:</span></span><br><span class="line">    <span class="string">"""The parsed URL parameters."""</span></span><br><span class="line">    <span class="keyword">return</span> url_decode(wsgi_get_bytes(self.environ.get(<span class="string">'QUERY_STRING'</span>, <span class="string">''</span>)),</span><br><span class="line">                      self.url_charset, errors=self.encoding_errors,</span><br><span class="line">                      cls=self.parameter_storage_class)</span><br><span class="line"></span><br><span class="line"><span class="meta">@cached_property</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">stream</span><span class="params">(self)</span>:</span></span><br><span class="line">    <span class="string">"""The stream to read incoming data from.  Unlike :attr:`input_stream`</span></span><br><span class="line"><span class="string">    this stream is properly guarded that you can't accidentally read past</span></span><br><span class="line"><span class="string">    the length of the input.  Werkzeug will internally always refer to</span></span><br><span class="line"><span class="string">    this stream to read data which makes it possible to wrap this</span></span><br><span class="line"><span class="string">    object with a stream that does filtering.</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    _assert_not_shallow(self)</span><br><span class="line">    <span class="keyword">return</span> get_input_stream(self.environ)</span><br><span class="line"></span><br><span class="line"><span class="meta">@cached_property</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">form</span><span class="params">(self)</span>:</span></span><br><span class="line">    <span class="string">"""The form parameters."""</span></span><br><span class="line">    self._load_form_data()</span><br><span class="line">    <span class="keyword">return</span> self.form</span><br><span class="line"></span><br><span class="line"><span class="meta">@cached_property</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">cookies</span><span class="params">(self)</span>:</span></span><br><span class="line">    <span class="string">"""Read only access to the retrieved cookie values as dictionary."""</span></span><br><span class="line">    <span class="keyword">return</span> parse_cookie(self.environ, self.charset,</span><br><span class="line">                        self.encoding_errors,</span><br><span class="line">                        cls=self.dict_storage_class)</span><br><span class="line"></span><br><span class="line"><span class="meta">@cached_property</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">headers</span><span class="params">(self)</span>:</span></span><br><span class="line">    <span class="string">"""The headers from the WSGI environ as immutable</span></span><br><span class="line"><span class="string">    :class:`~werkzeug.datastructures.EnvironHeaders`.</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    <span class="keyword">return</span> EnvironHeaders(self.environ)</span><br></pre></td></tr></table></figure>
+<p><code>@cached_property</code> 从名字就能看出来，它是  <code>@property</code> 的升级版，添加了缓存功能。我们知道<br><code>@property</code> 能把某个方法转换成属性，每次访问属性的时候，它都会执行底层的方法作为结果返回。<br><code>@cached_property</code> 也一样，区别是只有第一次访问的时候才会调用底层的方法，后续的方法会直接使用之前返回的值。<br>那么它是如何实现的呢？我们能在 <code>werkzeug.utils</code> 找到它的定义：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">cached_property</span><span class="params">(property)</span>:</span></span><br><span class="line"></span><br><span class="line">    <span class="string">"""A decorator that converts a function into a lazy property.  The</span></span><br><span class="line"><span class="string">    function wrapped is called the first time to retrieve the result</span></span><br><span class="line"><span class="string">    and then that calculated result is used the next time you access</span></span><br><span class="line"><span class="string">    the value.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    The class has to have a `__dict__` in order for this property to</span></span><br><span class="line"><span class="string">    work.</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># implementation detail: A subclass of python's builtin property</span></span><br><span class="line">    <span class="comment"># decorator, we override __get__ to check for a cached value. If one</span></span><br><span class="line">    <span class="comment"># choses to invoke __get__ by hand the property will still work as</span></span><br><span class="line">    <span class="comment"># expected because the lookup logic is replicated in __get__ for</span></span><br><span class="line">    <span class="comment"># manual invocation.</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, func, name=None, doc=None)</span>:</span></span><br><span class="line">        self.__name__ = name <span class="keyword">or</span> func.__name__</span><br><span class="line">        self.__module__ = func.__module__</span><br><span class="line">        self.__doc__ = doc <span class="keyword">or</span> func.__doc__</span><br><span class="line">        self.func = func</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__set__</span><span class="params">(self, obj, value)</span>:</span></span><br><span class="line">        obj.__dict__[self.__name__] = value</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__get__</span><span class="params">(self, obj, type=None)</span>:</span></span><br><span class="line">        <span class="keyword">if</span> obj <span class="keyword">is</span> <span class="keyword">None</span>:</span><br><span class="line">            <span class="keyword">return</span> self</span><br><span class="line">        value = obj.__dict__.get(self.__name__, _missing)</span><br><span class="line">        <span class="keyword">if</span> value <span class="keyword">is</span> _missing:</span><br><span class="line">            value = self.func(obj)</span><br><span class="line">            obj.__dict__[self.__name__] = value</span><br><span class="line">        <span class="keyword">return</span> value</span><br></pre></td></tr></table></figure>
+<p>这个装饰器同时也是实现了 <code>__set__</code> 和 <code>__get__</code> 方法的<a href="http://cizixs.com/2015/12/31/python-descriptor-introduction">描述器</a>。<br>访问它装饰的属性，就会调用 <code>__get__</code> 方法，这个方法先在 <code>obj.__dict__</code> 中寻找是否已经存在对应的值。如果存在，就直接返回；如果不存在，调用底层的函数<br><code>self.func</code>，并把得到的值保存起来，再返回。这也是它能实现缓存的原因：因为它会把函数的值作为属性保存到对象中。</p>
+<p>关于 <code>Request</code> 内部各种属性的实现，就不分析了，因为它们每个具体的实现都不太一样，也不复杂，无外乎对 <code>environ</code> 字典中某些字段做一些处理和计算。<br>接下来回过头来看看 Mixin，这里只用 <code>AcceptMixin</code> 作为例子：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">AcceptMixin</span><span class="params">(object)</span>:</span></span><br><span class="line"></span><br><span class="line"><span class="meta">    @cached_property</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">accept_mimetypes</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> parse_accept_header(self.environ.get(<span class="string">'HTTP_ACCEPT'</span>), MIMEAccept)</span><br><span class="line"></span><br><span class="line"><span class="meta">    @cached_property</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">accept_charsets</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> parse_accept_header(self.environ.get(<span class="string">'HTTP_ACCEPT_CHARSET'</span>),</span><br><span class="line">                                   CharsetAccept)</span><br><span class="line"></span><br><span class="line"><span class="meta">    @cached_property</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">accept_encodings</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> parse_accept_header(self.environ.get(<span class="string">'HTTP_ACCEPT_ENCODING'</span>))</span><br><span class="line"></span><br><span class="line"><span class="meta">    @cached_property</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">accept_languages</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> parse_accept_header(self.environ.get(<span class="string">'HTTP_ACCEPT_LANGUAGE'</span>),</span><br><span class="line">                                   LanguageAccept)</span><br></pre></td></tr></table></figure>
+<p><code>AcceptMixin</code> 实现了请求内容协商的部分，比如请求接受的语言、编码格式、相应内容等。<br>它也是定义了很多 <code>@cached_property</code> 方法，虽然自己没有 <code>__init__</code> 方法，但是也直接使用了<br><code>self.environ</code>，因此它并不能直接使用，只能和 <code>BaseRequest</code> 一起出现。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="http://flask.pocoo.org/docs/0.12/" target="_blank" rel="noopener">Flask official docs</a></li>
+</ul>
+
+                </div>
+            </section>
+        </article>
+    </div>
+    
+<nav class="pagination">
+    
+    
+    <a class="prev-post" title="flask 源码解析：响应" href="/2017/01/22/flask-insight-response/">
+        ← flask 源码解析：响应
+    </a>
+    
+    <span class="prev-next-post">•</span>
+    
+    <a class="next-post" title="flask 源码解析：上下文" href="/2017/01/13/flask-insight-context/">
+        flask 源码解析：上下文 →
+    </a>
+    
+    
+</nav>
+    
+</main>
+
+<div class="t-g-control">
+    <div class="gotop">
+        <svg class="icon" width="32px" height="32px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M793.024 710.272a32 32 0 1 0 45.952-44.544l-310.304-320a32 32 0 0 0-46.4 0.48l-297.696 320a32 32 0 0 0 46.848 43.584l274.752-295.328 286.848 295.808z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="toc-control">
+        <svg class="icon toc-icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M779.776 480h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M779.776 672h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M256 288a32 32 0 1 0 0 64 32 32 0 0 0 0-64M392.576 352h387.2a32 32 0 0 0 0-64h-387.2a32 32 0 0 0 0 64M256 480a32 32 0 1 0 0 64 32 32 0 0 0 0-64M256 672a32 32 0 1 0 0 64 32 32 0 0 0 0-64" fill="#8a8a8a" /></svg>
+        <svg class="icon toc-close" style="display: none;" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 960c-247.039484 0-448-200.960516-448-448S264.960516 64 512 64 960 264.960516 960 512 759.039484 960 512 960zM512 128.287273c-211.584464 0-383.712727 172.128262-383.712727 383.712727 0 211.551781 172.128262 383.712727 383.712727 383.712727 211.551781 0 383.712727-172.159226 383.712727-383.712727C895.712727 300.415536 723.551781 128.287273 512 128.287273z" fill="#8a8a8a" /><path d="M557.05545 513.376159l138.367639-136.864185c12.576374-12.416396 12.672705-32.671738 0.25631-45.248112s-32.704421-12.672705-45.248112-0.25631l-138.560301 137.024163-136.447897-136.864185c-12.512727-12.512727-32.735385-12.576374-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.248112l136.255235 136.671523-137.376804 135.904314c-12.576374 12.447359-12.672705 32.671738-0.25631 45.248112 6.271845 6.335493 14.496116 9.504099 22.751351 9.504099 8.12794 0 16.25588-3.103239 22.496761-9.247789l137.567746-136.064292 138.687596 139.136568c6.240882 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.05545 513.376159z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="gobottom">
+        <svg class="icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M231.424 346.208a32 32 0 0 0-46.848 43.584l297.696 320a32 32 0 0 0 46.4 0.48l310.304-320a32 32 0 1 0-45.952-44.544l-286.848 295.808-274.752-295.36z" fill="#8a8a8a" /></svg>
+    </div>
+</div>
+<div class="toc-main" style="right: -100%">
+    <div class="post-toc">
+        <span>TOC</span>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#简介"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#请求"><span class="toc-text">请求</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-text">参考资料</span></a></li></ol>
+    </div>
+</div>
+
+
+
+        
+
+<aside class="read-next outer">
+    <div class="inner">
+        <div class="read-next-feed">
+            
+            
+
+<article class="read-next-card"  style="background-image: url(https://i.loli.net/2017/11/26/5a19c56faa29f.jpg)"  >
+  <header class="read-next-card-header">
+    <small class="read-next-card-header-sitetitle">&mdash; Cizixs Write Here &mdash;</small>
+    <h3 class="read-next-card-header-title">Recent Posts</h3>
+  </header>
+  <div class="read-next-divider">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M13 14.5s2 3 5 3 5.5-2.463 5.5-5.5S21 6.5 18 6.5c-5 0-7 11-12 11C2.962 17.5.5 15.037.5 12S3 6.5 6 6.5s4.5 3.5 4.5 3.5"/>
+    </svg>
+  </div>
+  <div class="read-next-card-content">
+    <ul>
+      
+      
+      
+      <li>
+        <a href="/2018/08/26/what-is-istio/">什么是 istio</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/08/25/knative-serverless-platform/">serverless 平台 knative 简介</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/06/25/kubernetes-resource-management/">kubernetes 资源管理概述</a>
+      </li>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+  </div>
+  <footer class="read-next-card-footer">
+    <a href="/archives">  MORE  → </a>
+  </footer>
+</article>
+
+            
+            
+            
+        </div>
+    </div>
+</aside>
+
+<footer class="site-footer outer">
+	<div class="site-footer-content inner">
+		<section class="copyright">
+			<a href="/" title="Cizixs Write Here">Cizixs Write Here</a>
+			&copy; 2018
+		</section>
+		<nav class="site-footer-nav">
+			
+            <a href="https://hexo.io" title="Hexo" target="_blank" rel="noopener">Hexo</a>
+            <a href="https://github.com/xzhih/hexo-theme-casper" title="Casper" target="_blank" rel="noopener">Casper</a>
+        </nav>
+    </div>
+</footer>
+
+
+
+
+
+
+<div class="floating-header" >
+	<div class="floating-header-logo">
+        <a href="/" title="Cizixs Write Here">
+			
+                <img src="https://i.loli.net/2017/11/26/5a19c0b50432e.png" alt="Cizixs Write Here icon" />
+			
+            <span>Cizixs Write Here</span>
+        </a>
+    </div>
+    <span class="floating-header-divider">&mdash;</span>
+    <div class="floating-header-title">flask 源码解析：请求</div>
+    <progress class="progress" value="0">
+        <div class="progress-container">
+            <span class="progress-bar"></span>
+        </div>
+    </progress>
+</div>
+<script>
+   $(document).ready(function () {
+    var progressBar = document.querySelector('progress');
+    var header = document.querySelector('.floating-header');
+    var title = document.querySelector('.post-full-title');
+    var lastScrollY = window.scrollY;
+    var lastWindowHeight = window.innerHeight;
+    var lastDocumentHeight = $(document).height();
+    var ticking = false;
+
+    function onScroll() {
+        lastScrollY = window.scrollY;
+        requestTick();
+    }
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(update);
+        }
+        ticking = true;
+    }
+    function update() {
+        var rect = title.getBoundingClientRect();
+        var trigger = rect.top + window.scrollY;
+        var triggerOffset = title.offsetHeight + 35;
+        var progressMax = lastDocumentHeight - lastWindowHeight;
+            // show/hide floating header
+            if (lastScrollY >= trigger + triggerOffset) {
+                header.classList.add('floating-active');
+            } else {
+                header.classList.remove('floating-active');
+            }
+            progressBar.setAttribute('max', progressMax);
+            progressBar.setAttribute('value', lastScrollY);
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', onScroll, {passive: true});
+        update();
+
+        // TOC
+        var width = $('.toc-main').width();
+        $('.toc-control').click(function () {
+            if ($('.t-g-control').css('width')=="50px") {
+                if ($('.t-g-control').css('right')=="0px") {
+                    $('.t-g-control').animate({right: width}, "slow");
+                    $('.toc-main').animate({right: 0}, "slow");
+                    toc_icon()
+                } else {
+                    $('.t-g-control').animate({right: 0}, "slow");
+                    $('.toc-main').animate({right: -width}, "slow");
+                    toc_icon()
+                }
+            } else {
+                if ($('.toc-main').css('right')=="0px") {
+                    $('.toc-main').slideToggle("fast", toc_icon());
+                } else {
+                    $('.toc-main').css('right', '0px');
+                    toc_icon()
+                }
+            }
+        })
+
+        function toc_icon() {
+            if ($('.toc-icon').css('display')=="none") {
+                $('.toc-close').hide();
+                $('.toc-icon').show();
+            } else {
+                $('.toc-icon').hide();
+                $('.toc-close').show();
+            }
+        }
+
+        $('.gotop').click(function(){
+            $('html,body').animate({scrollTop:$('.post-full-header').offset().top}, 800);
+        });
+        $('.gobottom').click(function () {
+            $('html,body').animate({scrollTop:$('.pagination').offset().top}, 800);
+        });
+
+        // highlight
+        // https://highlightjs.org
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+        $('td.code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+
+        console.log("this theme is from https://github.com/xzhih/hexo-theme-casper")
+    });
+</script>
+
+
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/1.3.9/css/lightgallery.min.css">
+
+
+
+<script src="https://cdn.staticfile.org/lightgallery/1.3.9/js/lightgallery.min.js"></script>
+
+
+<script>
+	$(function () {
+		var postImg = $('#lightgallery').find('img');
+		postImg.addClass('post-img');
+		postImg.each(function () {
+			var imgSrc = $(this).attr('src');
+			$(this).attr('data-src', imgSrc);
+		});
+		$('#lightgallery').lightGallery({selector: '.post-img'});
+	});
+</script>
+
+
+
+
+    </div>
+</body>
+</html>

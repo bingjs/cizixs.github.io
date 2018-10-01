@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html CN>
+
+
+
+
+
+
+
+<head>
+	
+	
+	<link rel="stylesheet" href="/css/allinone.min.css"> 
+
+	
+
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+	<title>linux 网络虚拟化： macvlan | Cizixs Write Here</title>
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta name="generator" content="hexo">
+	<meta name="author" content="Cizixs Wu">
+	<meta name="description" content="">
+
+	
+	<meta name="keywords" content="">
+	
+
+	
+	<link rel="shortcut icon" href="https://i.loli.net/2017/11/26/5a19c0b50432e.png">
+	
+
+	
+	<meta name="theme-color" content="#3c484e">
+	<meta name="msapplication-TileColor" content="#3c484e">
+	
+
+	
+
+	
+
+	<meta property="og:site_name" content="Cizixs Write Here">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="linux 网络虚拟化： macvlan | Cizixs Write Here">
+	<meta property="og:description" content="">
+	<meta property="og:url" content="http://cizixs.com/2017/02/14/network-virtualization-macvlan/">
+
+	
+	<meta property="article:published_time" content="2017-02-14T00:02:00+08:00"/> 
+	<meta property="article:author" content="Cizixs Wu">
+	<meta property="article:published_first" content="Cizixs Write Here, /2017/02/14/network-virtualization-macvlan/" />
+	
+
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	
+
+	
+	<script src="https://cdn.staticfile.org/highlight.js/9.10.0/highlight.min.js"></script>
+	
+
+	
+	
+</head>
+<body class="post-template">
+    <div class="site-wrapper">
+        
+
+
+
+
+<header class="site-header outer" style="z-index: 999">
+    <div class="inner">
+        
+<nav class="site-nav"> 
+    <div class="site-nav-left">
+        <ul class="nav">
+            <li>
+                
+                <a href="/" title="Home">Home</a>
+                
+            </li>
+            
+            
+            <li>
+                <a href="/about" title="About">About</a>
+            </li>
+            
+            <li>
+                <a href="/archives" title="Archives">Archives</a>
+            </li>
+            
+            
+        </ul> 
+    </div>
+    <div class="site-nav-right">
+        
+<div class="social-links" >
+    
+    
+    
+    
+    <a class="social-link" title="twitter" href="https://twitter.com/cizixs" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30.063 7.313c-.813 1.125-1.75 2.125-2.875 2.938v.75c0 1.563-.188 3.125-.688 4.625a15.088 15.088 0 0 1-2.063 4.438c-.875 1.438-2 2.688-3.25 3.813a15.015 15.015 0 0 1-4.625 2.563c-1.813.688-3.75 1-5.75 1-3.25 0-6.188-.875-8.875-2.625.438.063.875.125 1.375.125 2.688 0 5.063-.875 7.188-2.5-1.25 0-2.375-.375-3.375-1.125s-1.688-1.688-2.063-2.875c.438.063.813.125 1.125.125.5 0 1-.063 1.5-.25-1.313-.25-2.438-.938-3.313-1.938a5.673 5.673 0 0 1-1.313-3.688v-.063c.813.438 1.688.688 2.625.688a5.228 5.228 0 0 1-1.875-2c-.5-.875-.688-1.813-.688-2.75 0-1.063.25-2.063.75-2.938 1.438 1.75 3.188 3.188 5.25 4.25s4.313 1.688 6.688 1.813a5.579 5.579 0 0 1 1.5-5.438c1.125-1.125 2.5-1.688 4.125-1.688s3.063.625 4.188 1.813a11.48 11.48 0 0 0 3.688-1.375c-.438 1.375-1.313 2.438-2.563 3.188 1.125-.125 2.188-.438 3.313-.875z"/></svg>
+
+    </a>
+    
+    
+</div>
+    </div>
+</nav>
+    </div>
+</header>
+
+
+<main id="site-main" class="site-main outer" role="main">
+    <div class="inner">
+        <header class="post-full-header">
+            <section class="post-full-meta">
+                <time  class="post-full-meta-date" datetime="2017-02-13T16:00:00.000Z" itemprop="datePublished">
+                    2017-02-14
+                </time>
+                
+                <span class="date-divider">/</span>
+                
+                <a href="/categories/blog/">blog</a>&nbsp;&nbsp;
+                
+                
+            </section>
+            <h1 class="post-full-title">linux 网络虚拟化： macvlan</h1>
+        </header>
+        <article class="post-full no-image">
+            
+            <section class="post-full-content">
+                <div id="lightgallery" class="markdown-body">
+                    <h2 id="macvlan-简介"><a href="#macvlan-简介" class="headerlink" title="macvlan 简介"></a>macvlan 简介</h2><p>macvlan 是 linux kernel 比较新的特性，可以通过以下方法判断当前系统是否支持：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ modprobe macvlan</span><br><span class="line">$ lsmod | grep macvlan</span><br><span class="line">  macvlan    19046    0</span><br></pre></td></tr></table></figure>
+<p>如果第一个命令报错，或者第二个命令没有返回，则说明当前系统不支持 macvlan，需要升级系统或者升级内核。</p>
+<p>macvlan 允许你在主机的一个网络接口上配置多个虚拟的网络接口，这些网络 interface 有自己独立的 mac 地址，也可以配置上 ip 地址进行通信。macvlan 下的虚拟机或者容器网络和主机在同一个网段中，共享同一个广播域。macvlan 和 bridge 比较相似，但因为它省去了 bridge 的存在，所以配置和调试起来比较简单，而且效率也相对高。除此之外，macvlan 自身也完美支持 VLAN。</p>
+<p>如果希望容器或者虚拟机放在主机相同的网络中，享受已经存在网络栈的各种优势，可以考虑 macvlan。</p>
+<h2 id="各个-linux-发行版对-macvlan-的支持"><a href="#各个-linux-发行版对-macvlan-的支持" class="headerlink" title="各个 linux 发行版对 macvlan 的支持"></a>各个 linux 发行版对 macvlan 的支持</h2><p>macvlan 对kernel 版本依赖：Linux kernel v3.9–3.19 and 4.0+。几个重要发行版支持情况：</p>
+<ul>
+<li>ubuntu：&gt;= saucy(13.10)</li>
+<li>RHEL(Red Hat Enterprise Linux): &gt;= 7.0(3.10.0)</li>
+<li>Fedora: &gt;=19(3.9)</li>
+<li>Debian: &gt;=8(3.16)</li>
+</ul>
+<p>各个发行版的 kernel 都可以自行手动升级，具体操作可以参考官方提供的文档。</p>
+<p>以上版本信息参考了这些资料：</p>
+<ul>
+<li><a href="http://askubuntu.com/questions/517136/list-of-ubuntu-versions-with-corresponding-linux-kernel-version" target="_blank" rel="noopener">List of ubuntu versions with corresponding linux kernel version</a></li>
+<li><a href="https://access.redhat.com/articles/3078" target="_blank" rel="noopener">Red Hat Enterprise Linux Release Dates</a></li>
+</ul>
+<h2 id="四种模式"><a href="#四种模式" class="headerlink" title="四种模式"></a>四种模式</h2><ul>
+<li>private mode：过滤掉所有来自其他 macvlan 接口的报文，因此不同 macvlan 接口之间无法互相通信</li>
+<li>vepa(Virtual Ethernet Port Aggregator) mode： 需要主接口连接的交换机支持 VEPA/802.1Qbg 特性。所有发送出去的报文都会经过交换机，交换机作为再发送到对应的目标地址（即使目标地址就是主机上的其他 macvlan 接口），也就是 hairpin mode 模式，这个模式用在交互机上需要做过滤、统计等功能的场景。</li>
+<li>bridge mode：通过虚拟的交换机讲主接口的所有 macvlan 接口连接在一起，这样的话，不同 macvlan 接口之间能够直接通信，不需要将报文发送到主机之外。这个模式下，主机外是看不到主机上 macvlan interface 之间通信的报文的。</li>
+<li>passthru mode：暂时没有搞清楚这个模式要解决的问题</li>
+</ul>
+<p>VEPA 和 passthru 模式下，两个 macvlan 接口之间的通信会经过主接口两次：第一次是发出的时候，第二次是返回的时候。这样会影响物理接口的宽带，也限制了不同 macvlan 接口之间通信的速度。如果多个 macvlan 接口之间通信比较频繁，对于性能的影响会比较明显。</p>
+<p>private 模式下，所有的 macvlan 接口都不能互相通信，对性能影响最小。</p>
+<p>bridge 模式下，数据报文是通过内存直接转发的，因此效率会高一些，但是会造成 CPU 额外的计算量。</p>
+<p><strong>NOTE</strong>：如果要手动分配 mac 地址，请注意本地的 mac 地址最高位字节的低位第二个 bit 必须是 1。比如 <code>02:xx:xx:xx:xx:xx</code>。</p>
+<h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><p>为了方便演示，我们会创建出来两个 macvlan 接口，分别放到不同的 <a href="http://cizixs.com/2017/02/10/network-virtualization-network-namespace">network namespace</a> 里。整个实验的网络拓扑结构如下：</p>
+<p><img src="http://hicu.be/wp-content/uploads/2016/05/docker-macvlan-bridge-mode-connectivity.png" alt="network topology"></p>
+<p><a href="http://hicu.be/docker-networking-macvlan-bridge-mode-configuration" target="_blank" rel="noopener">图片来源</a></p>
+<p>首先还是创建两个 network namespace：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@localhost ~]<span class="comment"># ip netns add net1</span></span><br><span class="line">[root@localhost ~]<span class="comment"># ip netns add net2</span></span><br></pre></td></tr></table></figure>
+<p>然后创建 macvlan 接口:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@localhost ~]<span class="comment"># ip link add link enp0s8 mac1 type macvlan</span></span><br><span class="line">[root@localhost ~]<span class="comment"># ip link</span></span><br><span class="line">23: mac1@enp0s8: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN mode DEFAULT</span><br><span class="line">    link/ether e2:80:1c:ba:59:9c brd ff:ff:ff:ff:ff:ff</span><br></pre></td></tr></table></figure>
+<p>创建的格式为 <code>ip link add link &lt;PARENT&gt; &lt;NAME&gt; type macvlan</code>，其中 <code>&lt;PARENT&gt;</code> 是 macvlan 接口的父 interface 名称，<code>&lt;NAME&gt;</code> 是新建的 macvlan 接口的名称，这个名字可以任意取。使用 <code>ip link</code> 可以看到我们刚创建的 macvlan 接口，除了它自己的名字之外，后面还跟着父接口的名字。</p>
+<p>下面就是把创建的 macvlan 放到 network namespace 中，配置好 ip 地址，然后启用它：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@localhost ~]<span class="comment"># ip link set mac1@enp0s8 netns net1</span></span><br><span class="line">Cannot find device <span class="string">"mac1@enp0s8"</span></span><br><span class="line">[root@localhost ~]<span class="comment"># ip link set mac1 netns net1</span></span><br><span class="line">[root@localhost ~]<span class="comment"># ip netns exec net1 ip link</span></span><br><span class="line">23: mac1@if3: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN mode DEFAULT</span><br><span class="line">    link/ether e2:80:1c:ba:59:9c brd ff:ff:ff:ff:ff:ff</span><br><span class="line">[root@localhost ~]<span class="comment"># ip netns exec net1 ip link set mac1 name eth0</span></span><br><span class="line">[root@localhost ~]<span class="comment"># ip netns exec net1 ip link</span></span><br><span class="line">23: eth0@if3: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN mode DEFAULT</span><br><span class="line">    link/ether e2:80:1c:ba:59:9c brd ff:ff:ff:ff:ff:ff</span><br><span class="line">[root@localhost ~]<span class="comment"># ip netns exec net1 ip addr add 192.168.8.120/24 dev eth0</span></span><br><span class="line">[root@localhost ~]<span class="comment"># ip netns exec net1 ip link set eth0 up</span></span><br></pre></td></tr></table></figure>
+<p>同理可以配置另外一个 macvlan 接口，可以测试两个 ip 的连通性：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@localhost ~]<span class="comment"># docker exec 1444 ping -c 3 192.168.8.120</span></span><br><span class="line">PING 192.168.8.120 (192.168.8.120): 56 data bytes</span><br><span class="line">64 bytes from 192.168.8.120: seq=0 ttl=64 time=0.130 ms</span><br><span class="line">64 bytes from 192.168.8.120: seq=1 ttl=64 time=0.099 ms</span><br><span class="line">64 bytes from 192.168.8.120: seq=2 ttl=64 time=0.083 ms</span><br><span class="line"></span><br><span class="line">--- 192.168.8.120 ping statistics ---</span><br><span class="line">3 packets transmitted, 3 packets received, 0% packet loss</span><br><span class="line">round-trip min/avg/max = 0.083/0.104/0.130 ms</span><br></pre></td></tr></table></figure>
+<h2 id="在-docker-中的使用"><a href="#在-docker-中的使用" class="headerlink" title="在 docker 中的使用"></a>在 docker 中的使用</h2><p>docker1.12 版本也正式支持了 macvlan 和 ipvlan 网络模式。</p>
+<h3 id="创建-macvlan-网络"><a href="#创建-macvlan-网络" class="headerlink" title="创建 macvlan 网络"></a>创建 macvlan 网络</h3><p>管理 macvlan 和其他类型的网络类似，通过 <code>docker network</code> 子命令就能实现。创建 macvlan 网络的时候，需要知道主机的网段和网关地址，虚拟网络要依附的物理网卡。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@localhost ~]<span class="comment"># docker network create -d macvlan --subnet=192.168.8.0/24 --gateway=192.168.8.1 -o parent=enp0s8 mcv</span></span><br><span class="line">9fad35e54a2f53c9314626f89cf8a705799ed382ddac01c865be1f4d04fdcb8f</span><br><span class="line">[root@localhost ~]<span class="comment"># docker network ls</span></span><br><span class="line">NETWORK ID          NAME                DRIVER              SCOPE</span><br><span class="line">e06b6e00dd3b        bridge              bridge              <span class="built_in">local</span></span><br><span class="line">823b7bb07c41        host                host                <span class="built_in">local</span></span><br><span class="line">9fad35e54a2f        mcv                 macvlan             <span class="built_in">local</span></span><br><span class="line">dc7c667aca19        none                null                <span class="built_in">local</span></span><br></pre></td></tr></table></figure>
+<p>选项说明：</p>
+<ul>
+<li>subnet：网络 CIDR 地址</li>
+<li>gateway：网关地址</li>
+<li>aux-address：不要分配给容器的 ip 地址。字典，以 key=value 对出现</li>
+<li>ip-range：指定具体的 ip 分配区间，也是 CIDR 格式，必须是 subnet 指定范围的子集</li>
+<li>opt(o)：和 macvlan driver 相关的选项，以 key=value 的格式出现<ul>
+<li>parent=eth0: 指定 parent interface</li>
+<li>macvlan_mode：macvlan 模式，默认是 bridge</li>
+</ul>
+</li>
+</ul>
+<h3 id="运行容器"><a href="#运行容器" class="headerlink" title="运行容器"></a>运行容器</h3><p>创建好网络之后，我们就可以使用刚创建的网络运行两个容器，测试网络的连通性。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@localhost ~]<span class="comment"># docker run --net=mac192 -d --rm alpine top</span></span><br><span class="line">5e950cf86cda7b4e6fc4bd869834943edacaaf969051293021c75330bbc18b53</span><br><span class="line">[root@localhost ~]<span class="comment"># docker run --net=mac192 -d --rm alpine top</span></span><br><span class="line">9067c54aac79e65b3193a137e95a180a7e5cc4a2845cc664f53c17a244be3853</span><br><span class="line">[root@localhost ~]<span class="comment"># docker ps</span></span><br><span class="line">CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES</span><br><span class="line">9067c54aac79        alpine              <span class="string">"top"</span>               7 seconds ago       Up 6 seconds                            sharp_hodgkin</span><br><span class="line">5e950cf86cda        alpine              <span class="string">"top"</span>               8 seconds ago       Up 7 seconds                            peaceful_chandrasekhar</span><br><span class="line"></span><br><span class="line">[root@localhost ~]<span class="comment"># docker exec 906 ip addr</span></span><br><span class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">    inet 127.0.0.1/8 scope host lo</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 ::1/128 scope host</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">16: eth0@if3: &lt;BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN&gt; mtu 1500 qdisc noqueue state UNKNOWN</span><br><span class="line">    link/ether 02:42:c0:a8:08:03 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 192.168.8.3/24 scope global eth0</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 fe80::42:c0ff:fea8:803/64 scope link</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">[root@localhost ~]<span class="comment"># docker exec 5e9 ping -c 3 192.168.8.3</span></span><br><span class="line">PING 192.168.8.3 (192.168.8.3): 56 data bytes</span><br><span class="line">64 bytes from 192.168.8.3: seq=0 ttl=64 time=0.226 ms</span><br><span class="line">64 bytes from 192.168.8.3: seq=1 ttl=64 time=0.076 ms</span><br><span class="line">64 bytes from 192.168.8.3: seq=2 ttl=64 time=0.095 ms</span><br><span class="line"></span><br><span class="line">--- 192.168.8.3 ping statistics ---</span><br><span class="line">3 packets transmitted, 3 packets received, 0% packet loss</span><br><span class="line">round-trip min/avg/max = 0.076/0.132/0.226 ms</span><br></pre></td></tr></table></figure>
+<p>需要注意的是，从容器中是无法访问所在主机地址的：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@localhost ~]<span class="comment"># docker exec 5e9 ping -c 3 192.168.8.110</span></span><br><span class="line">PING 192.168.8.110 (192.168.8.110): 56 data bytes</span><br><span class="line"></span><br><span class="line">--- 192.168.8.110 ping statistics ---</span><br><span class="line">3 packets transmitted, 0 packets received, 100% packet loss</span><br></pre></td></tr></table></figure>
+<p>这是 macvlan 的特性，目的是为了更好地实现网络的隔离，和 docker 无关。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://sreeninet.wordpress.com/2016/05/29/macvlan-and-ipvlan/" target="_blank" rel="noopener">Macvlan and IPvlan basics</a></li>
+<li><a href="https://docs.docker.com/engine/userguide/networking/get-started-macvlan/" target="_blank" rel="noopener">docker docs: Getting started with macvlan network driver</a></li>
+<li><a href="http://hicu.be/bridge-vs-macvlan" target="_blank" rel="noopener">bridge vs macvlan</a></li>
+</ul>
+
+                </div>
+            </section>
+        </article>
+    </div>
+    
+<nav class="pagination">
+    
+    
+    <a class="prev-post" title="linux 网络虚拟化： ipvlan" href="/2017/02/17/network-virtualization-ipvlan/">
+        ← linux 网络虚拟化： ipvlan
+    </a>
+    
+    <span class="prev-next-post">•</span>
+    
+    <a class="next-post" title="linux 网络虚拟化： network namespace 简介" href="/2017/02/10/network-virtualization-network-namespace/">
+        linux 网络虚拟化： network namespace 简介 →
+    </a>
+    
+    
+</nav>
+    
+</main>
+
+<div class="t-g-control">
+    <div class="gotop">
+        <svg class="icon" width="32px" height="32px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M793.024 710.272a32 32 0 1 0 45.952-44.544l-310.304-320a32 32 0 0 0-46.4 0.48l-297.696 320a32 32 0 0 0 46.848 43.584l274.752-295.328 286.848 295.808z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="toc-control">
+        <svg class="icon toc-icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M779.776 480h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M779.776 672h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M256 288a32 32 0 1 0 0 64 32 32 0 0 0 0-64M392.576 352h387.2a32 32 0 0 0 0-64h-387.2a32 32 0 0 0 0 64M256 480a32 32 0 1 0 0 64 32 32 0 0 0 0-64M256 672a32 32 0 1 0 0 64 32 32 0 0 0 0-64" fill="#8a8a8a" /></svg>
+        <svg class="icon toc-close" style="display: none;" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 960c-247.039484 0-448-200.960516-448-448S264.960516 64 512 64 960 264.960516 960 512 759.039484 960 512 960zM512 128.287273c-211.584464 0-383.712727 172.128262-383.712727 383.712727 0 211.551781 172.128262 383.712727 383.712727 383.712727 211.551781 0 383.712727-172.159226 383.712727-383.712727C895.712727 300.415536 723.551781 128.287273 512 128.287273z" fill="#8a8a8a" /><path d="M557.05545 513.376159l138.367639-136.864185c12.576374-12.416396 12.672705-32.671738 0.25631-45.248112s-32.704421-12.672705-45.248112-0.25631l-138.560301 137.024163-136.447897-136.864185c-12.512727-12.512727-32.735385-12.576374-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.248112l136.255235 136.671523-137.376804 135.904314c-12.576374 12.447359-12.672705 32.671738-0.25631 45.248112 6.271845 6.335493 14.496116 9.504099 22.751351 9.504099 8.12794 0 16.25588-3.103239 22.496761-9.247789l137.567746-136.064292 138.687596 139.136568c6.240882 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.05545 513.376159z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="gobottom">
+        <svg class="icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M231.424 346.208a32 32 0 0 0-46.848 43.584l297.696 320a32 32 0 0 0 46.4 0.48l310.304-320a32 32 0 1 0-45.952-44.544l-286.848 295.808-274.752-295.36z" fill="#8a8a8a" /></svg>
+    </div>
+</div>
+<div class="toc-main" style="right: -100%">
+    <div class="post-toc">
+        <span>TOC</span>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#macvlan-简介"><span class="toc-text">macvlan 简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#各个-linux-发行版对-macvlan-的支持"><span class="toc-text">各个 linux 发行版对 macvlan 的支持</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四种模式"><span class="toc-text">四种模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实验"><span class="toc-text">实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#在-docker-中的使用"><span class="toc-text">在 docker 中的使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#创建-macvlan-网络"><span class="toc-text">创建 macvlan 网络</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#运行容器"><span class="toc-text">运行容器</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-text">参考资料</span></a></li></ol>
+    </div>
+</div>
+
+
+
+        
+
+<aside class="read-next outer">
+    <div class="inner">
+        <div class="read-next-feed">
+            
+            
+
+<article class="read-next-card"  style="background-image: url(https://i.loli.net/2017/11/26/5a19c56faa29f.jpg)"  >
+  <header class="read-next-card-header">
+    <small class="read-next-card-header-sitetitle">&mdash; Cizixs Write Here &mdash;</small>
+    <h3 class="read-next-card-header-title">Recent Posts</h3>
+  </header>
+  <div class="read-next-divider">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M13 14.5s2 3 5 3 5.5-2.463 5.5-5.5S21 6.5 18 6.5c-5 0-7 11-12 11C2.962 17.5.5 15.037.5 12S3 6.5 6 6.5s4.5 3.5 4.5 3.5"/>
+    </svg>
+  </div>
+  <div class="read-next-card-content">
+    <ul>
+      
+      
+      
+      <li>
+        <a href="/2018/08/26/what-is-istio/">什么是 istio</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/08/25/knative-serverless-platform/">serverless 平台 knative 简介</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/06/25/kubernetes-resource-management/">kubernetes 资源管理概述</a>
+      </li>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+  </div>
+  <footer class="read-next-card-footer">
+    <a href="/archives">  MORE  → </a>
+  </footer>
+</article>
+
+            
+            
+            
+        </div>
+    </div>
+</aside>
+
+<footer class="site-footer outer">
+	<div class="site-footer-content inner">
+		<section class="copyright">
+			<a href="/" title="Cizixs Write Here">Cizixs Write Here</a>
+			&copy; 2018
+		</section>
+		<nav class="site-footer-nav">
+			
+            <a href="https://hexo.io" title="Hexo" target="_blank" rel="noopener">Hexo</a>
+            <a href="https://github.com/xzhih/hexo-theme-casper" title="Casper" target="_blank" rel="noopener">Casper</a>
+        </nav>
+    </div>
+</footer>
+
+
+
+
+
+
+<div class="floating-header" >
+	<div class="floating-header-logo">
+        <a href="/" title="Cizixs Write Here">
+			
+                <img src="https://i.loli.net/2017/11/26/5a19c0b50432e.png" alt="Cizixs Write Here icon" />
+			
+            <span>Cizixs Write Here</span>
+        </a>
+    </div>
+    <span class="floating-header-divider">&mdash;</span>
+    <div class="floating-header-title">linux 网络虚拟化： macvlan</div>
+    <progress class="progress" value="0">
+        <div class="progress-container">
+            <span class="progress-bar"></span>
+        </div>
+    </progress>
+</div>
+<script>
+   $(document).ready(function () {
+    var progressBar = document.querySelector('progress');
+    var header = document.querySelector('.floating-header');
+    var title = document.querySelector('.post-full-title');
+    var lastScrollY = window.scrollY;
+    var lastWindowHeight = window.innerHeight;
+    var lastDocumentHeight = $(document).height();
+    var ticking = false;
+
+    function onScroll() {
+        lastScrollY = window.scrollY;
+        requestTick();
+    }
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(update);
+        }
+        ticking = true;
+    }
+    function update() {
+        var rect = title.getBoundingClientRect();
+        var trigger = rect.top + window.scrollY;
+        var triggerOffset = title.offsetHeight + 35;
+        var progressMax = lastDocumentHeight - lastWindowHeight;
+            // show/hide floating header
+            if (lastScrollY >= trigger + triggerOffset) {
+                header.classList.add('floating-active');
+            } else {
+                header.classList.remove('floating-active');
+            }
+            progressBar.setAttribute('max', progressMax);
+            progressBar.setAttribute('value', lastScrollY);
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', onScroll, {passive: true});
+        update();
+
+        // TOC
+        var width = $('.toc-main').width();
+        $('.toc-control').click(function () {
+            if ($('.t-g-control').css('width')=="50px") {
+                if ($('.t-g-control').css('right')=="0px") {
+                    $('.t-g-control').animate({right: width}, "slow");
+                    $('.toc-main').animate({right: 0}, "slow");
+                    toc_icon()
+                } else {
+                    $('.t-g-control').animate({right: 0}, "slow");
+                    $('.toc-main').animate({right: -width}, "slow");
+                    toc_icon()
+                }
+            } else {
+                if ($('.toc-main').css('right')=="0px") {
+                    $('.toc-main').slideToggle("fast", toc_icon());
+                } else {
+                    $('.toc-main').css('right', '0px');
+                    toc_icon()
+                }
+            }
+        })
+
+        function toc_icon() {
+            if ($('.toc-icon').css('display')=="none") {
+                $('.toc-close').hide();
+                $('.toc-icon').show();
+            } else {
+                $('.toc-icon').hide();
+                $('.toc-close').show();
+            }
+        }
+
+        $('.gotop').click(function(){
+            $('html,body').animate({scrollTop:$('.post-full-header').offset().top}, 800);
+        });
+        $('.gobottom').click(function () {
+            $('html,body').animate({scrollTop:$('.pagination').offset().top}, 800);
+        });
+
+        // highlight
+        // https://highlightjs.org
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+        $('td.code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+
+        console.log("this theme is from https://github.com/xzhih/hexo-theme-casper")
+    });
+</script>
+
+
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/1.3.9/css/lightgallery.min.css">
+
+
+
+<script src="https://cdn.staticfile.org/lightgallery/1.3.9/js/lightgallery.min.js"></script>
+
+
+<script>
+	$(function () {
+		var postImg = $('#lightgallery').find('img');
+		postImg.addClass('post-img');
+		postImg.each(function () {
+			var imgSrc = $(this).attr('src');
+			$(this).attr('data-src', imgSrc);
+		});
+		$('#lightgallery').lightGallery({selector: '.post-img'});
+	});
+</script>
+
+
+
+
+    </div>
+</body>
+</html>

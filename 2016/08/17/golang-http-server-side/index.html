@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html CN>
+
+
+
+
+
+
+
+<head>
+	
+	
+	<link rel="stylesheet" href="/css/allinone.min.css"> 
+
+	
+
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+	<title>go http 服务器编程 | Cizixs Write Here</title>
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta name="generator" content="hexo">
+	<meta name="author" content="Cizixs Wu">
+	<meta name="description" content="">
+
+	
+	<meta name="keywords" content="">
+	
+
+	
+	<link rel="shortcut icon" href="https://i.loli.net/2017/11/26/5a19c0b50432e.png">
+	
+
+	
+	<meta name="theme-color" content="#3c484e">
+	<meta name="msapplication-TileColor" content="#3c484e">
+	
+
+	
+
+	
+
+	<meta property="og:site_name" content="Cizixs Write Here">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="go http 服务器编程 | Cizixs Write Here">
+	<meta property="og:description" content="">
+	<meta property="og:url" content="http://cizixs.com/2016/08/17/golang-http-server-side/">
+
+	
+	<meta property="article:published_time" content="2016-08-17T00:08:00+08:00"/> 
+	<meta property="article:author" content="Cizixs Wu">
+	<meta property="article:published_first" content="Cizixs Write Here, /2016/08/17/golang-http-server-side/" />
+	
+
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	
+
+	
+	<script src="https://cdn.staticfile.org/highlight.js/9.10.0/highlight.min.js"></script>
+	
+
+	
+	
+</head>
+<body class="post-template">
+    <div class="site-wrapper">
+        
+
+
+
+
+<header class="site-header outer" style="z-index: 999">
+    <div class="inner">
+        
+<nav class="site-nav"> 
+    <div class="site-nav-left">
+        <ul class="nav">
+            <li>
+                
+                <a href="/" title="Home">Home</a>
+                
+            </li>
+            
+            
+            <li>
+                <a href="/about" title="About">About</a>
+            </li>
+            
+            <li>
+                <a href="/archives" title="Archives">Archives</a>
+            </li>
+            
+            
+        </ul> 
+    </div>
+    <div class="site-nav-right">
+        
+<div class="social-links" >
+    
+    
+    
+    
+    <a class="social-link" title="twitter" href="https://twitter.com/cizixs" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30.063 7.313c-.813 1.125-1.75 2.125-2.875 2.938v.75c0 1.563-.188 3.125-.688 4.625a15.088 15.088 0 0 1-2.063 4.438c-.875 1.438-2 2.688-3.25 3.813a15.015 15.015 0 0 1-4.625 2.563c-1.813.688-3.75 1-5.75 1-3.25 0-6.188-.875-8.875-2.625.438.063.875.125 1.375.125 2.688 0 5.063-.875 7.188-2.5-1.25 0-2.375-.375-3.375-1.125s-1.688-1.688-2.063-2.875c.438.063.813.125 1.125.125.5 0 1-.063 1.5-.25-1.313-.25-2.438-.938-3.313-1.938a5.673 5.673 0 0 1-1.313-3.688v-.063c.813.438 1.688.688 2.625.688a5.228 5.228 0 0 1-1.875-2c-.5-.875-.688-1.813-.688-2.75 0-1.063.25-2.063.75-2.938 1.438 1.75 3.188 3.188 5.25 4.25s4.313 1.688 6.688 1.813a5.579 5.579 0 0 1 1.5-5.438c1.125-1.125 2.5-1.688 4.125-1.688s3.063.625 4.188 1.813a11.48 11.48 0 0 0 3.688-1.375c-.438 1.375-1.313 2.438-2.563 3.188 1.125-.125 2.188-.438 3.313-.875z"/></svg>
+
+    </a>
+    
+    
+</div>
+    </div>
+</nav>
+    </div>
+</header>
+
+
+<main id="site-main" class="site-main outer" role="main">
+    <div class="inner">
+        <header class="post-full-header">
+            <section class="post-full-meta">
+                <time  class="post-full-meta-date" datetime="2016-08-16T16:00:00.000Z" itemprop="datePublished">
+                    2016-08-17
+                </time>
+                
+                <span class="date-divider">/</span>
+                
+                <a href="/categories/blog/">blog</a>&nbsp;&nbsp;
+                
+                
+            </section>
+            <h1 class="post-full-title">go http 服务器编程</h1>
+        </header>
+        <article class="post-full no-image">
+            
+            <section class="post-full-content">
+                <div id="lightgallery" class="markdown-body">
+                    <h2 id="1-初识"><a href="#1-初识" class="headerlink" title="1. 初识"></a>1. 初识</h2><p>http 是典型的 C/S 架构，客户端向服务端发送请求（request），服务端做出应答（response）。</p>
+<p>golang 的标准库 <code>net/http</code> 提供了 http 编程有关的接口，封装了内部TCP连接和报文解析的复杂琐碎的细节，使用者只需要和 <code>http.request</code> 和 <code>http.ResponseWriter</code> 两个对象交互就行。也就是说，我们只要写一个 handler，请求会通过参数传递进来，而它要做的就是根据请求的数据做处理，把结果写到 Response 中。废话不多说，来看看 hello world 程序有多简单吧！</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"io"</span></span><br><span class="line">	<span class="string">"net/http"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> helloHandler <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(h *helloHandler)</span> <span class="title">ServeHTTP</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	w.Write([]<span class="keyword">byte</span>(<span class="string">"Hello, world!"</span>))</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	http.Handle(<span class="string">"/"</span>, &amp;helloHandler&#123;&#125;)</span><br><span class="line">	http.ListenAndServe(<span class="string">":12345"</span>, <span class="literal">nil</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行 <code>go run hello_server.go</code>，我们的服务器就会监听在本地的 <code>12345</code> 端口，对所有的请求都会返回 <code>hello, world!</code>：</p>
+<p><img src="http://ww4.sinaimg.cn/large/006tKfTcgw1f6uoaz8reuj30ne0hrq56.jpg" alt=""></p>
+<p>正如上面程序展示的那样，我们只要实现的一个 Handler，它的<a href="https://golang.org/pkg/net/http/#Handler" target="_blank" rel="noopener">接口原型</a>是（也就是说只要实现了 <code>ServeHTTP</code> 方法的对象都可以作为 Handler）：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Handler <span class="keyword">interface</span> &#123;</span><br><span class="line">    ServeHTTP(ResponseWriter, *Request)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后，注册到对应的路由路径上就 OK 了。</p>
+<p><code>http.HandleFunc</code>接受两个参数：第一个参数是字符串表示的 url 路径，第二个参数是该 url 实际的处理对象。</p>
+<p><code>http.ListenAndServe</code> 监听在某个端口，启动服务，准备接受客户端的请求（第二个参数这里设置为 <code>nil</code>，这里也不要纠结什么意思，后面会有讲解）。每次客户端有请求的时候，把请求封装成 <code>http.Request</code>，调用对应的 handler 的 <code>ServeHTTP</code> 方法，然后把操作后的 <code>http.ResponseWriter</code> 解析，返回到客户端。</p>
+<h2 id="2-封装"><a href="#2-封装" class="headerlink" title="2. 封装"></a>2. 封装</h2><p>上面的代码没有什么问题，但是有一个不便：每次写 Handler 的时候，都要定义一个类型，然后编写对应的 <code>ServeHTTP</code> 方法，这个步骤对于所有 Handler 都是一样的。重复的工作总是可以抽象出来，<code>net/http</code> 也正这么做了，它提供了 <code>http.HandleFunc</code> 方法，允许直接把特定类型的函数作为 handler。上面的代码可以改成：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"io"</span></span><br><span class="line">	<span class="string">"net/http"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">helloHandler</span><span class="params">(w http.ResponseWriter, req *http.Request)</span></span> &#123;</span><br><span class="line">	io.WriteString(w, <span class="string">"hello, world!\n"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	http.HandleFunc(<span class="string">"/"</span>, helloHandler)</span><br><span class="line">	http.ListenAndServe(<span class="string">":12345"</span>, <span class="literal">nil</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其实，<code>HandleFunc</code> 只是一个适配器，</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// The HandlerFunc type is an adapter to allow the use of</span></span><br><span class="line"><span class="comment">// ordinary functions as HTTP handlers.  If f is a function</span></span><br><span class="line"><span class="comment">// with the appropriate signature, HandlerFunc(f) is a</span></span><br><span class="line"><span class="comment">// Handler object that calls f.</span></span><br><span class="line"><span class="keyword">type</span> HandlerFunc <span class="function"><span class="keyword">func</span><span class="params">(ResponseWriter, *Request)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">// <span class="title">ServeHTTP</span> <span class="title">calls</span> <span class="title">f</span><span class="params">(w, r)</span>.</span></span><br><span class="line"><span class="function"><span class="title">func</span> <span class="params">(f HandlerFunc)</span> <span class="title">ServeHTTP</span><span class="params">(w ResponseWriter, r *Request)</span></span> &#123;</span><br><span class="line">	f(w, r)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>自动给 <code>f</code> 函数添加了 <code>HandlerFunc</code> 这个壳，最终调用的还是 <code>ServerHTTP</code>，只不过会直接使用 <code>f(w, r)</code>。这样封装的好处是：使用者可以专注于业务逻辑的编写，省去了很多重复的代码处理逻辑。如果只是简单的 Handler，会直接使用函数；如果是需要传递更多信息或者有复杂的操作，会使用上部分的方法。</p>
+<p>如果需要我们自己写的话，是这样的：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"io"</span></span><br><span class="line">	<span class="string">"net/http"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">helloHandler</span><span class="params">(w http.ResponseWriter, req *http.Request)</span></span> &#123;</span><br><span class="line">	io.WriteString(w, <span class="string">"hello, world!\n"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">// 通过 HandlerFunc 把函数转换成 Handler 接口的实现对象</span></span><br><span class="line">    hh := http.HandlerFunc(helloHandler)</span><br><span class="line">	http.Handle(<span class="string">"/"</span>, hh)</span><br><span class="line">	http.ListenAndServe(<span class="string">":12345"</span>, <span class="literal">nil</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="3-默认"><a href="#3-默认" class="headerlink" title="3. 默认"></a>3. 默认</h2><p>大部分的服务器逻辑都需要使用者编写对应的 Handler，不过有些 Handler 使用频繁，因此 <code>net/http</code> 提供了它们的实现。比如负责文件 hosting 的 <code>FileServer</code>、负责 404 的<code>NotFoundHandler</code> 和 负责重定向的<code>RedirectHandler</code>。下面这个简单的例子，把当前目录所有文件 host 到服务端：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"net/http"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	http.ListenAndServe(<span class="string">":12345"</span>, http.FileServer(http.Dir(<span class="string">"."</span>)))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>强大吧！只要一行逻辑代码就能实现一个简单的静态文件服务器。从这里可以看出一件事：<code>http.ListenAndServe</code> 第二个参数就是一个 Handler 函数（请记住这一点，后面有些内容依赖于这个）。</p>
+<p>运行这个程序，在浏览器中打开 <code>http://127.0.0.1:12345</code>，可以看到所有的文件，点击对应的文件还能看到它的内容。</p>
+<p><img src="http://ww3.sinaimg.cn/large/006tKfTcgw1f6uujkzgc9j30mc0e8gm5.jpg" alt=""></p>
+<p>其他两个 Handler，这里就不再举例子了，读者可以自行参考文档。</p>
+<h2 id="4-路由"><a href="#4-路由" class="headerlink" title="4. 路由"></a>4. 路由</h2><p>虽然上面的代码已经工作，并且能实现很多功能，但是实际开发中，HTTP 接口会有许多的 URL 和对应的 Handler。这里就要讲 <code>net/http</code> 的另外一个重要的概念：<code>ServeMux</code>。<code>Mux</code> 是 <code>multiplexor</code> 的缩写，就是多路传输的意思（请求传过来，根据某种判断，分流到后端多个不同的地方）。<code>ServeMux</code> 可以注册多了 URL 和 handler 的对应关系，并自动把请求转发到对应的 handler 进行处理。我们还是来看例子吧：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"io"</span></span><br><span class="line">	<span class="string">"net/http"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">helloHandler</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	io.WriteString(w, <span class="string">"Hello, world!\n"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">echoHandler</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">	io.WriteString(w, r.URL.Path)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	mux := http.NewServeMux()</span><br><span class="line">	mux.HandleFunc(<span class="string">"/hello"</span>, helloHandler)</span><br><span class="line">	mux.HandleFunc(<span class="string">"/"</span>, echoHandler)</span><br><span class="line"></span><br><span class="line">	http.ListenAndServe(<span class="string">":12345"</span>, mux)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个服务器的功能也很简单：如果在请求的 URL 是 <code>/hello</code>，就返回 <code>hello, world!</code>；否则就返回 URL 的路径，路径是从请求对象 <code>http.Requests</code> 中提取的。</p>
+<p><img src="http://ww3.sinaimg.cn/large/006tKfTcgw1f6vdun05zpj30ne0hrgoe.jpg" alt=""></p>
+<p>这段代码和之前的代码有两点区别：</p>
+<ol>
+<li>通过 <code>NewServeMux</code> 生成了 <code>ServerMux</code> 结构，URL 和 handler 是通过它注册的</li>
+<li><code>http.ListenAndServe</code> 方法第二个参数变成了上面的 <code>mux</code> 变量</li>
+</ol>
+<p>还记得我们之前说过，<code>http.ListenAndServe</code> 第二个参数应该是 Handler 类型的变量吗？这里为什么能传过来 <code>ServeMux</code>？嗯，估计你也猜到啦：<code>ServeMux</code> 也是是 <code>Handler</code> 接口的实现，也就是说它实现了 <code>ServeHTTP</code> 方法，我们来看一下：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> ServeMux <span class="keyword">struct</span> &#123;</span><br><span class="line">        <span class="comment">// contains filtered or unexported fields</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewServeMux</span><span class="params">()</span> *<span class="title">ServeMux</span></span></span><br><span class="line"><span class="function"><span class="title">func</span> <span class="params">(mux *ServeMux)</span> <span class="title">Handle</span><span class="params">(pattern <span class="keyword">string</span>, handler Handler)</span></span></span><br><span class="line"><span class="function"><span class="title">func</span> <span class="params">(mux *ServeMux)</span> <span class="title">HandleFunc</span><span class="params">(pattern <span class="keyword">string</span>, handler <span class="keyword">func</span>(ResponseWriter, *Request)</span>)</span></span><br><span class="line"><span class="function"><span class="title">func</span> <span class="params">(mux *ServeMux)</span> <span class="title">Handler</span><span class="params">(r *Request)</span> <span class="params">(h Handler, pattern <span class="keyword">string</span>)</span></span></span><br><span class="line"><span class="function"><span class="title">func</span> <span class="params">(mux *ServeMux)</span> <span class="title">ServeHTTP</span><span class="params">(w ResponseWriter, r *Request)</span></span></span><br></pre></td></tr></table></figure>
+<p>哈！果然，这里的方法我们大都很熟悉，除了 <code>Handler()</code> 返回某个请求的 Handler。<code>Handle</code> 和 <code>HandleFunc</code> 这两个方法 <code>net/http</code> 也提供了，后面我们会说明它们之间的关系。而 <code>ServeHTTP</code> 就是 <code>ServeMux</code> 的核心处理逻辑：<strong>根据传递过来的 Request，匹配之前注册的 URL 和处理函数，找到最匹配的项，进行处理。</strong>可以说 <code>ServeMux</code> 是个特殊的 Handler，它负责路由和调用其他后端 Handler 的处理方法。</p>
+<p>关于<code>ServeMux</code> ，有几点要说明：</p>
+<ul>
+<li>URL 分为两种，末尾是 <code>/</code>：表示一个子树，后面可以跟其他子路径； 末尾不是 <code>/</code>，表示一个叶子，固定的路径</li>
+<li>以<code>/</code> 结尾的 URL 可以匹配它的任何子路径，比如 <code>/images</code> 会匹配 <code>/images/cute-cat.jpg</code></li>
+<li>它采用最长匹配原则，如果有多个匹配，一定采用匹配路径最长的那个进行处理</li>
+<li>如果没有找到任何匹配项，会返回 404 错误</li>
+<li><code>ServeMux</code> 也会识别和处理 <code>.</code> 和 <code>..</code>，正确转换成对应的 URL 地址</li>
+</ul>
+<p>你可能会有疑问？我们之间为什么没有使用 <code>ServeMux</code> 就能实现路径功能？那是因为 <code>net/http</code> 在后台默认创建使用了 <code>DefaultServeMux</code>。</p>
+<h2 id="5-深入"><a href="#5-深入" class="headerlink" title="5. 深入"></a>5. 深入</h2><p>嗯，上面基本覆盖了编写 HTTP 服务端需要的所有内容。这部分就分析一下，它们的源码实现，加深理解，以后遇到疑惑也能通过源码来定位和解决。</p>
+<h3 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h3><p>首先来看 <code>http.ListenAndServe()</code>:</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">ListenAndServe</span><span class="params">(addr <span class="keyword">string</span>, handler Handler)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	server := &amp;Server&#123;Addr: addr, Handler: handler&#125;</span><br><span class="line">	<span class="keyword">return</span> server.ListenAndServe()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个函数其实也是一层封装，创建了 <code>Server</code> 结构，并调用它的 <code>ListenAndServe</code> 方法，那我们就跟进去看看：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// A Server defines parameters for running an HTTP server.</span></span><br><span class="line"><span class="comment">// The zero value for Server is a valid configuration.</span></span><br><span class="line"><span class="keyword">type</span> Server <span class="keyword">struct</span> &#123;</span><br><span class="line">	Addr           <span class="keyword">string</span>        <span class="comment">// TCP address to listen on, ":http" if empty</span></span><br><span class="line">	Handler        Handler       <span class="comment">// handler to invoke, http.DefaultServeMux if nil</span></span><br><span class="line">	......</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ListenAndServe listens on the TCP network address srv.Addr and then</span></span><br><span class="line"><span class="comment">// calls Serve to handle requests on incoming connections.  If</span></span><br><span class="line"><span class="comment">// srv.Addr is blank, ":http" is used.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(srv *Server)</span> <span class="title">ListenAndServe</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	addr := srv.Addr</span><br><span class="line">	<span class="keyword">if</span> addr == <span class="string">""</span> &#123;</span><br><span class="line">		addr = <span class="string">":http"</span></span><br><span class="line">	&#125;</span><br><span class="line">	ln, err := net.Listen(<span class="string">"tcp"</span>, addr)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> srv.Serve(tcpKeepAliveListener&#123;ln.(*net.TCPListener)&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>Server</code> 保存了运行 HTTP 服务需要的参数，调用 <code>net.Listen</code> 监听在对应的 tcp 端口，<code>tcpKeepAliveListener</code> 设置了 TCP 的 <code>KeepAlive</code> 功能，最后调用 <code>srv.Serve()</code>方法开始真正的循环逻辑。我们再跟进去看看 <code>Serve</code> 方法：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Serve accepts incoming connections on the Listener l, creating a</span></span><br><span class="line"><span class="comment">// new service goroutine for each.  The service goroutines read requests and</span></span><br><span class="line"><span class="comment">// then call srv.Handler to reply to them.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(srv *Server)</span> <span class="title">Serve</span><span class="params">(l net.Listener)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> l.Close()</span><br><span class="line">	<span class="keyword">var</span> tempDelay time.Duration <span class="comment">// how long to sleep on accept failure</span></span><br><span class="line">    <span class="comment">// 循环逻辑，接受请求并处理</span></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">         <span class="comment">// 有新的连接</span></span><br><span class="line">		rw, e := l.Accept()</span><br><span class="line">		<span class="keyword">if</span> e != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> ne, ok := e.(net.Error); ok &amp;&amp; ne.Temporary() &#123;</span><br><span class="line">				<span class="keyword">if</span> tempDelay == <span class="number">0</span> &#123;</span><br><span class="line">					tempDelay = <span class="number">5</span> * time.Millisecond</span><br><span class="line">				&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">					tempDelay *= <span class="number">2</span></span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">if</span> max := <span class="number">1</span> * time.Second; tempDelay &gt; max &#123;</span><br><span class="line">					tempDelay = max</span><br><span class="line">				&#125;</span><br><span class="line">				srv.logf(<span class="string">"http: Accept error: %v; retrying in %v"</span>, e, tempDelay)</span><br><span class="line">				time.Sleep(tempDelay)</span><br><span class="line">				<span class="keyword">continue</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span> e</span><br><span class="line">		&#125;</span><br><span class="line">		tempDelay = <span class="number">0</span></span><br><span class="line">         <span class="comment">// 创建 Conn 连接</span></span><br><span class="line">		c, err := srv.newConn(rw)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		&#125;</span><br><span class="line">		c.setState(c.rwc, StateNew) <span class="comment">// before Serve can return</span></span><br><span class="line">         <span class="comment">// 启动新的 goroutine 进行处理</span></span><br><span class="line">		<span class="keyword">go</span> c.serve()</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最上面的注释也说明了这个方法的主要功能：</p>
+<ul>
+<li>接受 <code>Listener l</code> 传递过来的请求</li>
+<li>为每个请求创建 goroutine 进行后台处理</li>
+<li>goroutine 会读取请求，调用 <code>srv.Handler</code></li>
+</ul>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *conn)</span> <span class="title">serve</span><span class="params">()</span></span> &#123;</span><br><span class="line">	origConn := c.rwc <span class="comment">// copy it before it's set nil on Close or Hijack</span></span><br><span class="line"></span><br><span class="line">  	...</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		w, err := c.readRequest()</span><br><span class="line">		<span class="keyword">if</span> c.lr.N != c.server.initialLimitedReaderSize() &#123;</span><br><span class="line">			<span class="comment">// If we read any bytes off the wire, we're active.</span></span><br><span class="line">			c.setState(c.rwc, StateActive)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">         ...</span><br><span class="line"></span><br><span class="line">		<span class="comment">// HTTP cannot have multiple simultaneous active requests.[*]</span></span><br><span class="line">		<span class="comment">// Until the server replies to this request, it can't read another,</span></span><br><span class="line">		<span class="comment">// so we might as well run the handler in this goroutine.</span></span><br><span class="line">		<span class="comment">// [*] Not strictly true: HTTP pipelining.  We could let them all process</span></span><br><span class="line">		<span class="comment">// in parallel even if their responses need to be serialized.</span></span><br><span class="line">		serverHandler&#123;c.server&#125;.ServeHTTP(w, w.req)</span><br><span class="line"></span><br><span class="line">		w.finishRequest()</span><br><span class="line">		<span class="keyword">if</span> w.closeAfterReply &#123;</span><br><span class="line">			<span class="keyword">if</span> w.requestBodyLimitHit &#123;</span><br><span class="line">				c.closeWriteAndWait()</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">		c.setState(c.rwc, StateIdle)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看到上面这段代码 <code>serverHandler{c.server}.ServeHTTP(w, w.req)</code>这一句了吗？它会调用最早传递给 <code>Server</code> 的 Handler 函数：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(sh serverHandler)</span> <span class="title">ServeHTTP</span><span class="params">(rw ResponseWriter, req *Request)</span></span> &#123;</span><br><span class="line">	handler := sh.srv.Handler</span><br><span class="line">	<span class="keyword">if</span> handler == <span class="literal">nil</span> &#123;</span><br><span class="line">		handler = DefaultServeMux</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> req.RequestURI == <span class="string">"*"</span> &amp;&amp; req.Method == <span class="string">"OPTIONS"</span> &#123;</span><br><span class="line">		handler = globalOptionsHandler&#123;&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	handler.ServeHTTP(rw, req)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>哇！这里看到 <code>DefaultServeMux</code> 了吗？如果没有 handler 为空，就会使用它。<code>handler.ServeHTTP(rw, req)</code>，Handler 接口都要实现 <code>ServeHTTP</code> 这个方法，因为这里就要被调用啦。</p>
+<p>也就是说，无论如何，最终都会用到 <code>ServeMux</code>，也就是负责 URL 路由的家伙。前面也已经说过，它的 <code>ServeHTTP</code> 方法就是根据请求的路径，把它转交给注册的 handler 进行处理。这次，我们就在源码层面一探究竟。</p>
+<h3 id="ServeMux"><a href="#ServeMux" class="headerlink" title="ServeMux"></a>ServeMux</h3><p>我们已经知道，<code>ServeMux</code> 会以某种方式保存 URL 和 Handlers 的对应关系，下面我们就从代码层面来解开这个秘密：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> ServeMux <span class="keyword">struct</span> &#123;</span><br><span class="line">	mu    sync.RWMutex</span><br><span class="line">    m     <span class="keyword">map</span>[<span class="keyword">string</span>]muxEntry  <span class="comment">// 存放路由信息的字典！\(^o^)/</span></span><br><span class="line">	hosts <span class="keyword">bool</span> <span class="comment">// whether any patterns contain hostnames</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> muxEntry <span class="keyword">struct</span> &#123;</span><br><span class="line">	explicit <span class="keyword">bool</span></span><br><span class="line">	h        Handler</span><br><span class="line">	pattern  <span class="keyword">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>没错，数据结构也比较直观，和我们想象的差不多，路由信息保存在字典中，接下来就看看几个重要的操作：路由信息是怎么注册的？<code>ServeHTTP</code> 方法到底是怎么做的？路由查找过程是怎样的？</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Handle registers the handler for the given pattern.</span></span><br><span class="line"><span class="comment">// If a handler already exists for pattern, Handle panics.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mux *ServeMux)</span> <span class="title">Handle</span><span class="params">(pattern <span class="keyword">string</span>, handler Handler)</span></span> &#123;</span><br><span class="line">	mux.mu.Lock()</span><br><span class="line">	<span class="keyword">defer</span> mux.mu.Unlock()</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 边界情况处理</span></span><br><span class="line">	<span class="keyword">if</span> pattern == <span class="string">""</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">"http: invalid pattern "</span> + pattern)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> handler == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">"http: nil handler"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> mux.m[pattern].explicit &#123;</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">"http: multiple registrations for "</span> + pattern)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建 `muxEntry` 并添加到路由字典中</span></span><br><span class="line">	mux.m[pattern] = muxEntry&#123;explicit: <span class="literal">true</span>, h: handler, pattern: pattern&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> pattern[<span class="number">0</span>] != <span class="string">'/'</span> &#123;</span><br><span class="line">		mux.hosts = <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 这是一个很有用的小技巧，如果注册了 `/tree/`， `serveMux` 会自动添加一个 `/tree` 的路径并重定向到 `/tree/`。当然这个 `/tree` 路径会被用户显示的路由信息覆盖。</span></span><br><span class="line">	<span class="comment">// Helpful behavior:</span></span><br><span class="line">	<span class="comment">// If pattern is /tree/, insert an implicit permanent redirect for /tree.</span></span><br><span class="line">	<span class="comment">// It can be overridden by an explicit registration.</span></span><br><span class="line">	n := <span class="built_in">len</span>(pattern)</span><br><span class="line">	<span class="keyword">if</span> n &gt; <span class="number">0</span> &amp;&amp; pattern[n<span class="number">-1</span>] == <span class="string">'/'</span> &amp;&amp; !mux.m[pattern[<span class="number">0</span>:n<span class="number">-1</span>]].explicit &#123;</span><br><span class="line">		<span class="comment">// If pattern contains a host name, strip it and use remaining</span></span><br><span class="line">		<span class="comment">// path for redirect.</span></span><br><span class="line">		path := pattern</span><br><span class="line">		<span class="keyword">if</span> pattern[<span class="number">0</span>] != <span class="string">'/'</span> &#123;</span><br><span class="line">			<span class="comment">// In pattern, at least the last character is a '/', so</span></span><br><span class="line">			<span class="comment">// strings.Index can't be -1.</span></span><br><span class="line">			path = pattern[strings.Index(pattern, <span class="string">"/"</span>):]</span><br><span class="line">		&#125;</span><br><span class="line">		mux.m[pattern[<span class="number">0</span>:n<span class="number">-1</span>]] = muxEntry&#123;h: RedirectHandler(path, StatusMovedPermanently), pattern: pattern&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>路由注册没有什么特殊的地方，很简单，也符合我们的预期，注意最后一段代码对类似 <code>/tree</code> URL 重定向的处理。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ServeHTTP dispatches the request to the handler whose</span></span><br><span class="line"><span class="comment">// pattern most closely matches the request URL.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mux *ServeMux)</span> <span class="title">ServeHTTP</span><span class="params">(w ResponseWriter, r *Request)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> r.RequestURI == <span class="string">"*"</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> r.ProtoAtLeast(<span class="number">1</span>, <span class="number">1</span>) &#123;</span><br><span class="line">			w.Header().Set(<span class="string">"Connection"</span>, <span class="string">"close"</span>)</span><br><span class="line">		&#125;</span><br><span class="line">		w.WriteHeader(StatusBadRequest)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	h, _ := mux.Handler(r)</span><br><span class="line">	h.ServeHTTP(w, r)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>好吧，<code>ServeHTTP</code> 也只是通过 <code>mux.Handler(r)</code> 找到请求对应的 handler，调用它的 <code>ServeHTTP</code> 方法，代码比较简单我们就显示了，它最终会调用 <code>mux.match()</code> 方法，我们来看一下它的实现：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Does path match pattern?</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">pathMatch</span><span class="params">(pattern, path <span class="keyword">string</span>)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(pattern) == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="comment">// should not happen</span></span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line">	n := <span class="built_in">len</span>(pattern)</span><br><span class="line">	<span class="keyword">if</span> pattern[n<span class="number">-1</span>] != <span class="string">'/'</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> pattern == path</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="comment">// 匹配的逻辑很简单，path 前面的字符和 pattern 一样就是匹配</span></span><br><span class="line">	<span class="keyword">return</span> <span class="built_in">len</span>(path) &gt;= n &amp;&amp; path[<span class="number">0</span>:n] == pattern</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Find a handler on a handler map given a path string</span></span><br><span class="line"><span class="comment">// Most-specific (longest) pattern wins</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mux *ServeMux)</span> <span class="title">match</span><span class="params">(path <span class="keyword">string</span>)</span> <span class="params">(h Handler, pattern <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> n = <span class="number">0</span></span><br><span class="line">	<span class="keyword">for</span> k, v := <span class="keyword">range</span> mux.m &#123;</span><br><span class="line">		<span class="keyword">if</span> !pathMatch(k, path) &#123;</span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		&#125;</span><br><span class="line">         <span class="comment">// 最长匹配的逻辑在这里</span></span><br><span class="line">		<span class="keyword">if</span> h == <span class="literal">nil</span> || <span class="built_in">len</span>(k) &gt; n &#123;</span><br><span class="line">			n = <span class="built_in">len</span>(k)</span><br><span class="line">			h = v.h</span><br><span class="line">			pattern = v.pattern</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>match</code> 会遍历路由信息字典，找到所有匹配该路径最长的那个。路由部分的代码解释就到这里了，最后回答上面的一个问题：<code>http.HandleFunc</code> 和 <code>ServeMux.HandlerFunc</code> 是什么关系？</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Handle registers the handler for the given pattern</span></span><br><span class="line"><span class="comment">// in the DefaultServeMux.</span></span><br><span class="line"><span class="comment">// The documentation for ServeMux explains how patterns are matched.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Handle</span><span class="params">(pattern <span class="keyword">string</span>, handler Handler)</span></span> &#123; DefaultServeMux.Handle(pattern, handler) &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// HandleFunc registers the handler function for the given pattern</span></span><br><span class="line"><span class="comment">// in the DefaultServeMux.</span></span><br><span class="line"><span class="comment">// The documentation for ServeMux explains how patterns are matched.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">HandleFunc</span><span class="params">(pattern <span class="keyword">string</span>, handler <span class="keyword">func</span>(ResponseWriter, *Request)</span>)</span> &#123;</span><br><span class="line">	DefaultServeMux.HandleFunc(pattern, handler)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 原来是直接通过 <code>DefaultServeMux</code> 调用对应的方法，到这里上面的一切都串起来了！</p>
+<h3 id="Request"><a href="#Request" class="headerlink" title="Request"></a>Request</h3><p>最后一部分，要讲讲 Handler 函数接受的两个参数：<code>http.Request</code> 和 <code>http.ResponseWriter</code>。</p>
+<p>Request 就是封装好的客户端请求，包括 URL，method，header 等等所有信息，以及一些方便使用的方法：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// A Request represents an HTTP request received by a server</span></span><br><span class="line"><span class="comment">// or to be sent by a client.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// The field semantics differ slightly between client and server</span></span><br><span class="line"><span class="comment">// usage. In addition to the notes on the fields below, see the</span></span><br><span class="line"><span class="comment">// documentation for Request.Write and RoundTripper.</span></span><br><span class="line"><span class="keyword">type</span> Request <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// Method specifies the HTTP method (GET, POST, PUT, etc.).</span></span><br><span class="line">	<span class="comment">// For client requests an empty string means GET.</span></span><br><span class="line">	Method <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// URL specifies either the URI being requested (for server</span></span><br><span class="line">	<span class="comment">// requests) or the URL to access (for client requests).</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// For server requests the URL is parsed from the URI</span></span><br><span class="line">	<span class="comment">// supplied on the Request-Line as stored in RequestURI.  For</span></span><br><span class="line">	<span class="comment">// most requests, fields other than Path and RawQuery will be</span></span><br><span class="line">	<span class="comment">// empty. (See RFC 2616, Section 5.1.2)</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// For client requests, the URL's Host specifies the server to</span></span><br><span class="line">	<span class="comment">// connect to, while the Request's Host field optionally</span></span><br><span class="line">	<span class="comment">// specifies the Host header value to send in the HTTP</span></span><br><span class="line">	<span class="comment">// request.</span></span><br><span class="line">	URL *url.URL</span><br><span class="line"></span><br><span class="line">	<span class="comment">// The protocol version for incoming requests.</span></span><br><span class="line">	<span class="comment">// Client requests always use HTTP/1.1.</span></span><br><span class="line">	Proto      <span class="keyword">string</span> <span class="comment">// "HTTP/1.0"</span></span><br><span class="line">	ProtoMajor <span class="keyword">int</span>    <span class="comment">// 1</span></span><br><span class="line">	ProtoMinor <span class="keyword">int</span>    <span class="comment">// 0</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// A header maps request lines to their values.</span></span><br><span class="line">	<span class="comment">// If the header says</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">//	accept-encoding: gzip, deflate</span></span><br><span class="line">	<span class="comment">//	Accept-Language: en-us</span></span><br><span class="line">	<span class="comment">//	Connection: keep-alive</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// then</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">//	Header = map[string][]string&#123;</span></span><br><span class="line">	<span class="comment">//		"Accept-Encoding": &#123;"gzip, deflate"&#125;,</span></span><br><span class="line">	<span class="comment">//		"Accept-Language": &#123;"en-us"&#125;,</span></span><br><span class="line">	<span class="comment">//		"Connection": &#123;"keep-alive"&#125;,</span></span><br><span class="line">	<span class="comment">//	&#125;</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// HTTP defines that header names are case-insensitive.</span></span><br><span class="line">	<span class="comment">// The request parser implements this by canonicalizing the</span></span><br><span class="line">	<span class="comment">// name, making the first character and any characters</span></span><br><span class="line">	<span class="comment">// following a hyphen uppercase and the rest lowercase.</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// For client requests certain headers are automatically</span></span><br><span class="line">	<span class="comment">// added and may override values in Header.</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// See the documentation for the Request.Write method.</span></span><br><span class="line">	Header Header</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Body is the request's body.</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// For client requests a nil body means the request has no</span></span><br><span class="line">	<span class="comment">// body, such as a GET request. The HTTP Client's Transport</span></span><br><span class="line">	<span class="comment">// is responsible for calling the Close method.</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// For server requests the Request Body is always non-nil</span></span><br><span class="line">	<span class="comment">// but will return EOF immediately when no body is present.</span></span><br><span class="line">	<span class="comment">// The Server will close the request body. The ServeHTTP</span></span><br><span class="line">	<span class="comment">// Handler does not need to.</span></span><br><span class="line">	Body io.ReadCloser</span><br><span class="line"></span><br><span class="line">	<span class="comment">// ContentLength records the length of the associated content.</span></span><br><span class="line">	<span class="comment">// The value -1 indicates that the length is unknown.</span></span><br><span class="line">	<span class="comment">// Values &gt;= 0 indicate that the given number of bytes may</span></span><br><span class="line">	<span class="comment">// be read from Body.</span></span><br><span class="line">	<span class="comment">// For client requests, a value of 0 means unknown if Body is not nil.</span></span><br><span class="line">	ContentLength <span class="keyword">int64</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// TransferEncoding lists the transfer encodings from outermost to</span></span><br><span class="line">	<span class="comment">// innermost. An empty list denotes the "identity" encoding.</span></span><br><span class="line">	<span class="comment">// TransferEncoding can usually be ignored; chunked encoding is</span></span><br><span class="line">	<span class="comment">// automatically added and removed as necessary when sending and</span></span><br><span class="line">	<span class="comment">// receiving requests.</span></span><br><span class="line">	TransferEncoding []<span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// Close indicates whether to close the connection after</span></span><br><span class="line">	<span class="comment">// replying to this request (for servers) or after sending</span></span><br><span class="line">	<span class="comment">// the request (for clients).</span></span><br><span class="line">	Close <span class="keyword">bool</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// For server requests Host specifies the host on which the</span></span><br><span class="line">	<span class="comment">// URL is sought. Per RFC 2616, this is either the value of</span></span><br><span class="line">	<span class="comment">// the "Host" header or the host name given in the URL itself.</span></span><br><span class="line">	<span class="comment">// It may be of the form "host:port".</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// For client requests Host optionally overrides the Host</span></span><br><span class="line">	<span class="comment">// header to send. If empty, the Request.Write method uses</span></span><br><span class="line">	<span class="comment">// the value of URL.Host.</span></span><br><span class="line">	Host <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// Form contains the parsed form data, including both the URL</span></span><br><span class="line">	<span class="comment">// field's query parameters and the POST or PUT form data.</span></span><br><span class="line">	<span class="comment">// This field is only available after ParseForm is called.</span></span><br><span class="line">	<span class="comment">// The HTTP client ignores Form and uses Body instead.</span></span><br><span class="line">	Form url.Values</span><br><span class="line"></span><br><span class="line">	<span class="comment">// PostForm contains the parsed form data from POST or PUT</span></span><br><span class="line">	<span class="comment">// body parameters.</span></span><br><span class="line">	<span class="comment">// This field is only available after ParseForm is called.</span></span><br><span class="line">	<span class="comment">// The HTTP client ignores PostForm and uses Body instead.</span></span><br><span class="line">	PostForm url.Values</span><br><span class="line"></span><br><span class="line">	<span class="comment">// MultipartForm is the parsed multipart form, including file uploads.</span></span><br><span class="line">	<span class="comment">// This field is only available after ParseMultipartForm is called.</span></span><br><span class="line">	<span class="comment">// The HTTP client ignores MultipartForm and uses Body instead.</span></span><br><span class="line">	MultipartForm *multipart.Form</span><br><span class="line"></span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">	<span class="comment">// RemoteAddr allows HTTP servers and other software to record</span></span><br><span class="line">	<span class="comment">// the network address that sent the request, usually for</span></span><br><span class="line">	<span class="comment">// logging. This field is not filled in by ReadRequest and</span></span><br><span class="line">	<span class="comment">// has no defined format. The HTTP server in this package</span></span><br><span class="line">	<span class="comment">// sets RemoteAddr to an "IP:port" address before invoking a</span></span><br><span class="line">	<span class="comment">// handler.</span></span><br><span class="line">	<span class="comment">// This field is ignored by the HTTP client.</span></span><br><span class="line">	RemoteAddr <span class="keyword">string</span></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Handler 需要知道关于请求的任何信息，都要从这个对象中获取，一般不会直接修改这个对象（除非你非常清楚自己在做什么）！</p>
+<h3 id="ResponseWriter"><a href="#ResponseWriter" class="headerlink" title="ResponseWriter"></a>ResponseWriter</h3><p>ResponseWriter 是一个接口，定义了三个方法：</p>
+<ul>
+<li><code>Header()</code>：返回一个 Header 对象，可以通过它的 <code>Set()</code> 方法设置头部，注意最终返回的头部信息可能和你写进去的不完全相同，因为后续处理还可能修改头部的值（比如设置 <code>Content-Length</code>、<code>Content-type</code> 等操作）</li>
+<li><code>Write()</code>： 写 response 的主体部分，比如 <code>html</code>  或者 <code>json</code> 的内容就是放到这里的</li>
+<li><code>WriteHeader()</code>：设置 status code，如果没有调用这个函数，默认设置为 <code>http.StatusOK</code>， 就是 <code>200</code> 状态码</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// A ResponseWriter interface is used by an HTTP handler to</span></span><br><span class="line"><span class="comment">// construct an HTTP response.</span></span><br><span class="line"><span class="keyword">type</span> ResponseWriter <span class="keyword">interface</span> &#123;</span><br><span class="line">	<span class="comment">// Header returns the header map that will be sent by WriteHeader.</span></span><br><span class="line">	<span class="comment">// Changing the header after a call to WriteHeader (or Write) has</span></span><br><span class="line">	<span class="comment">// no effect.</span></span><br><span class="line">	Header() Header</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Write writes the data to the connection as part of an HTTP reply.</span></span><br><span class="line">	<span class="comment">// If WriteHeader has not yet been called, Write calls WriteHeader(http.StatusOK)</span></span><br><span class="line">	<span class="comment">// before writing the data.  If the Header does not contain a</span></span><br><span class="line">	<span class="comment">// Content-Type line, Write adds a Content-Type set to the result of passing</span></span><br><span class="line">	<span class="comment">// the initial 512 bytes of written data to DetectContentType.</span></span><br><span class="line">	Write([]<span class="keyword">byte</span>) (<span class="keyword">int</span>, error)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// WriteHeader sends an HTTP response header with status code.</span></span><br><span class="line">	<span class="comment">// If WriteHeader is not called explicitly, the first call to Write</span></span><br><span class="line">	<span class="comment">// will trigger an implicit WriteHeader(http.StatusOK).</span></span><br><span class="line">	<span class="comment">// Thus explicit calls to WriteHeader are mainly used to</span></span><br><span class="line">	<span class="comment">// send error codes.</span></span><br><span class="line">	WriteHeader(<span class="keyword">int</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>实际上传递给 Handler 的对象是:</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// A response represents the server side of an HTTP response.</span></span><br><span class="line"><span class="keyword">type</span> response <span class="keyword">struct</span> &#123;</span><br><span class="line">	conn          *conn</span><br><span class="line">	req           *Request <span class="comment">// request for this response</span></span><br><span class="line">	wroteHeader   <span class="keyword">bool</span>     <span class="comment">// reply header has been (logically) written</span></span><br><span class="line">	wroteContinue <span class="keyword">bool</span>     <span class="comment">// 100 Continue response was written</span></span><br><span class="line"></span><br><span class="line">	w  *bufio.Writer <span class="comment">// buffers output in chunks to chunkWriter</span></span><br><span class="line">	cw chunkWriter</span><br><span class="line">	sw *switchWriter <span class="comment">// of the bufio.Writer, for return to putBufioWriter</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// handlerHeader is the Header that Handlers get access to,</span></span><br><span class="line">	<span class="comment">// which may be retained and mutated even after WriteHeader.</span></span><br><span class="line">	<span class="comment">// handlerHeader is copied into cw.header at WriteHeader</span></span><br><span class="line">	<span class="comment">// time, and privately mutated thereafter.</span></span><br><span class="line">	handlerHeader Header</span><br><span class="line">	...</span><br><span class="line">	status        <span class="keyword">int</span>   <span class="comment">// status code passed to WriteHeader</span></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它当然实现了上面提到的三个方法，具体代码就不放到这里了，感兴趣的可以自己去看。</p>
+<h2 id="6-扩展"><a href="#6-扩展" class="headerlink" title="6. 扩展"></a>6. 扩展</h2><p>虽然 <code>net/http</code> 提供的各种功能已经满足基本需求了，但是很多时候还不够方便，比如：</p>
+<ul>
+<li>不支持 URL 匹配，所有的路径必须完全匹配，不能捕获 URL 中的变量，不够灵活</li>
+<li>不支持 HTTP 方法匹配</li>
+<li>不支持扩展和嵌套，URL 处理都在都一个 <code>ServeMux</code> 变量中</li>
+</ul>
+<p>虽然这些都可以自己手动去码，但实在很不方便。这部分看看有哪些三方的包，都提供了哪些额外的功能。</p>
+<h3 id="alice"><a href="#alice" class="headerlink" title="alice"></a><a href="https://github.com/justinas/alice" target="_blank" rel="noopener">alice</a></h3><p>alice 的功能很简单——把多个 handler 串联起来，有请求过来的时候，逐个通过这个 handler 进行处理。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">alice.New(Middleware1, Middleware2, Middleware3).Then(App)</span><br></pre></td></tr></table></figure>
+<h3 id="Gorilla-Mux"><a href="#Gorilla-Mux" class="headerlink" title="Gorilla Mux"></a><a href="http://www.gorillatoolkit.org/pkg/mux" target="_blank" rel="noopener">Gorilla Mux</a></h3><p>Gorilla 提供了很多网络有关的组件， Mux 就是其中一个，负责 HTTP 的路由功能。这个组件弥补了上面提到的 <code>ServeMux</code> 的一些缺陷，支持的功能有：</p>
+<ul>
+<li>更多的匹配类型：HTTP 方法、query 字段、URL host 等</li>
+<li>支持正则表达式作为 URL path 的一部分，也支持变量提取功能</li>
+<li>支持子路由，也就是路由的嵌套，<code>SubRouter</code> 可以实现路由信息的传递</li>
+<li>并且和 <code>ServeMux</code> 完全兼容</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">r := mux.NewRouter()</span><br><span class="line">r.HandleFunc(<span class="string">"/products/&#123;key&#125;"</span>, ProductHandler)</span><br><span class="line">r.HandleFunc(<span class="string">"/articles/&#123;category&#125;/"</span>, ArticlesCategoryHandler)</span><br><span class="line">r.HandleFunc(<span class="string">"/articles/&#123;category&#125;/&#123;id:[0-9]+&#125;"</span>, ArticleHandler)</span><br></pre></td></tr></table></figure>
+<h3 id="httprouter"><a href="#httprouter" class="headerlink" title="httprouter"></a><a href="https://github.com/julienschmidt/httprouter" target="_blank" rel="noopener">httprouter</a></h3><p>httprouter 和 <code>mux</code> 一样，也是扩展了自带 <code>ServeMux</code> 功能的路由库。它的主要特点是速度快、内存使用少、可扩展性高（使用 radix tree 数据结构进行路由匹配，路由项很多的时候速度也很快）。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">"fmt"</span></span><br><span class="line">    <span class="string">"github.com/julienschmidt/httprouter"</span></span><br><span class="line">    <span class="string">"net/http"</span></span><br><span class="line">    <span class="string">"log"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Index</span><span class="params">(w http.ResponseWriter, r *http.Request, _ httprouter.Params)</span></span> &#123;</span><br><span class="line">    fmt.Fprint(w, <span class="string">"Welcome!\n"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Hello</span><span class="params">(w http.ResponseWriter, r *http.Request, ps httprouter.Params)</span></span> &#123;</span><br><span class="line">    fmt.Fprintf(w, <span class="string">"hello, %s!\n"</span>, ps.ByName(<span class="string">"name"</span>))</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    router := httprouter.New()</span><br><span class="line">    router.GET(<span class="string">"/"</span>, Index)</span><br><span class="line">    router.GET(<span class="string">"/hello/:name"</span>, Hello)</span><br><span class="line"></span><br><span class="line">    log.Fatal(http.ListenAndServe(<span class="string">":8080"</span>, router))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="negroni"><a href="#negroni" class="headerlink" title="negroni"></a><a href="https://github.com/urfave/negroni" target="_blank" rel="noopener">negroni</a></h3><p>http middleware 库，支持嵌套的中间件，能够和其他路由库兼容。同时它也自带了不少 middleware 可以使用，比如<code>Recovery</code>、<code>Logger</code>、<code>Static</code>。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">router := mux.NewRouter()</span><br><span class="line">router.HandleFunc(<span class="string">"/"</span>, HomeHandler)</span><br><span class="line"></span><br><span class="line">n := negroni.New(Middleware1, Middleware2)</span><br><span class="line"><span class="comment">// Or use a middleware with the Use() function</span></span><br><span class="line">n.Use(Middleware3)</span><br><span class="line"><span class="comment">// router goes last</span></span><br><span class="line">n.UseHandler(router)</span><br><span class="line"></span><br><span class="line">http.ListenAndServe(<span class="string">":3001"</span>, n)</span><br></pre></td></tr></table></figure>
+<h2 id="7-参考"><a href="#7-参考" class="headerlink" title="7. 参考"></a>7. 参考</h2><p>这篇文章参考了以下资料：</p>
+<ul>
+<li><a href="https://golang.org/pkg/net/http/" target="_blank" rel="noopener">golang net/http 官方文档</a></li>
+<li><a href="https://golang.org/src/net/http/server.go" target="_blank" rel="noopener">net/http 源码</a></li>
+<li><a href="http://www.alexedwards.net/blog/a-recap-of-request-handling" target="_blank" rel="noopener">A Recap of Request Handling in Go</a></li>
+<li><a href="http://soryy.com/blog/2014/not-another-go-net-http-tutorial/" target="_blank" rel="noopener">Not Another Go/Golang net/http Tutorial</a></li>
+<li><a href="https://medium.com/@matryer/the-http-handlerfunc-wrapper-technique-in-golang-c60bf76e6124#.esdqmzzah" target="_blank" rel="noopener">the http handlerfunc wrapper technique in golang</a></li>
+<li><a href="https://husobee.github.io/golang/url-router/2015/06/15/why-do-all-golang-url-routers-suck.html" target="_blank" rel="noopener">why do all golang url routers suck</a></li>
+</ul>
+
+                </div>
+            </section>
+        </article>
+    </div>
+    
+<nav class="pagination">
+    
+    
+    <a class="prev-post" title="kubernetes 简介： kubelet 和 pod" href="/2016/10/25/kubernetes-intro-kubelet/">
+        ← kubernetes 简介： kubelet 和 pod
+    </a>
+    
+    <span class="prev-next-post">•</span>
+    
+    <a class="next-post" title="etcd 使用入门" href="/2016/08/02/intro-to-etcd/">
+        etcd 使用入门 →
+    </a>
+    
+    
+</nav>
+    
+</main>
+
+<div class="t-g-control">
+    <div class="gotop">
+        <svg class="icon" width="32px" height="32px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M793.024 710.272a32 32 0 1 0 45.952-44.544l-310.304-320a32 32 0 0 0-46.4 0.48l-297.696 320a32 32 0 0 0 46.848 43.584l274.752-295.328 286.848 295.808z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="toc-control">
+        <svg class="icon toc-icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M779.776 480h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M779.776 672h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M256 288a32 32 0 1 0 0 64 32 32 0 0 0 0-64M392.576 352h387.2a32 32 0 0 0 0-64h-387.2a32 32 0 0 0 0 64M256 480a32 32 0 1 0 0 64 32 32 0 0 0 0-64M256 672a32 32 0 1 0 0 64 32 32 0 0 0 0-64" fill="#8a8a8a" /></svg>
+        <svg class="icon toc-close" style="display: none;" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 960c-247.039484 0-448-200.960516-448-448S264.960516 64 512 64 960 264.960516 960 512 759.039484 960 512 960zM512 128.287273c-211.584464 0-383.712727 172.128262-383.712727 383.712727 0 211.551781 172.128262 383.712727 383.712727 383.712727 211.551781 0 383.712727-172.159226 383.712727-383.712727C895.712727 300.415536 723.551781 128.287273 512 128.287273z" fill="#8a8a8a" /><path d="M557.05545 513.376159l138.367639-136.864185c12.576374-12.416396 12.672705-32.671738 0.25631-45.248112s-32.704421-12.672705-45.248112-0.25631l-138.560301 137.024163-136.447897-136.864185c-12.512727-12.512727-32.735385-12.576374-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.248112l136.255235 136.671523-137.376804 135.904314c-12.576374 12.447359-12.672705 32.671738-0.25631 45.248112 6.271845 6.335493 14.496116 9.504099 22.751351 9.504099 8.12794 0 16.25588-3.103239 22.496761-9.247789l137.567746-136.064292 138.687596 139.136568c6.240882 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.05545 513.376159z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="gobottom">
+        <svg class="icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M231.424 346.208a32 32 0 0 0-46.848 43.584l297.696 320a32 32 0 0 0 46.4 0.48l310.304-320a32 32 0 1 0-45.952-44.544l-286.848 295.808-274.752-295.36z" fill="#8a8a8a" /></svg>
+    </div>
+</div>
+<div class="toc-main" style="right: -100%">
+    <div class="post-toc">
+        <span>TOC</span>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-初识"><span class="toc-text">1. 初识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-封装"><span class="toc-text">2. 封装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-默认"><span class="toc-text">3. 默认</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-路由"><span class="toc-text">4. 路由</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-深入"><span class="toc-text">5. 深入</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Server"><span class="toc-text">Server</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ServeMux"><span class="toc-text">ServeMux</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Request"><span class="toc-text">Request</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ResponseWriter"><span class="toc-text">ResponseWriter</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-扩展"><span class="toc-text">6. 扩展</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#alice"><span class="toc-text">alice</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Gorilla-Mux"><span class="toc-text">Gorilla Mux</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#httprouter"><span class="toc-text">httprouter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#negroni"><span class="toc-text">negroni</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-参考"><span class="toc-text">7. 参考</span></a></li></ol>
+    </div>
+</div>
+
+
+
+        
+
+<aside class="read-next outer">
+    <div class="inner">
+        <div class="read-next-feed">
+            
+            
+
+<article class="read-next-card"  style="background-image: url(https://i.loli.net/2017/11/26/5a19c56faa29f.jpg)"  >
+  <header class="read-next-card-header">
+    <small class="read-next-card-header-sitetitle">&mdash; Cizixs Write Here &mdash;</small>
+    <h3 class="read-next-card-header-title">Recent Posts</h3>
+  </header>
+  <div class="read-next-divider">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M13 14.5s2 3 5 3 5.5-2.463 5.5-5.5S21 6.5 18 6.5c-5 0-7 11-12 11C2.962 17.5.5 15.037.5 12S3 6.5 6 6.5s4.5 3.5 4.5 3.5"/>
+    </svg>
+  </div>
+  <div class="read-next-card-content">
+    <ul>
+      
+      
+      
+      <li>
+        <a href="/2018/08/26/what-is-istio/">什么是 istio</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/08/25/knative-serverless-platform/">serverless 平台 knative 简介</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/06/25/kubernetes-resource-management/">kubernetes 资源管理概述</a>
+      </li>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+  </div>
+  <footer class="read-next-card-footer">
+    <a href="/archives">  MORE  → </a>
+  </footer>
+</article>
+
+            
+            
+            
+        </div>
+    </div>
+</aside>
+
+<footer class="site-footer outer">
+	<div class="site-footer-content inner">
+		<section class="copyright">
+			<a href="/" title="Cizixs Write Here">Cizixs Write Here</a>
+			&copy; 2018
+		</section>
+		<nav class="site-footer-nav">
+			
+            <a href="https://hexo.io" title="Hexo" target="_blank" rel="noopener">Hexo</a>
+            <a href="https://github.com/xzhih/hexo-theme-casper" title="Casper" target="_blank" rel="noopener">Casper</a>
+        </nav>
+    </div>
+</footer>
+
+
+
+
+
+
+<div class="floating-header" >
+	<div class="floating-header-logo">
+        <a href="/" title="Cizixs Write Here">
+			
+                <img src="https://i.loli.net/2017/11/26/5a19c0b50432e.png" alt="Cizixs Write Here icon" />
+			
+            <span>Cizixs Write Here</span>
+        </a>
+    </div>
+    <span class="floating-header-divider">&mdash;</span>
+    <div class="floating-header-title">go http 服务器编程</div>
+    <progress class="progress" value="0">
+        <div class="progress-container">
+            <span class="progress-bar"></span>
+        </div>
+    </progress>
+</div>
+<script>
+   $(document).ready(function () {
+    var progressBar = document.querySelector('progress');
+    var header = document.querySelector('.floating-header');
+    var title = document.querySelector('.post-full-title');
+    var lastScrollY = window.scrollY;
+    var lastWindowHeight = window.innerHeight;
+    var lastDocumentHeight = $(document).height();
+    var ticking = false;
+
+    function onScroll() {
+        lastScrollY = window.scrollY;
+        requestTick();
+    }
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(update);
+        }
+        ticking = true;
+    }
+    function update() {
+        var rect = title.getBoundingClientRect();
+        var trigger = rect.top + window.scrollY;
+        var triggerOffset = title.offsetHeight + 35;
+        var progressMax = lastDocumentHeight - lastWindowHeight;
+            // show/hide floating header
+            if (lastScrollY >= trigger + triggerOffset) {
+                header.classList.add('floating-active');
+            } else {
+                header.classList.remove('floating-active');
+            }
+            progressBar.setAttribute('max', progressMax);
+            progressBar.setAttribute('value', lastScrollY);
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', onScroll, {passive: true});
+        update();
+
+        // TOC
+        var width = $('.toc-main').width();
+        $('.toc-control').click(function () {
+            if ($('.t-g-control').css('width')=="50px") {
+                if ($('.t-g-control').css('right')=="0px") {
+                    $('.t-g-control').animate({right: width}, "slow");
+                    $('.toc-main').animate({right: 0}, "slow");
+                    toc_icon()
+                } else {
+                    $('.t-g-control').animate({right: 0}, "slow");
+                    $('.toc-main').animate({right: -width}, "slow");
+                    toc_icon()
+                }
+            } else {
+                if ($('.toc-main').css('right')=="0px") {
+                    $('.toc-main').slideToggle("fast", toc_icon());
+                } else {
+                    $('.toc-main').css('right', '0px');
+                    toc_icon()
+                }
+            }
+        })
+
+        function toc_icon() {
+            if ($('.toc-icon').css('display')=="none") {
+                $('.toc-close').hide();
+                $('.toc-icon').show();
+            } else {
+                $('.toc-icon').hide();
+                $('.toc-close').show();
+            }
+        }
+
+        $('.gotop').click(function(){
+            $('html,body').animate({scrollTop:$('.post-full-header').offset().top}, 800);
+        });
+        $('.gobottom').click(function () {
+            $('html,body').animate({scrollTop:$('.pagination').offset().top}, 800);
+        });
+
+        // highlight
+        // https://highlightjs.org
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+        $('td.code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+
+        console.log("this theme is from https://github.com/xzhih/hexo-theme-casper")
+    });
+</script>
+
+
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/1.3.9/css/lightgallery.min.css">
+
+
+
+<script src="https://cdn.staticfile.org/lightgallery/1.3.9/js/lightgallery.min.js"></script>
+
+
+<script>
+	$(function () {
+		var postImg = $('#lightgallery').find('img');
+		postImg.addClass('post-img');
+		postImg.each(function () {
+			var imgSrc = $(this).attr('src');
+			$(this).attr('data-src', imgSrc);
+		});
+		$('#lightgallery').lightGallery({selector: '.post-img'});
+	});
+</script>
+
+
+
+
+    </div>
+</body>
+</html>

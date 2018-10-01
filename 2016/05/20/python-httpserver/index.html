@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html CN>
+
+
+
+
+
+
+
+<head>
+	
+	
+	<link rel="stylesheet" href="/css/allinone.min.css"> 
+
+	
+
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+	<title>Python BaseHTTPServer 介绍 | Cizixs Write Here</title>
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta name="generator" content="hexo">
+	<meta name="author" content="Cizixs Wu">
+	<meta name="description" content="">
+
+	
+	<meta name="keywords" content="">
+	
+
+	
+	<link rel="shortcut icon" href="https://i.loli.net/2017/11/26/5a19c0b50432e.png">
+	
+
+	
+	<meta name="theme-color" content="#3c484e">
+	<meta name="msapplication-TileColor" content="#3c484e">
+	
+
+	
+
+	
+
+	<meta property="og:site_name" content="Cizixs Write Here">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="Python BaseHTTPServer 介绍 | Cizixs Write Here">
+	<meta property="og:description" content="">
+	<meta property="og:url" content="http://cizixs.com/2016/05/20/python-httpserver/">
+
+	
+	<meta property="article:published_time" content="2016-05-20T00:05:00+08:00"/> 
+	<meta property="article:author" content="Cizixs Wu">
+	<meta property="article:published_first" content="Cizixs Write Here, /2016/05/20/python-httpserver/" />
+	
+
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	
+
+	
+	<script src="https://cdn.staticfile.org/highlight.js/9.10.0/highlight.min.js"></script>
+	
+
+	
+	
+</head>
+<body class="post-template">
+    <div class="site-wrapper">
+        
+
+
+
+
+<header class="site-header outer" style="z-index: 999">
+    <div class="inner">
+        
+<nav class="site-nav"> 
+    <div class="site-nav-left">
+        <ul class="nav">
+            <li>
+                
+                <a href="/" title="Home">Home</a>
+                
+            </li>
+            
+            
+            <li>
+                <a href="/about" title="About">About</a>
+            </li>
+            
+            <li>
+                <a href="/archives" title="Archives">Archives</a>
+            </li>
+            
+            
+        </ul> 
+    </div>
+    <div class="site-nav-right">
+        
+<div class="social-links" >
+    
+    
+    
+    
+    <a class="social-link" title="twitter" href="https://twitter.com/cizixs" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30.063 7.313c-.813 1.125-1.75 2.125-2.875 2.938v.75c0 1.563-.188 3.125-.688 4.625a15.088 15.088 0 0 1-2.063 4.438c-.875 1.438-2 2.688-3.25 3.813a15.015 15.015 0 0 1-4.625 2.563c-1.813.688-3.75 1-5.75 1-3.25 0-6.188-.875-8.875-2.625.438.063.875.125 1.375.125 2.688 0 5.063-.875 7.188-2.5-1.25 0-2.375-.375-3.375-1.125s-1.688-1.688-2.063-2.875c.438.063.813.125 1.125.125.5 0 1-.063 1.5-.25-1.313-.25-2.438-.938-3.313-1.938a5.673 5.673 0 0 1-1.313-3.688v-.063c.813.438 1.688.688 2.625.688a5.228 5.228 0 0 1-1.875-2c-.5-.875-.688-1.813-.688-2.75 0-1.063.25-2.063.75-2.938 1.438 1.75 3.188 3.188 5.25 4.25s4.313 1.688 6.688 1.813a5.579 5.579 0 0 1 1.5-5.438c1.125-1.125 2.5-1.688 4.125-1.688s3.063.625 4.188 1.813a11.48 11.48 0 0 0 3.688-1.375c-.438 1.375-1.313 2.438-2.563 3.188 1.125-.125 2.188-.438 3.313-.875z"/></svg>
+
+    </a>
+    
+    
+</div>
+    </div>
+</nav>
+    </div>
+</header>
+
+
+<main id="site-main" class="site-main outer" role="main">
+    <div class="inner">
+        <header class="post-full-header">
+            <section class="post-full-meta">
+                <time  class="post-full-meta-date" datetime="2016-05-19T16:00:00.000Z" itemprop="datePublished">
+                    2016-05-20
+                </time>
+                
+                <span class="date-divider">/</span>
+                
+                <a href="/categories/blog/">blog</a>&nbsp;&nbsp;
+                
+                
+            </section>
+            <h1 class="post-full-title">Python BaseHTTPServer 介绍</h1>
+        </header>
+        <article class="post-full no-image">
+            
+            <section class="post-full-content">
+                <div id="lightgallery" class="markdown-body">
+                    <p>本文针对 python 2.7 版本，介绍了 BaseHTTPServer 这个库的使用方法。</p>
+<p>这个库是 python 自带的标准库的一部分，不需要额外安装，在 linux 系统下，位置在 <code>/usr/lib/python2.7/BaseHTTPServer.py</code>。</p>
+<h2 id="HTTP-协议"><a href="#HTTP-协议" class="headerlink" title="HTTP 协议"></a>HTTP 协议</h2><h3 id="HTTP-请求（request）"><a href="#HTTP-请求（request）" class="headerlink" title="HTTP 请求（request）"></a>HTTP 请求（request）</h3><p>http 请求分为三个部分：</p>
+<ol>
+<li>第一行：请求类型、地址和版本号</li>
+<li>头部信息：HTTP header</li>
+<li>数据部分</li>
+</ol>
+<p>标准的 HTTP 请求是：<br><figure class="highlight groovy"><table><tr><td class="code"><pre><span class="line">GET <span class="regexp">/ HTTP/</span><span class="number">1.1</span></span><br><span class="line"><span class="string">Host:</span> cizixs.com</span><br><span class="line">User-<span class="string">Agent:</span> Mozilla<span class="regexp">/5.0 (Windows NT 6.1; WOW64; rv:42.0) Gecko/</span><span class="number">20100101</span> Firefox/<span class="number">42.0</span></span><br><span class="line"><span class="string">Accept:</span> text<span class="regexp">/html,application/</span>xhtml+xml,application<span class="regexp">/xml;q=0.9,*/</span>*;q=<span class="number">0.8</span></span><br><span class="line">Accept-<span class="string">Language:</span> zh-CN,zh;q=<span class="number">0.8</span>,en-US;q=<span class="number">0.5</span>,en;q=<span class="number">0.3</span></span><br><span class="line">Accept-<span class="string">Encoding:</span> gzip, deflate</span><br><span class="line"><span class="string">Connection:</span> keep-alive</span><br><span class="line">If-Modified-<span class="string">Since:</span> Thu, <span class="number">25</span> Feb <span class="number">2016</span> <span class="number">16</span>:<span class="number">00</span>:<span class="number">57</span> GMT</span><br><span class="line">Cache-<span class="string">Control:</span> max-age=<span class="number">0</span></span><br></pre></td></tr></table></figure></p>
+<p>标准的 HTTP 响应头部：<br><figure class="highlight http"><table><tr><td class="code"><pre><span class="line">HTTP/1.1 <span class="number">304</span> Not Modified</span><br><span class="line"><span class="attribute">Server</span>: GitHub.com</span><br><span class="line"><span class="attribute">Date</span>: Thu, 24 Mar 2016 06:21:25 GMT</span><br><span class="line"><span class="attribute">Last-Modified</span>: Thu, 25 Feb 2016 16:00:57 GMT</span><br><span class="line"><span class="attribute">access-control-allow-origin</span>: *</span><br><span class="line"><span class="attribute">Expires</span>: Thu, 24 Mar 2016 06:31:25 GMT</span><br><span class="line"><span class="attribute">Cache-Control</span>: max-age=600</span><br><span class="line"><span class="attribute">X-GitHub-Request-Id</span>: 3AF60A59:7CE3:1C889201:56F38765</span><br><span class="line"></span><br><span class="line"><span class="attribute">data...</span></span><br></pre></td></tr></table></figure></p>
+<h2 id="使用-BaseHTTPServer-写一个简单的-web-server"><a href="#使用-BaseHTTPServer-写一个简单的-web-server" class="headerlink" title="使用 BaseHTTPServer 写一个简单的 web server"></a>使用 BaseHTTPServer 写一个简单的 web server</h2><p>这个类可以帮助你快速编写一个 HTTP 服务端 server。别说了，先上代码：</p>
+<pre><code>from BaseHTTPServer import BaseHTTPRequestHandler
+import cgi
+import json
+
+
+class TodoHandler(BaseHTTPRequestHandler):
+    &quot;&quot;&quot;A simple TODO server
+
+    which can display and manage todos for you.
+    &quot;&quot;&quot;
+
+    # Global instance to store todos. You should use a database in reality.
+    TODOS = []
+
+    def do_GET(self):
+        # return all todos
+
+        if self.path != &apos;/&apos;:
+            self.send_error(404, &quot;File not found.&quot;)
+            return
+
+        # Just dump data to json, and return it
+        message = json.dumps(self.TODOS)
+
+        self.send_response(200)
+        self.send_header(&apos;Content-type&apos;, &apos;application/json&apos;)
+        self.end_headers()
+        self.wfile.write(message)
+
+    def do_POST(self):
+        &quot;&quot;&quot;Add a new todo
+
+        Only json data is supported, otherwise send a 415 response back.
+        Append new todo to class variable, and it will be displayed
+        in following get request
+        &quot;&quot;&quot;
+        ctype, pdict = cgi.parse_header(self.headers[&apos;content-type&apos;])
+        if ctype == &apos;application/json&apos;:
+            length = int(self.headers[&apos;content-length&apos;])
+            post_values = json.loads(self.rfile.read(length))
+            self.TODOS.append(post_values)
+        else:
+            self.send_error(415, &quot;Only json data is supported.&quot;)
+            return
+
+        self.send_response(200)
+        self.send_header(&apos;Content-type&apos;, &apos;application/json&apos;)
+        self.end_headers()
+
+        self.wfile.write(post_values)
+
+if __name__ == &apos;__main__&apos;:
+    # Start a simple server, and loop forever
+    from BaseHTTPServer import HTTPServer
+    server = HTTPServer((&apos;localhost&apos;, 8888), TodoHandler)
+    print(&quot;Starting server, use &lt;Ctrl-C&gt; to stop&quot;)
+    server.serve_forever()
+</code></pre><p>这段代码实现的功能很简单，就是一个简单的 Todo 管理：你可以添加 todo，也可以查询 todo。更新和删除 todo 可以根据上面的代码自行添加。</p>
+<p>代码也不难理解，在关键的步骤我已经添加了注释，在这里就不再解释了。</p>
+<p>好了，我们用 <a href="">httpie</a> 来和它交互一下，最开始的时候返回的数据是空的</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="string">➜</span>  <span class="string">~</span> <span class="string">http</span> <span class="bullet">--verbose</span> <span class="attr">http://localhost:8888</span></span><br><span class="line"><span class="string">GET</span> <span class="string">/</span> <span class="string">HTTP/1.1</span></span><br><span class="line"><span class="attr">Accept:</span> <span class="string">*/*</span></span><br><span class="line"><span class="attr">Accept-Encoding:</span> <span class="string">gzip,</span> <span class="string">deflate</span></span><br><span class="line"><span class="attr">Host:</span> <span class="attr">localhost:8888</span></span><br><span class="line"><span class="attr">User-Agent:</span> <span class="string">HTTPie/0.8.0</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="string">HTTP/1.0</span> <span class="number">200</span> <span class="string">OK</span></span><br><span class="line"><span class="attr">Content-type:</span> <span class="string">application/json</span></span><br><span class="line"><span class="attr">Date:</span> <span class="string">Fri,</span> <span class="number">25</span> <span class="string">Mar</span> <span class="number">2016</span> <span class="number">09</span><span class="string">:35:08</span> <span class="string">GMT</span></span><br><span class="line"><span class="attr">Server:</span> <span class="string">BaseHTTP/0.3</span> <span class="string">Python/2.7.10</span></span><br><span class="line"></span><br><span class="line"><span class="string">[]</span></span><br></pre></td></tr></table></figure>
+<p>然后，添加几条试试：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">➜  ~ http --verbose POST http://localhost:<span class="number">8888</span> content=<span class="string">"buy a beer"</span> finished:=false</span><br><span class="line">POST / HTTP/<span class="number">1.1</span></span><br><span class="line">Accept: application/json</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Content-Length: <span class="number">44</span></span><br><span class="line">Content-Type: application/json; charset=utf<span class="number">-8</span></span><br><span class="line">Host: localhost:<span class="number">8888</span></span><br><span class="line">User-Agent: HTTPie/<span class="number">0.8</span><span class="number">.0</span></span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"content"</span>: <span class="string">"buy a beer"</span>,</span><br><span class="line">    <span class="string">"finished"</span>: false</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">HTTP/<span class="number">1.0</span> <span class="number">200</span> OK</span><br><span class="line">Content-type: application/json</span><br><span class="line">Date: Fri, <span class="number">25</span> Mar <span class="number">2016</span> <span class="number">09</span>:<span class="number">36</span>:<span class="number">08</span> GMT</span><br><span class="line">Server: BaseHTTP/<span class="number">0.3</span> Python/<span class="number">2.7</span><span class="number">.10</span></span><br><span class="line"></span><br><span class="line">&#123;<span class="string">u'content'</span>: <span class="string">u'buy a beer'</span>, <span class="string">u'finished'</span>: <span class="keyword">False</span>&#125;</span><br><span class="line"></span><br><span class="line">➜  ~ http --verbose POST http://localhost:<span class="number">8888</span> content=<span class="string">"learn HTTP"</span> finished:=false</span><br><span class="line">POST / HTTP/<span class="number">1.1</span></span><br><span class="line">Accept: application/json</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Content-Length: <span class="number">44</span></span><br><span class="line">Content-Type: application/json; charset=utf<span class="number">-8</span></span><br><span class="line">Host: localhost:<span class="number">8888</span></span><br><span class="line">User-Agent: HTTPie/<span class="number">0.8</span><span class="number">.0</span></span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"content"</span>: <span class="string">"learn HTTP"</span>,</span><br><span class="line">    <span class="string">"finished"</span>: false</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">HTTP/<span class="number">1.0</span> <span class="number">200</span> OK</span><br><span class="line">Content-type: application/json</span><br><span class="line">Date: Fri, <span class="number">25</span> Mar <span class="number">2016</span> <span class="number">09</span>:<span class="number">36</span>:<span class="number">24</span> GMT</span><br><span class="line">Server: BaseHTTP/<span class="number">0.3</span> Python/<span class="number">2.7</span><span class="number">.10</span></span><br><span class="line"></span><br><span class="line">&#123;<span class="string">u'content'</span>: <span class="string">u'learn HTTP'</span>, <span class="string">u'finished'</span>: <span class="keyword">False</span>&#125;</span><br></pre></td></tr></table></figure>
+<p>这个时候，再来看一下内容：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="string">➜</span>  <span class="string">~</span> <span class="string">http</span> <span class="bullet">--verbose</span> <span class="attr">http://localhost:8888</span></span><br><span class="line"><span class="string">GET</span> <span class="string">/</span> <span class="string">HTTP/1.1</span></span><br><span class="line"><span class="attr">Accept:</span> <span class="string">*/*</span></span><br><span class="line"><span class="attr">Accept-Encoding:</span> <span class="string">gzip,</span> <span class="string">deflate</span></span><br><span class="line"><span class="attr">Host:</span> <span class="attr">localhost:8888</span></span><br><span class="line"><span class="attr">User-Agent:</span> <span class="string">HTTPie/0.8.0</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="string">HTTP/1.0</span> <span class="number">200</span> <span class="string">OK</span></span><br><span class="line"><span class="attr">Content-type:</span> <span class="string">application/json</span></span><br><span class="line"><span class="attr">Date:</span> <span class="string">Fri,</span> <span class="number">25</span> <span class="string">Mar</span> <span class="number">2016</span> <span class="number">09</span><span class="string">:36:58</span> <span class="string">GMT</span></span><br><span class="line"><span class="attr">Server:</span> <span class="string">BaseHTTP/0.3</span> <span class="string">Python/2.7.10</span></span><br><span class="line"></span><br><span class="line"><span class="string">[</span></span><br><span class="line">    <span class="string">&#123;</span></span><br><span class="line"><span class="attr">        "content":</span> <span class="string">"buy a beer"</span><span class="string">,</span></span><br><span class="line"><span class="attr">        "finished":</span> <span class="literal">false</span></span><br><span class="line">    <span class="string">&#125;,</span></span><br><span class="line">    <span class="string">&#123;</span></span><br><span class="line"><span class="attr">        "content":</span> <span class="string">"learn HTTP"</span><span class="string">,</span></span><br><span class="line"><span class="attr">        "finished":</span> <span class="literal">false</span></span><br><span class="line">    <span class="string">&#125;</span></span><br><span class="line"><span class="string">]</span></span><br></pre></td></tr></table></figure>
+<p>我们刚刚创建的 todo 就出现了！前面也说了，这段代码不支持更新和删除功能，而且数据也没有落地，关闭程序之后，数据就消失了。</p>
+<h2 id="BaseHTTPServer-源代码解析"><a href="#BaseHTTPServer-源代码解析" class="headerlink" title="BaseHTTPServer 源代码解析"></a>BaseHTTPServer 源代码解析</h2><p>BaseHTTPServer 这个模块提供了两个类让开发者实现 HTTP server：<code>HTTPServer</code> 和 <code>BaseHTTPRequestHandler</code>。</p>
+<p><code>HTTPServer</code> 继承了 <code>SocketServer.BaseServer</code>，主要功能是：创建和监听 socket，把请求转发给 handler 去处理。主要的工作都是在 <code>BaseHTTPRequestHandler</code> 中处理的，它把和请求有关的信息都封装成自己的实例变量，可以在子类中直接使用。这些变量包括：</p>
+<ul>
+<li>client_address：客户端的地址，存放在一个 tuple 里 (host, port)</li>
+<li>server: server 实例</li>
+<li>command：请求类型，比如，GET、POST 等</li>
+<li>path：请求路径，比如 <code>/index.html</code></li>
+<li>request_version: 请求版本号，比如 <code>HTTP/1.0</code></li>
+<li>headers：<code>mimetools.Message</code> 的实例对象，包含了头部信息</li>
+<li>rfile：rfile 是一个输入流，用来读取请求的数据</li>
+<li>wfile：wfile 是一个输出流，用来回写响应，回写的数据必须遵守 HTTP 协议的格式</li>
+</ul>
+<p>除了这些实例变量之外，还有其他的类变量：</p>
+<ul>
+<li>server_version：服务器的版本号，比如 <code>BaseHTTP/0.2</code></li>
+<li>sys_version：python 的版本号，比如 <code>Python/1.4</code></li>
+<li>error_message_format：错误 response 的格式</li>
+<li>error_content_type：错误 response 的 Content-Type，默认是 <code>text/html</code></li>
+<li>protocol_version：HTTP 协议版本号</li>
+<li>responses：error code 对应错误消息的匹配关系</li>
+</ul>
+<p>当然，还有一些方法可以使用：</p>
+<ul>
+<li>handle()：调用底层的实现来处理一次请求</li>
+<li>send_response（）：发送应答消息和状态码</li>
+</ul>
+<p>更多的内容可以查看文末的链接。</p>
+<h2 id="为什么这个类不会被广泛使用？"><a href="#为什么这个类不会被广泛使用？" class="headerlink" title="为什么这个类不会被广泛使用？"></a>为什么这个类不会被广泛使用？</h2><p>写了这么多，我们也看到这个类缺点很多，比如：</p>
+<ul>
+<li>不支持 url 解析和转发，如果有多个 endpoint，需要用户自己解析</li>
+<li>回写的响应也需要用户自己维护格式，容易出错</li>
+<li>没有模板支持，如果要写 HTML 页面，也需要自己维护</li>
+</ul>
+<p>所以在正式的工作中，编写 HTTP server 端应用的时候，都是使用 web 框架的。因为 web 框架帮你封装了底层的这些细节，还提供了很多便利的功能，让开发者把中心更多地放到业务逻辑的实现。</p>
+<p>如果有时间，以后讲讲怎么自己写一个简单的 HTTP Server。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://docs.python.org/2/library/basehttpserver.html" target="_blank" rel="noopener">BaseHTTPServer — Basic HTTP server</a></li>
+</ul>
+
+                </div>
+            </section>
+        </article>
+    </div>
+    
+<nav class="pagination">
+    
+    
+    <a class="prev-post" title="在 mac 系统配置 docker 开发环境" href="/2016/05/31/install-docker-dev-environment-on-mac/">
+        ← 在 mac 系统配置 docker 开发环境
+    </a>
+    
+    <span class="prev-next-post">•</span>
+    
+    <a class="next-post" title="docker 镜像介绍" href="/2016/04/06/docker-images/">
+        docker 镜像介绍 →
+    </a>
+    
+    
+</nav>
+    
+</main>
+
+<div class="t-g-control">
+    <div class="gotop">
+        <svg class="icon" width="32px" height="32px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M793.024 710.272a32 32 0 1 0 45.952-44.544l-310.304-320a32 32 0 0 0-46.4 0.48l-297.696 320a32 32 0 0 0 46.848 43.584l274.752-295.328 286.848 295.808z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="toc-control">
+        <svg class="icon toc-icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M779.776 480h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M779.776 672h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M256 288a32 32 0 1 0 0 64 32 32 0 0 0 0-64M392.576 352h387.2a32 32 0 0 0 0-64h-387.2a32 32 0 0 0 0 64M256 480a32 32 0 1 0 0 64 32 32 0 0 0 0-64M256 672a32 32 0 1 0 0 64 32 32 0 0 0 0-64" fill="#8a8a8a" /></svg>
+        <svg class="icon toc-close" style="display: none;" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 960c-247.039484 0-448-200.960516-448-448S264.960516 64 512 64 960 264.960516 960 512 759.039484 960 512 960zM512 128.287273c-211.584464 0-383.712727 172.128262-383.712727 383.712727 0 211.551781 172.128262 383.712727 383.712727 383.712727 211.551781 0 383.712727-172.159226 383.712727-383.712727C895.712727 300.415536 723.551781 128.287273 512 128.287273z" fill="#8a8a8a" /><path d="M557.05545 513.376159l138.367639-136.864185c12.576374-12.416396 12.672705-32.671738 0.25631-45.248112s-32.704421-12.672705-45.248112-0.25631l-138.560301 137.024163-136.447897-136.864185c-12.512727-12.512727-32.735385-12.576374-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.248112l136.255235 136.671523-137.376804 135.904314c-12.576374 12.447359-12.672705 32.671738-0.25631 45.248112 6.271845 6.335493 14.496116 9.504099 22.751351 9.504099 8.12794 0 16.25588-3.103239 22.496761-9.247789l137.567746-136.064292 138.687596 139.136568c6.240882 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.05545 513.376159z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="gobottom">
+        <svg class="icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M231.424 346.208a32 32 0 0 0-46.848 43.584l297.696 320a32 32 0 0 0 46.4 0.48l310.304-320a32 32 0 1 0-45.952-44.544l-286.848 295.808-274.752-295.36z" fill="#8a8a8a" /></svg>
+    </div>
+</div>
+<div class="toc-main" style="right: -100%">
+    <div class="post-toc">
+        <span>TOC</span>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#HTTP-协议"><span class="toc-text">HTTP 协议</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#HTTP-请求（request）"><span class="toc-text">HTTP 请求（request）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用-BaseHTTPServer-写一个简单的-web-server"><span class="toc-text">使用 BaseHTTPServer 写一个简单的 web server</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BaseHTTPServer-源代码解析"><span class="toc-text">BaseHTTPServer 源代码解析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#为什么这个类不会被广泛使用？"><span class="toc-text">为什么这个类不会被广泛使用？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-text">参考资料</span></a></li></ol>
+    </div>
+</div>
+
+
+
+        
+
+<aside class="read-next outer">
+    <div class="inner">
+        <div class="read-next-feed">
+            
+            
+
+<article class="read-next-card"  style="background-image: url(https://i.loli.net/2017/11/26/5a19c56faa29f.jpg)"  >
+  <header class="read-next-card-header">
+    <small class="read-next-card-header-sitetitle">&mdash; Cizixs Write Here &mdash;</small>
+    <h3 class="read-next-card-header-title">Recent Posts</h3>
+  </header>
+  <div class="read-next-divider">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M13 14.5s2 3 5 3 5.5-2.463 5.5-5.5S21 6.5 18 6.5c-5 0-7 11-12 11C2.962 17.5.5 15.037.5 12S3 6.5 6 6.5s4.5 3.5 4.5 3.5"/>
+    </svg>
+  </div>
+  <div class="read-next-card-content">
+    <ul>
+      
+      
+      
+      <li>
+        <a href="/2018/08/26/what-is-istio/">什么是 istio</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/08/25/knative-serverless-platform/">serverless 平台 knative 简介</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/06/25/kubernetes-resource-management/">kubernetes 资源管理概述</a>
+      </li>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+  </div>
+  <footer class="read-next-card-footer">
+    <a href="/archives">  MORE  → </a>
+  </footer>
+</article>
+
+            
+            
+            
+        </div>
+    </div>
+</aside>
+
+<footer class="site-footer outer">
+	<div class="site-footer-content inner">
+		<section class="copyright">
+			<a href="/" title="Cizixs Write Here">Cizixs Write Here</a>
+			&copy; 2018
+		</section>
+		<nav class="site-footer-nav">
+			
+            <a href="https://hexo.io" title="Hexo" target="_blank" rel="noopener">Hexo</a>
+            <a href="https://github.com/xzhih/hexo-theme-casper" title="Casper" target="_blank" rel="noopener">Casper</a>
+        </nav>
+    </div>
+</footer>
+
+
+
+
+
+
+<div class="floating-header" >
+	<div class="floating-header-logo">
+        <a href="/" title="Cizixs Write Here">
+			
+                <img src="https://i.loli.net/2017/11/26/5a19c0b50432e.png" alt="Cizixs Write Here icon" />
+			
+            <span>Cizixs Write Here</span>
+        </a>
+    </div>
+    <span class="floating-header-divider">&mdash;</span>
+    <div class="floating-header-title">Python BaseHTTPServer 介绍</div>
+    <progress class="progress" value="0">
+        <div class="progress-container">
+            <span class="progress-bar"></span>
+        </div>
+    </progress>
+</div>
+<script>
+   $(document).ready(function () {
+    var progressBar = document.querySelector('progress');
+    var header = document.querySelector('.floating-header');
+    var title = document.querySelector('.post-full-title');
+    var lastScrollY = window.scrollY;
+    var lastWindowHeight = window.innerHeight;
+    var lastDocumentHeight = $(document).height();
+    var ticking = false;
+
+    function onScroll() {
+        lastScrollY = window.scrollY;
+        requestTick();
+    }
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(update);
+        }
+        ticking = true;
+    }
+    function update() {
+        var rect = title.getBoundingClientRect();
+        var trigger = rect.top + window.scrollY;
+        var triggerOffset = title.offsetHeight + 35;
+        var progressMax = lastDocumentHeight - lastWindowHeight;
+            // show/hide floating header
+            if (lastScrollY >= trigger + triggerOffset) {
+                header.classList.add('floating-active');
+            } else {
+                header.classList.remove('floating-active');
+            }
+            progressBar.setAttribute('max', progressMax);
+            progressBar.setAttribute('value', lastScrollY);
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', onScroll, {passive: true});
+        update();
+
+        // TOC
+        var width = $('.toc-main').width();
+        $('.toc-control').click(function () {
+            if ($('.t-g-control').css('width')=="50px") {
+                if ($('.t-g-control').css('right')=="0px") {
+                    $('.t-g-control').animate({right: width}, "slow");
+                    $('.toc-main').animate({right: 0}, "slow");
+                    toc_icon()
+                } else {
+                    $('.t-g-control').animate({right: 0}, "slow");
+                    $('.toc-main').animate({right: -width}, "slow");
+                    toc_icon()
+                }
+            } else {
+                if ($('.toc-main').css('right')=="0px") {
+                    $('.toc-main').slideToggle("fast", toc_icon());
+                } else {
+                    $('.toc-main').css('right', '0px');
+                    toc_icon()
+                }
+            }
+        })
+
+        function toc_icon() {
+            if ($('.toc-icon').css('display')=="none") {
+                $('.toc-close').hide();
+                $('.toc-icon').show();
+            } else {
+                $('.toc-icon').hide();
+                $('.toc-close').show();
+            }
+        }
+
+        $('.gotop').click(function(){
+            $('html,body').animate({scrollTop:$('.post-full-header').offset().top}, 800);
+        });
+        $('.gobottom').click(function () {
+            $('html,body').animate({scrollTop:$('.pagination').offset().top}, 800);
+        });
+
+        // highlight
+        // https://highlightjs.org
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+        $('td.code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+
+        console.log("this theme is from https://github.com/xzhih/hexo-theme-casper")
+    });
+</script>
+
+
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/1.3.9/css/lightgallery.min.css">
+
+
+
+<script src="https://cdn.staticfile.org/lightgallery/1.3.9/js/lightgallery.min.js"></script>
+
+
+<script>
+	$(function () {
+		var postImg = $('#lightgallery').find('img');
+		postImg.addClass('post-img');
+		postImg.each(function () {
+			var imgSrc = $(this).attr('src');
+			$(this).attr('data-src', imgSrc);
+		});
+		$('#lightgallery').lightGallery({selector: '.post-img'});
+	});
+</script>
+
+
+
+
+    </div>
+</body>
+</html>

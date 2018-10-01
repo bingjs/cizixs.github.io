@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html CN>
+
+
+
+
+
+
+
+<head>
+	
+	
+	<link rel="stylesheet" href="/css/allinone.min.css"> 
+
+	
+
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+	<title>kubelet 源码分析：Garbage Collect | Cizixs Write Here</title>
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta name="generator" content="hexo">
+	<meta name="author" content="Cizixs Wu">
+	<meta name="description" content="">
+
+	
+	<meta name="keywords" content="">
+	
+
+	
+	<link rel="shortcut icon" href="https://i.loli.net/2017/11/26/5a19c0b50432e.png">
+	
+
+	
+	<meta name="theme-color" content="#3c484e">
+	<meta name="msapplication-TileColor" content="#3c484e">
+	
+
+	
+
+	
+
+	<meta property="og:site_name" content="Cizixs Write Here">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="kubelet 源码分析：Garbage Collect | Cizixs Write Here">
+	<meta property="og:description" content="">
+	<meta property="og:url" content="http://cizixs.com/2017/06/09/kubelet-source-code-analysis-part-3/">
+
+	
+	<meta property="article:published_time" content="2017-06-09T00:06:00+08:00"/> 
+	<meta property="article:author" content="Cizixs Wu">
+	<meta property="article:published_first" content="Cizixs Write Here, /2017/06/09/kubelet-source-code-analysis-part-3/" />
+	
+
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	
+
+	
+	<script src="https://cdn.staticfile.org/highlight.js/9.10.0/highlight.min.js"></script>
+	
+
+	
+	
+</head>
+<body class="post-template">
+    <div class="site-wrapper">
+        
+
+
+
+
+<header class="site-header outer" style="z-index: 999">
+    <div class="inner">
+        
+<nav class="site-nav"> 
+    <div class="site-nav-left">
+        <ul class="nav">
+            <li>
+                
+                <a href="/" title="Home">Home</a>
+                
+            </li>
+            
+            
+            <li>
+                <a href="/about" title="About">About</a>
+            </li>
+            
+            <li>
+                <a href="/archives" title="Archives">Archives</a>
+            </li>
+            
+            
+        </ul> 
+    </div>
+    <div class="site-nav-right">
+        
+<div class="social-links" >
+    
+    
+    
+    
+    <a class="social-link" title="twitter" href="https://twitter.com/cizixs" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30.063 7.313c-.813 1.125-1.75 2.125-2.875 2.938v.75c0 1.563-.188 3.125-.688 4.625a15.088 15.088 0 0 1-2.063 4.438c-.875 1.438-2 2.688-3.25 3.813a15.015 15.015 0 0 1-4.625 2.563c-1.813.688-3.75 1-5.75 1-3.25 0-6.188-.875-8.875-2.625.438.063.875.125 1.375.125 2.688 0 5.063-.875 7.188-2.5-1.25 0-2.375-.375-3.375-1.125s-1.688-1.688-2.063-2.875c.438.063.813.125 1.125.125.5 0 1-.063 1.5-.25-1.313-.25-2.438-.938-3.313-1.938a5.673 5.673 0 0 1-1.313-3.688v-.063c.813.438 1.688.688 2.625.688a5.228 5.228 0 0 1-1.875-2c-.5-.875-.688-1.813-.688-2.75 0-1.063.25-2.063.75-2.938 1.438 1.75 3.188 3.188 5.25 4.25s4.313 1.688 6.688 1.813a5.579 5.579 0 0 1 1.5-5.438c1.125-1.125 2.5-1.688 4.125-1.688s3.063.625 4.188 1.813a11.48 11.48 0 0 0 3.688-1.375c-.438 1.375-1.313 2.438-2.563 3.188 1.125-.125 2.188-.438 3.313-.875z"/></svg>
+
+    </a>
+    
+    
+</div>
+    </div>
+</nav>
+    </div>
+</header>
+
+
+<main id="site-main" class="site-main outer" role="main">
+    <div class="inner">
+        <header class="post-full-header">
+            <section class="post-full-meta">
+                <time  class="post-full-meta-date" datetime="2017-06-08T16:00:00.000Z" itemprop="datePublished">
+                    2017-06-9
+                </time>
+                
+                <span class="date-divider">/</span>
+                
+                <a href="/categories/blog/">blog</a>&nbsp;&nbsp;
+                
+                
+            </section>
+            <h1 class="post-full-title">kubelet 源码分析：Garbage Collect</h1>
+        </header>
+        <article class="post-full no-image">
+            
+            <section class="post-full-content">
+                <div id="lightgallery" class="markdown-body">
+                    <h2 id="kubernetes-GC-简介"><a href="#kubernetes-GC-简介" class="headerlink" title="kubernetes GC 简介"></a>kubernetes GC 简介</h2><p>作为 kubernetes 中重要的组件，kubelet 接管了节点上容器相关的所有工作。除了最核心的任务：根据 apiserver 分配的 pod 创建容器之外，它还有其他很多事情要做，其中之一就是 GC（Garbage Collect）。</p>
+<p>在运行一段时候之后，节点上会下载很多镜像，也会有很多因为各种原因退出的容器。为了保证节点能够正常运行，kubelet 要防止镜像太多占满磁盘空间，也要防止退出的容器太多导致系统运行缓慢或者出现错误。</p>
+<p>GC 的工作不需要手动干预，kubelet 会周期性去执行，不过在启动 kubelet 进程的时候可以通过参数控制 GC 的策略。这篇文章会介绍 GC 的功能，然后跟着代码看一下它的实现。</p>
+<h3 id="容器-Garbage-Collect"><a href="#容器-Garbage-Collect" class="headerlink" title="容器 Garbage Collect"></a>容器 Garbage Collect</h3><p>退出的容器也会继续占用系统资源，比如还会在文件系统存储很多数据、docker 应用也要占用 CPU 和内存去维护这些容器。docker 本身并不会自动删除已经退出的容器，因此 kubelet 就负起了这个责任。kubelet 容器的回收是为了删除已经退出的容器以节省节点的空间，提升性能。</p>
+<p>容器 GC 虽然有利于空间和性能，但是删除容器也会导致错误现场被清理，不利于 debug 和错误定位，因此不建议把所有退出的容器都删除。因此容器的清理需要一定的策略，主要是告诉 kubelet 你要保存多少已经退出的容器。和容器 GC 有关的可以配置的 kubelet 启动参数包括：</p>
+<ul>
+<li><code>minimum-container-ttl-duration</code>：container 结束多长时间之后才能够被回收，默认是一分钟</li>
+<li><code>maximum-dead-containers-per-container</code>：每个 container 最终可以保存多少个已经结束的容器，默认是 1，设置为负数表示不做限制</li>
+<li><code>maximum-dead-containers</code>：节点上最多能保留多少个结束的容器，默认是 -1，表示不做限制</li>
+</ul>
+<p>也就是说默认情况下，kubelet 会自动每分钟去做容器 GC，容器退出一分钟之后就可以被删除，而且每个容器做多只会保留一个已经退出的历史容器。</p>
+<h3 id="镜像-Garbage-Collect"><a href="#镜像-Garbage-Collect" class="headerlink" title="镜像 Garbage Collect"></a>镜像 Garbage Collect</h3><p>镜像主要占用磁盘空间，虽然 docker 使用镜像分层可以让多个镜像共享存储，但是长时间运行的节点如果下载了很多镜像也会导致占用的存储空间过多。如果镜像导致磁盘被占满，会造成应用无法正常工作。docker 默认也不会做镜像清理，镜像一旦下载就会永远留在本地，除非被手动删除。</p>
+<p>其实很多镜像并没有被实际使用，这些不用的镜像继续占用空间是非常大的浪费，也是巨大的隐患，因此 kubelet 也会周期性地去清理镜像。</p>
+<p>镜像的清理和容器不同，是以占用的空间作为标准的，用户可以配置当镜像占据多大比例的存储空间时才进行清理。清理的时候会优先清理最久没有被使用的镜像，镜像被 pull 下来或者被容器使用都会更新它的最近使用时间。</p>
+<p>启动 kubelet 的时候，可以配置这些参数控制镜像清理的策略：</p>
+<ul>
+<li><code>image-gc-high-threshold</code>：磁盘使用率的上限，当达到这一使用率的时候会触发镜像清理。默认值为 90%</li>
+<li><code>image-gc-low-threshold</code>：磁盘使用率的下限，每次清理直到使用率低于这个值或者没有可以清理的镜像了才会停止.默认值为 80%</li>
+<li><code>minimum-image-ttl-duration</code>：镜像最少这么久没有被使用才会被清理，可以使用 <code>h</code>（小时）、<code>m</code>（分钟）、<code>s</code>（秒）和 <code>ms</code>（毫秒）时间单位进行配置，默认是 <code>2m</code>(两分钟)</li>
+</ul>
+<p>也就是说，默认情况下，当镜像占满所在盘 90% 容量的时候，kubelet 就会进行清理，一直到镜像占用率低于 80% 为止。</p>
+<h2 id="容器-GC-的代码分析"><a href="#容器-GC-的代码分析" class="headerlink" title="容器 GC 的代码分析"></a>容器 GC 的代码分析</h2><p>我们在之前<a href="http://cizixs.com/2017/06/06/kubelet-source-code-analysis-part-1">分析 kubelet 启动</a>的时候讲过，kubelet 会调用 <code>StartGarbageCollection</code> 启动 GC：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kl *Kubelet)</span> <span class="title">StartGarbageCollection</span><span class="params">()</span></span> &#123;</span><br><span class="line">	loggedContainerGCFailure := <span class="literal">false</span></span><br><span class="line">	<span class="keyword">go</span> wait.Until(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">if</span> err := kl.containerGC.GarbageCollect(kl.sourcesReady.AllReady()); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			kl.recorder.Eventf(kl.nodeRef, api.EventTypeWarning, events.ContainerGCFailed, err.Error())</span><br><span class="line">			loggedContainerGCFailure = <span class="literal">true</span></span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">var</span> vLevel glog.Level = <span class="number">4</span></span><br><span class="line">			<span class="keyword">if</span> loggedContainerGCFailure &#123;</span><br><span class="line">				vLevel = <span class="number">1</span></span><br><span class="line">				loggedContainerGCFailure = <span class="literal">false</span></span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			glog.V(vLevel).Infof(<span class="string">"Container garbage collection succeeded"</span>)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;, ContainerGCPeriod, wait.NeverStop)</span><br><span class="line"></span><br><span class="line">	loggedImageGCFailure := <span class="literal">false</span></span><br><span class="line">	<span class="keyword">go</span> wait.Until(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">if</span> err := kl.imageManager.GarbageCollect(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			kl.recorder.Eventf(kl.nodeRef, api.EventTypeWarning, events.ImageGCFailed, err.Error())</span><br><span class="line">			loggedImageGCFailure = <span class="literal">true</span></span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">var</span> vLevel glog.Level = <span class="number">4</span></span><br><span class="line">			<span class="keyword">if</span> loggedImageGCFailure &#123;</span><br><span class="line">				vLevel = <span class="number">1</span></span><br><span class="line">				loggedImageGCFailure = <span class="literal">false</span></span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			glog.V(vLevel).Infof(<span class="string">"Image garbage collection succeeded"</span>)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;, ImageGCPeriod, wait.NeverStop)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>容器 GC 和镜像 GC 分别是在独立的 goroutine 中执行的，我们先来分析容器 GC 的过程。containerGC 的创建是在 <code>pkg/kubelet/kubelet.go#NewMainKublet</code> 中完成的，对应的代码有：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">containerGCPolicy := kubecontainer.ContainerGCPolicy&#123;</span><br><span class="line">	MinAge:             kubeCfg.MinimumGCAge.Duration,</span><br><span class="line">	MaxPerPodContainer: <span class="keyword">int</span>(kubeCfg.MaxPerPodContainerCount),</span><br><span class="line">	MaxContainers:      <span class="keyword">int</span>(kubeCfg.MaxContainerCount),</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">containerGC, err := kubecontainer.NewContainerGC(klet.containerRuntime, containerGCPolicy)</span><br><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">&#125;</span><br><span class="line">klet.containerGC = containerGC</span><br><span class="line">klet.containerDeletor = newPodContainerDeletor(klet.containerRuntime, integer.IntMax(containerGCPolicy.MaxPerPodContainer, minDeadContainerInPod))</span><br></pre></td></tr></table></figure>
+<p><code>containerGCPolicy</code> 对应了我们上面提到的容器 GC 的策略，具体的初始化和实现的代码在 <code>pkg/kubelet/container/container_gc.go</code> 文件中：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> ContainerGCPolicy <span class="keyword">struct</span> &#123;</span><br><span class="line">	MinAge time.Duration</span><br><span class="line">	MaxPerPodContainer <span class="keyword">int</span></span><br><span class="line">	MaxContainers <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> ContainerGC <span class="keyword">interface</span> &#123;</span><br><span class="line">	GarbageCollect(allSourcesReady <span class="keyword">bool</span>) error</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> realContainerGC <span class="keyword">struct</span> &#123;</span><br><span class="line">	runtime Runtime</span><br><span class="line">	policy ContainerGCPolicy</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewContainerGC</span><span class="params">(runtime Runtime, policy ContainerGCPolicy)</span> <span class="params">(ContainerGC, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> policy.MinAge &lt; <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">"invalid minimum garbage collection age: %v"</span>, policy.MinAge)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> &amp;realContainerGC&#123;</span><br><span class="line">		runtime: runtime,</span><br><span class="line">		policy:  policy,</span><br><span class="line">	&#125;, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(cgc *realContainerGC)</span> <span class="title">GarbageCollect</span><span class="params">(allSourcesReady <span class="keyword">bool</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> cgc.runtime.GarbageCollect(cgc.policy, allSourcesReady)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里的代码只是一层封装，最终会调用 <code>runtime.GarbageCollect</code>，对于 docker 来说，对应的代码是 <code>pkg/kubelet/dockertools/docker_manager.go</code>：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(dm *DockerManager)</span> <span class="title">GarbageCollect</span><span class="params">(gcPolicy kubecontainer.ContainerGCPolicy, allSourcesReady <span class="keyword">bool</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> dm.containerGC.GarbageCollect(gcPolicy, allSourcesReady)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>内容又被包装到 <code>dm.containerGC</code>，我们找到创建 dockerManager 的代码，看一下 <code>containerGC</code> 初始化部分：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewDockerManager</span><span class="params">(...)</span></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    dm.containerGC = NewContainerGC(client, podGetter, containerLogsDir)</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这才是具体的 docker container GC 的实现， 对应的代码在 <code>pkg/kubelet/dockertools/container_gc.go#NewContainerGC</code>：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> containerGC <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">// client 用来和 docker API 交互，比如获取容器列表、查看某个容器的详细信息等</span></span><br><span class="line">	client           DockerInterface</span><br><span class="line">	podGetter        podGetter</span><br><span class="line">	containerLogsDir <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewContainerGC</span><span class="params">(client DockerInterface, podGetter podGetter, containerLogsDir <span class="keyword">string</span>)</span> *<span class="title">containerGC</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;containerGC&#123;</span><br><span class="line">		client:           client,</span><br><span class="line">		podGetter:        podGetter,</span><br><span class="line">		containerLogsDir: containerLogsDir,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(cgc *containerGC)</span> <span class="title">GarbageCollect</span><span class="params">(gcPolicy kubecontainer.ContainerGCPolicy, allSourcesReady <span class="keyword">bool</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="comment">// 找到可以清理的容器列表，条件是不在运行并且创建时间超过 MinAge。</span></span><br><span class="line">	<span class="comment">// 这个步骤会过滤掉不是 kubelet 管理的容器，并且把容器按照创建时间进行排序（也就是说最早创建的容器会先被删除）</span></span><br><span class="line">	<span class="comment">// evictUnits 返回的是需要被正确回收的，第二个参数是 kubelet 无法识别的容器</span></span><br><span class="line">	evictUnits, unidentifiedContainers, err := cgc.evictableContainers(gcPolicy.MinAge)</span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 删除无法识别的容器</span></span><br><span class="line">	<span class="keyword">for</span> _, container := <span class="keyword">range</span> unidentifiedContainers &#123;</span><br><span class="line">		glog.Infof(<span class="string">"Removing unidentified dead container %q with ID %q"</span>, container.name, container.id)</span><br><span class="line">		err = cgc.client.RemoveContainer(container.id, dockertypes.ContainerRemoveOptions&#123;RemoveVolumes: <span class="literal">true</span>&#125;)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			glog.Warningf(<span class="string">"Failed to remove unidentified dead container %q: %v"</span>, container.name, err)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果 pod 已经不存在了，就删除其中所有的容器</span></span><br><span class="line">	<span class="keyword">if</span> allSourcesReady &#123;</span><br><span class="line">		<span class="keyword">for</span> key, unit := <span class="keyword">range</span> evictUnits &#123;</span><br><span class="line">			<span class="keyword">if</span> cgc.isPodDeleted(key.uid) &#123;</span><br><span class="line">				cgc.removeOldestN(unit, <span class="built_in">len</span>(unit)) <span class="comment">// Remove all.</span></span><br><span class="line">				<span class="built_in">delete</span>(evictUnits, key)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 执行 GC 策略，保证每个 POD 最多只能保存 MaxPerPodContainer 个已经退出的容器</span></span><br><span class="line">	<span class="keyword">if</span> gcPolicy.MaxPerPodContainer &gt;= <span class="number">0</span> &#123;</span><br><span class="line">		cgc.enforceMaxContainersPerEvictUnit(evictUnits, gcPolicy.MaxPerPodContainer)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 执行 GC 策略，保证节点上最多有 MaxContainers 个已经退出的容器</span></span><br><span class="line">	<span class="comment">// 先把最大容器数量平分到 pod，保证每个 pod 在平均数量以下；如果还不满足要求的数量，就按照时间顺序先删除最旧的容器</span></span><br><span class="line">	<span class="keyword">if</span> gcPolicy.MaxContainers &gt;= <span class="number">0</span> &amp;&amp; evictUnits.NumContainers() &gt; gcPolicy.MaxContainers &#123;</span><br><span class="line">		<span class="comment">// 先按照 pod 进行删除，每个 pod 能保留的容器数是总数的平均值</span></span><br><span class="line">		numContainersPerEvictUnit := gcPolicy.MaxContainers / evictUnits.NumEvictUnits()</span><br><span class="line">		<span class="keyword">if</span> numContainersPerEvictUnit &lt; <span class="number">1</span> &#123;</span><br><span class="line">			numContainersPerEvictUnit = <span class="number">1</span></span><br><span class="line">		&#125;</span><br><span class="line">		cgc.enforceMaxContainersPerEvictUnit(evictUnits, numContainersPerEvictUnit)</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 如果还不满足数量要求，按照容器进行删除，先删除最老的</span></span><br><span class="line">		numContainers := evictUnits.NumContainers()</span><br><span class="line">		<span class="keyword">if</span> numContainers &gt; gcPolicy.MaxContainers &#123;</span><br><span class="line">			flattened := <span class="built_in">make</span>([]containerGCInfo, <span class="number">0</span>, numContainers)</span><br><span class="line">			<span class="keyword">for</span> uid := <span class="keyword">range</span> evictUnits &#123;</span><br><span class="line">				flattened = <span class="built_in">append</span>(flattened, evictUnits[uid]...)</span><br><span class="line">			&#125;</span><br><span class="line">			sort.Sort(byCreated(flattened))</span><br><span class="line"></span><br><span class="line">			cgc.removeOldestN(flattened, numContainers-gcPolicy.MaxContainers)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	......</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码才是容器 GC 的核心逻辑，它做的事情是这样的：</p>
+<ul>
+<li>先从正在运行的容器中找到可以被清理的，包括符合清理条件或者不被 kubelet 识别的容器</li>
+<li>直接删除不能识别的容器，以及 pod 信息已经不存在的容器</li>
+<li>根据配置的容器删除策略，对剩下的容器进行删除</li>
+</ul>
+<h2 id="镜像-GC-的代码"><a href="#镜像-GC-的代码" class="headerlink" title="镜像 GC 的代码"></a>镜像 GC 的代码</h2><p>看过了容器 GC 的代码逻辑，我们再来看看镜像 GC 的逻辑。因为两者非常类似，这里略过参数的引用、对象的初始化和调用链分析，直接分析最核心的逻辑代码，这部分内容在 <code>pkg/kubelet/images/image_gc_manager.go</code> 文件中：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> ImageGCManager <span class="keyword">interface</span> &#123;</span><br><span class="line">	GarbageCollect() error</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Start async garbage collection of images.</span></span><br><span class="line">	Start() error</span><br><span class="line"></span><br><span class="line">	GetImageList() ([]kubecontainer.Image, error)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Delete all unused images and returns the number of bytes freed. The number of bytes freed is always returned.</span></span><br><span class="line">	DeleteUnusedImages() (<span class="keyword">int64</span>, error)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 镜像 GC 策略</span></span><br><span class="line"><span class="keyword">type</span> ImageGCPolicy <span class="keyword">struct</span> &#123;</span><br><span class="line">	HighThresholdPercent <span class="keyword">int</span></span><br><span class="line">	LowThresholdPercent <span class="keyword">int</span></span><br><span class="line">	MinAge time.Duration</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> realImageGCManager <span class="keyword">struct</span> &#123;</span><br><span class="line">	runtime container.Runtime</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 记录了当前使用的镜像</span></span><br><span class="line">	imageRecords     <span class="keyword">map</span>[<span class="keyword">string</span>]*imageRecord</span><br><span class="line">	imageRecordsLock sync.Mutex</span><br><span class="line"></span><br><span class="line">	policy ImageGCPolicy</span><br><span class="line">	</span><br><span class="line">	cadvisor cadvisor.Interface</span><br><span class="line">	recorder record.EventRecorder</span><br><span class="line">	nodeRef *api.ObjectReference</span><br><span class="line">	initialized <span class="keyword">bool</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// imageCache is the cache of latest image list.</span></span><br><span class="line">	imageCache imageCache</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> imageRecord <span class="keyword">struct</span> &#123;</span><br><span class="line">	firstDetected time.Time</span><br><span class="line">	lastUsed time.Time</span><br><span class="line">	<span class="comment">// Size of the image in bytes.</span></span><br><span class="line">	size <span class="keyword">int64</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(im *realImageGCManager)</span> <span class="title">Start</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">go</span> wait.Until(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="comment">// Initial detection make detected time "unknown" in the past.</span></span><br><span class="line">		<span class="keyword">var</span> ts time.Time</span><br><span class="line">		<span class="keyword">if</span> im.initialized &#123;</span><br><span class="line">			ts = time.Now()</span><br><span class="line">		&#125;</span><br><span class="line">		err := im.detectImages(ts)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			glog.Warningf(<span class="string">"[imageGCManager] Failed to monitor images: %v"</span>, err)</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			im.initialized = <span class="literal">true</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;, <span class="number">5</span>*time.Minute, wait.NeverStop)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Start a goroutine periodically updates image cache.</span></span><br><span class="line">	<span class="keyword">go</span> wait.Until(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		images, err := im.runtime.ListImages()</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			glog.Warningf(<span class="string">"[imageGCManager] Failed to update image list: %v"</span>, err)</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			im.imageCache.set(images)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;, <span class="number">30</span>*time.Second, wait.NeverStop)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(im *realImageGCManager)</span> <span class="title">GarbageCollect</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="comment">// 从 cadvisor 中获取镜像所在文件系统的信息，包括磁盘的容量和当前的使用量</span></span><br><span class="line">	fsInfo, err := im.cadvisor.ImagesFsInfo()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	capacity := <span class="keyword">int64</span>(fsInfo.Capacity)</span><br><span class="line">	available := <span class="keyword">int64</span>(fsInfo.Available)</span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果镜像的磁盘使用率达到了设定的最高阈值，就进行清理工作，直到使用率</span></span><br><span class="line">	usagePercent := <span class="number">100</span> - <span class="keyword">int</span>(available*<span class="number">100</span>/capacity)</span><br><span class="line">	<span class="keyword">if</span> usagePercent &gt;= im.policy.HighThresholdPercent &#123;</span><br><span class="line">		amountToFree := capacity*<span class="keyword">int64</span>(<span class="number">100</span>-im.policy.LowThresholdPercent)/<span class="number">100</span> - available</span><br><span class="line">		glog.Infof(<span class="string">"[imageGCManager]: Disk usage on %q (%s) is at %d%% which is over the high threshold (%d%%). Trying to free %d bytes"</span>, fsInfo.Device, fsInfo.Mountpoint, usagePercent, im.policy.HighThresholdPercent, amountToFree)</span><br><span class="line">		freed, err := im.freeSpace(amountToFree, time.Now())</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> err</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> freed &lt; amountToFree &#123;</span><br><span class="line">			err := fmt.Errorf(<span class="string">"failed to garbage collect required amount of images. Wanted to free %d, but freed %d"</span>, amountToFree, freed)</span><br><span class="line">			im.recorder.Eventf(im.nodeRef, api.EventTypeWarning, events.FreeDiskSpaceFailed, err.Error())</span><br><span class="line">			<span class="keyword">return</span> err</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(im *realImageGCManager)</span> <span class="title">DeleteUnusedImages</span><span class="params">()</span> <span class="params">(<span class="keyword">int64</span>, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> im.freeSpace(math.MaxInt64, time.Now())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(im *realImageGCManager)</span> <span class="title">freeSpace</span><span class="params">(bytesToFree <span class="keyword">int64</span>, freeTime time.Time)</span> <span class="params">(<span class="keyword">int64</span>, error)</span></span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 更新镜像记录列表中的数据，添加刚发现的镜像，移除已经不存在的镜像</span></span><br><span class="line">	err := im.detectImages(freeTime)</span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">	im.imageRecordsLock.Lock()</span><br><span class="line">	<span class="keyword">defer</span> im.imageRecordsLock.Unlock()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 根据镜像的最近使用时间和最近发现时间进行排序</span></span><br><span class="line">	images := <span class="built_in">make</span>([]evictionInfo, <span class="number">0</span>, <span class="built_in">len</span>(im.imageRecords))</span><br><span class="line">	<span class="keyword">for</span> image, record := <span class="keyword">range</span> im.imageRecords &#123;</span><br><span class="line">		images = <span class="built_in">append</span>(images, evictionInfo&#123;</span><br><span class="line">			id:          image,</span><br><span class="line">			imageRecord: *record,</span><br><span class="line">		&#125;)</span><br><span class="line">	&#125;</span><br><span class="line">	sort.Sort(byLastUsedAndDetected(images))</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Delete unused images until we've freed up enough space.</span></span><br><span class="line">	<span class="keyword">var</span> deletionErrors []error</span><br><span class="line">	spaceFreed := <span class="keyword">int64</span>(<span class="number">0</span>)</span><br><span class="line">	<span class="keyword">for</span> _, image := <span class="keyword">range</span> images &#123;</span><br><span class="line">		......</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 略过最近使用时间距离现在小于设置的 MinAge 的镜像</span></span><br><span class="line">		<span class="keyword">if</span> freeTime.Sub(image.firstDetected) &lt; im.policy.MinAge &#123;</span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 删除镜像并更新 imageRecords 对象中缓存的镜像信息，记录删除的镜像大小</span></span><br><span class="line">		err := im.runtime.RemoveImage(container.ImageSpec&#123;Image: image.id&#125;)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			deletionErrors = <span class="built_in">append</span>(deletionErrors, err)</span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="built_in">delete</span>(im.imageRecords, image.id)</span><br><span class="line">		spaceFreed += image.size</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果删除的镜像大小满足需求，停止继续删除</span></span><br><span class="line">		<span class="keyword">if</span> spaceFreed &gt;= bytesToFree &#123;</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(deletionErrors) &gt; <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> spaceFreed, fmt.Errorf(<span class="string">"wanted to free %d, but freed %d space with errors in image deletion: %v"</span>, bytesToFree, spaceFreed, errors.NewAggregate(deletionErrors))</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> spaceFreed, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>realImageGCManager</code> 缓存了当前节点使用的镜像信息，并在 <code>Start()</code> 方法中启动两个 goroutine 周期性地去更新缓存的内容。<code>GarbageCollect</code> 的逻辑是这样的：</p>
+<ul>
+<li>调用 cAdvisor 接口获取镜像所在磁盘的文件系统信息，根据当前的使用量和配置的 GC 策略确定是否需要进行清理</li>
+<li>如果需要清理，计算需要清理的总大小，调用 <code>freeSpace</code> 进行镜像清理工作</li>
+<li>把所有可以清理的镜像根据使用时间进行排序，进行逐个清理，知道清理的镜像总大小满足需求才停止</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>容器和镜像 GC 的内容相对比较独立，而且逻辑也不是很复杂，源代码也很容易理解。但这部分内容却非常重要，影响到节点的正常工作状况，最后总结几点需要注意的地方：</p>
+<ul>
+<li>默认情况下，container GC 是每分钟进行一次，image GC 是每五分钟一次，如果有不同的需要，可以通过 kubelet 的启动参数进行修改</li>
+<li>不要手动清理镜像和容器，因为 kubelet 运行的时候会保存当前节点上镜像和容器的缓存，并定时更新。手动清理镜像和容器会让 kubelet 做出误判，带来不确定的问题</li>
+<li>不是 kubelet 管理的容器不在 GC 的范围内，也就是说用户手动通过 docker 创建的容器不会被 kubelet 删除</li>
+</ul>
+<p><strong>NOTE</strong>：GC 机制后面会被 eviction 机制替代，可以在官方文档查看 <a href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/kubelet-eviction.md" target="_blank" rel="noopener"> eviction 的设计</a>。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://kubernetes.io/docs/concepts/cluster-administration/kubelet-garbage-collection/" target="_blank" rel="noopener">Configuring kubelet Garbage Collection</a></li>
+<li><a href="https://kubernetes.io/docs/tasks/administer-cluster/out-of-resource/" target="_blank" rel="noopener">Configuring Out Of Resource Handling</a></li>
+<li><a href="https://blog.kublr.com/learn-how-kubelet-eviction-policies-impact-cluster-rebalancing-2e976ebc53ea" target="_blank" rel="noopener">Learn how kubelet eviction policies impact cluster rebalancing</a></li>
+<li><a href="https://kubernetes.cn/topics/48" target="_blank" rel="noopener">谈 Kubernetes 如何控制 Node 的资源使用</a></li>
+<li><a href="http://www.cnblogs.com/openxxs/p/5275051.html" target="_blank" rel="noopener">Kubernetes中的垃圾回收机制</a></li>
+<li><a href="http://dockone.io/article/2134" target="_blank" rel="noopener">Kubelet源码分析（三）：Garbage Collection</a></li>
+<li><a href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/kubelet-eviction.md" target="_blank" rel="noopener">Kubelet - Eviction Policy Proposals Doc</a></li>
+<li><a href="https://github.com/kubernetes/kubernetes/issues/31362" target="_blank" rel="noopener">Kubelet evictions - whats remaining?</a></li>
+</ul>
+
+                </div>
+            </section>
+        </article>
+    </div>
+    
+<nav class="pagination">
+    
+    
+    <a class="prev-post" title="kubelet 源码分析：statusManager 和 probeManager" href="/2017/06/12/kubelet-source-code-analysis-part4-status-manager/">
+        ← kubelet 源码分析：statusManager 和 probeManager
+    </a>
+    
+    <span class="prev-next-post">•</span>
+    
+    <a class="next-post" title="kubelet 源码分析：pod 新建流程" href="/2017/06/07/kubelet-source-code-analysis-part-2/">
+        kubelet 源码分析：pod 新建流程 →
+    </a>
+    
+    
+</nav>
+    
+</main>
+
+<div class="t-g-control">
+    <div class="gotop">
+        <svg class="icon" width="32px" height="32px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M793.024 710.272a32 32 0 1 0 45.952-44.544l-310.304-320a32 32 0 0 0-46.4 0.48l-297.696 320a32 32 0 0 0 46.848 43.584l274.752-295.328 286.848 295.808z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="toc-control">
+        <svg class="icon toc-icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M779.776 480h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M779.776 672h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M256 288a32 32 0 1 0 0 64 32 32 0 0 0 0-64M392.576 352h387.2a32 32 0 0 0 0-64h-387.2a32 32 0 0 0 0 64M256 480a32 32 0 1 0 0 64 32 32 0 0 0 0-64M256 672a32 32 0 1 0 0 64 32 32 0 0 0 0-64" fill="#8a8a8a" /></svg>
+        <svg class="icon toc-close" style="display: none;" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 960c-247.039484 0-448-200.960516-448-448S264.960516 64 512 64 960 264.960516 960 512 759.039484 960 512 960zM512 128.287273c-211.584464 0-383.712727 172.128262-383.712727 383.712727 0 211.551781 172.128262 383.712727 383.712727 383.712727 211.551781 0 383.712727-172.159226 383.712727-383.712727C895.712727 300.415536 723.551781 128.287273 512 128.287273z" fill="#8a8a8a" /><path d="M557.05545 513.376159l138.367639-136.864185c12.576374-12.416396 12.672705-32.671738 0.25631-45.248112s-32.704421-12.672705-45.248112-0.25631l-138.560301 137.024163-136.447897-136.864185c-12.512727-12.512727-32.735385-12.576374-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.248112l136.255235 136.671523-137.376804 135.904314c-12.576374 12.447359-12.672705 32.671738-0.25631 45.248112 6.271845 6.335493 14.496116 9.504099 22.751351 9.504099 8.12794 0 16.25588-3.103239 22.496761-9.247789l137.567746-136.064292 138.687596 139.136568c6.240882 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.05545 513.376159z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="gobottom">
+        <svg class="icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M231.424 346.208a32 32 0 0 0-46.848 43.584l297.696 320a32 32 0 0 0 46.4 0.48l310.304-320a32 32 0 1 0-45.952-44.544l-286.848 295.808-274.752-295.36z" fill="#8a8a8a" /></svg>
+    </div>
+</div>
+<div class="toc-main" style="right: -100%">
+    <div class="post-toc">
+        <span>TOC</span>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#kubernetes-GC-简介"><span class="toc-text">kubernetes GC 简介</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#容器-Garbage-Collect"><span class="toc-text">容器 Garbage Collect</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#镜像-Garbage-Collect"><span class="toc-text">镜像 Garbage Collect</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#容器-GC-的代码分析"><span class="toc-text">容器 GC 的代码分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#镜像-GC-的代码"><span class="toc-text">镜像 GC 的代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-text">参考资料</span></a></li></ol>
+    </div>
+</div>
+
+
+
+        
+
+<aside class="read-next outer">
+    <div class="inner">
+        <div class="read-next-feed">
+            
+            
+
+<article class="read-next-card"  style="background-image: url(https://i.loli.net/2017/11/26/5a19c56faa29f.jpg)"  >
+  <header class="read-next-card-header">
+    <small class="read-next-card-header-sitetitle">&mdash; Cizixs Write Here &mdash;</small>
+    <h3 class="read-next-card-header-title">Recent Posts</h3>
+  </header>
+  <div class="read-next-divider">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M13 14.5s2 3 5 3 5.5-2.463 5.5-5.5S21 6.5 18 6.5c-5 0-7 11-12 11C2.962 17.5.5 15.037.5 12S3 6.5 6 6.5s4.5 3.5 4.5 3.5"/>
+    </svg>
+  </div>
+  <div class="read-next-card-content">
+    <ul>
+      
+      
+      
+      <li>
+        <a href="/2018/08/26/what-is-istio/">什么是 istio</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/08/25/knative-serverless-platform/">serverless 平台 knative 简介</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/06/25/kubernetes-resource-management/">kubernetes 资源管理概述</a>
+      </li>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+  </div>
+  <footer class="read-next-card-footer">
+    <a href="/archives">  MORE  → </a>
+  </footer>
+</article>
+
+            
+            
+            
+        </div>
+    </div>
+</aside>
+
+<footer class="site-footer outer">
+	<div class="site-footer-content inner">
+		<section class="copyright">
+			<a href="/" title="Cizixs Write Here">Cizixs Write Here</a>
+			&copy; 2018
+		</section>
+		<nav class="site-footer-nav">
+			
+            <a href="https://hexo.io" title="Hexo" target="_blank" rel="noopener">Hexo</a>
+            <a href="https://github.com/xzhih/hexo-theme-casper" title="Casper" target="_blank" rel="noopener">Casper</a>
+        </nav>
+    </div>
+</footer>
+
+
+
+
+
+
+<div class="floating-header" >
+	<div class="floating-header-logo">
+        <a href="/" title="Cizixs Write Here">
+			
+                <img src="https://i.loli.net/2017/11/26/5a19c0b50432e.png" alt="Cizixs Write Here icon" />
+			
+            <span>Cizixs Write Here</span>
+        </a>
+    </div>
+    <span class="floating-header-divider">&mdash;</span>
+    <div class="floating-header-title">kubelet 源码分析：Garbage Collect</div>
+    <progress class="progress" value="0">
+        <div class="progress-container">
+            <span class="progress-bar"></span>
+        </div>
+    </progress>
+</div>
+<script>
+   $(document).ready(function () {
+    var progressBar = document.querySelector('progress');
+    var header = document.querySelector('.floating-header');
+    var title = document.querySelector('.post-full-title');
+    var lastScrollY = window.scrollY;
+    var lastWindowHeight = window.innerHeight;
+    var lastDocumentHeight = $(document).height();
+    var ticking = false;
+
+    function onScroll() {
+        lastScrollY = window.scrollY;
+        requestTick();
+    }
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(update);
+        }
+        ticking = true;
+    }
+    function update() {
+        var rect = title.getBoundingClientRect();
+        var trigger = rect.top + window.scrollY;
+        var triggerOffset = title.offsetHeight + 35;
+        var progressMax = lastDocumentHeight - lastWindowHeight;
+            // show/hide floating header
+            if (lastScrollY >= trigger + triggerOffset) {
+                header.classList.add('floating-active');
+            } else {
+                header.classList.remove('floating-active');
+            }
+            progressBar.setAttribute('max', progressMax);
+            progressBar.setAttribute('value', lastScrollY);
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', onScroll, {passive: true});
+        update();
+
+        // TOC
+        var width = $('.toc-main').width();
+        $('.toc-control').click(function () {
+            if ($('.t-g-control').css('width')=="50px") {
+                if ($('.t-g-control').css('right')=="0px") {
+                    $('.t-g-control').animate({right: width}, "slow");
+                    $('.toc-main').animate({right: 0}, "slow");
+                    toc_icon()
+                } else {
+                    $('.t-g-control').animate({right: 0}, "slow");
+                    $('.toc-main').animate({right: -width}, "slow");
+                    toc_icon()
+                }
+            } else {
+                if ($('.toc-main').css('right')=="0px") {
+                    $('.toc-main').slideToggle("fast", toc_icon());
+                } else {
+                    $('.toc-main').css('right', '0px');
+                    toc_icon()
+                }
+            }
+        })
+
+        function toc_icon() {
+            if ($('.toc-icon').css('display')=="none") {
+                $('.toc-close').hide();
+                $('.toc-icon').show();
+            } else {
+                $('.toc-icon').hide();
+                $('.toc-close').show();
+            }
+        }
+
+        $('.gotop').click(function(){
+            $('html,body').animate({scrollTop:$('.post-full-header').offset().top}, 800);
+        });
+        $('.gobottom').click(function () {
+            $('html,body').animate({scrollTop:$('.pagination').offset().top}, 800);
+        });
+
+        // highlight
+        // https://highlightjs.org
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+        $('td.code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+
+        console.log("this theme is from https://github.com/xzhih/hexo-theme-casper")
+    });
+</script>
+
+
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/1.3.9/css/lightgallery.min.css">
+
+
+
+<script src="https://cdn.staticfile.org/lightgallery/1.3.9/js/lightgallery.min.js"></script>
+
+
+<script>
+	$(function () {
+		var postImg = $('#lightgallery').find('img');
+		postImg.addClass('post-img');
+		postImg.each(function () {
+			var imgSrc = $(this).attr('src');
+			$(this).attr('data-src', imgSrc);
+		});
+		$('#lightgallery').lightGallery({selector: '.post-img'});
+	});
+</script>
+
+
+
+
+    </div>
+</body>
+</html>

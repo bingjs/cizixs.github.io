@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html CN>
+
+
+
+
+
+
+
+<head>
+	
+	
+	<link rel="stylesheet" href="/css/allinone.min.css"> 
+
+	
+
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+	<title>etcd go 语言 v2 客户端开发介绍 | Cizixs Write Here</title>
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta name="generator" content="hexo">
+	<meta name="author" content="Cizixs Wu">
+	<meta name="description" content="">
+
+	
+	<meta name="keywords" content="">
+	
+
+	
+	<link rel="shortcut icon" href="https://i.loli.net/2017/11/26/5a19c0b50432e.png">
+	
+
+	
+	<meta name="theme-color" content="#3c484e">
+	<meta name="msapplication-TileColor" content="#3c484e">
+	
+
+	
+
+	
+
+	<meta property="og:site_name" content="Cizixs Write Here">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="etcd go 语言 v2 客户端开发介绍 | Cizixs Write Here">
+	<meta property="og:description" content="">
+	<meta property="og:url" content="http://cizixs.com/2017/12/03/etcd-v2-go-client/">
+
+	
+	<meta property="article:published_time" content="2017-12-03T00:12:00+08:00"/> 
+	<meta property="article:author" content="Cizixs Wu">
+	<meta property="article:published_first" content="Cizixs Write Here, /2017/12/03/etcd-v2-go-client/" />
+	
+
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	
+
+	
+	<script src="https://cdn.staticfile.org/highlight.js/9.10.0/highlight.min.js"></script>
+	
+
+	
+	
+</head>
+<body class="post-template">
+    <div class="site-wrapper">
+        
+
+
+
+
+<header class="site-header outer" style="z-index: 999">
+    <div class="inner">
+        
+<nav class="site-nav"> 
+    <div class="site-nav-left">
+        <ul class="nav">
+            <li>
+                
+                <a href="/" title="Home">Home</a>
+                
+            </li>
+            
+            
+            <li>
+                <a href="/about" title="About">About</a>
+            </li>
+            
+            <li>
+                <a href="/archives" title="Archives">Archives</a>
+            </li>
+            
+            
+        </ul> 
+    </div>
+    <div class="site-nav-right">
+        
+<div class="social-links" >
+    
+    
+    
+    
+    <a class="social-link" title="twitter" href="https://twitter.com/cizixs" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30.063 7.313c-.813 1.125-1.75 2.125-2.875 2.938v.75c0 1.563-.188 3.125-.688 4.625a15.088 15.088 0 0 1-2.063 4.438c-.875 1.438-2 2.688-3.25 3.813a15.015 15.015 0 0 1-4.625 2.563c-1.813.688-3.75 1-5.75 1-3.25 0-6.188-.875-8.875-2.625.438.063.875.125 1.375.125 2.688 0 5.063-.875 7.188-2.5-1.25 0-2.375-.375-3.375-1.125s-1.688-1.688-2.063-2.875c.438.063.813.125 1.125.125.5 0 1-.063 1.5-.25-1.313-.25-2.438-.938-3.313-1.938a5.673 5.673 0 0 1-1.313-3.688v-.063c.813.438 1.688.688 2.625.688a5.228 5.228 0 0 1-1.875-2c-.5-.875-.688-1.813-.688-2.75 0-1.063.25-2.063.75-2.938 1.438 1.75 3.188 3.188 5.25 4.25s4.313 1.688 6.688 1.813a5.579 5.579 0 0 1 1.5-5.438c1.125-1.125 2.5-1.688 4.125-1.688s3.063.625 4.188 1.813a11.48 11.48 0 0 0 3.688-1.375c-.438 1.375-1.313 2.438-2.563 3.188 1.125-.125 2.188-.438 3.313-.875z"/></svg>
+
+    </a>
+    
+    
+</div>
+    </div>
+</nav>
+    </div>
+</header>
+
+
+<main id="site-main" class="site-main outer" role="main">
+    <div class="inner">
+        <header class="post-full-header">
+            <section class="post-full-meta">
+                <time  class="post-full-meta-date" datetime="2017-12-02T16:00:00.000Z" itemprop="datePublished">
+                    2017-12-3
+                </time>
+                
+                <span class="date-divider">/</span>
+                
+                <a href="/categories/blog/">blog</a>&nbsp;&nbsp;
+                
+                
+            </section>
+            <h1 class="post-full-title">etcd go 语言 v2 客户端开发介绍</h1>
+        </header>
+        <article class="post-full no-image">
+            
+            <section class="post-full-content">
+                <div id="lightgallery" class="markdown-body">
+                    <h2 id="etcd-介绍"><a href="#etcd-介绍" class="headerlink" title="etcd 介绍"></a>etcd 介绍</h2><p>很久之前写过<a href="http://cizixs.com/2016/08/02/intro-to-etcd">一篇 etcd 的介绍文章</a>，主要是讲 etcd 的概念和使用方式，这篇文章介绍如何使用 go 语言进行 etcd 的开发工作。</p>
+<p>etcd 目前最新版 API 是 v3 版本，之前被广泛使用的 API 为 v2 版本。这篇文章会介绍 v2 版本 go 语言客户端的使用，涉及了最常见的增删查改和监听操作。</p>
+<h2 id="v2-版本使用"><a href="#v2-版本使用" class="headerlink" title="v2 版本使用"></a>v2 版本使用</h2><p><a href="http://cizixs.com/2016/08/02/intro-to-etcd">之前的文章</a> 已经对 etcd v2 版本的概念和 API 介绍得很详细了，这里再总结一下。</p>
+<ul>
+<li>作为分布式的键值存储，etcd v2 存储的 key 和 value 都是字符串类型。其中 key 以类 unix 文件系统的结构存储，分为目录和文件，目录下面可以嵌套目录和文件，文件只能对应某个值（value）。可以对 key 进行创建、删除和修改的工作</li>
+<li>可以为 key（包括目录和文件）设置一个 TTL 值，也就是过期时间，等到时间过了，值自动被删除</li>
+<li>提供了 CAS(compare And Set）和 CAD（Compare And Delete）两种原子操作，可以实现比较然后执行某个动作的逻辑</li>
+<li>可以监听某个文件和目录，当里面的值发生变化时，监听者会立即收到通知</li>
+</ul>
+<p>概念讲完了，下面看看如何用 go 语言进行 etcd 的开发工作。etcd 官方就维护了一个 etcd go 语言客户端，在 <code>github.com/coreos/etcd/client</code>，我们可以用下面的语句把它导入到 go 程序中：</p>
+<figure class="highlight clean"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span>	(</span><br><span class="line">    ...</span><br><span class="line">    etcd <span class="string">"github.com/coreos/etcd/client"</span></span><br><span class="line">    <span class="string">"github.com/coreos/etcd/pkg/transport"</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>我们给它取了个别名 <code>etcd</code>，之后后面的程序中我们可以用 <code>etcd</code> 而不是 <code>client</code> 来使用它提供的功能（这样程序的可读性更好）。</p>
+<h3 id="创建-client-客户端"><a href="#创建-client-客户端" class="headerlink" title="创建 client 客户端"></a>创建 client 客户端</h3><p>首先，我们要创建一个 etcd 的 Client，可以使用 <code>etcd.New()</code> 函数，它接受 <code>etcd.Config</code> 作为参数，后者主要的参数包括：</p>
+<ul>
+<li><code>Endpoints</code>：etcd server 集群的地址列表，是一个 string 列表，每个值为一个 etcd 的监听地址</li>
+<li><code>Transport</code>：底层用于进行 HTTP 请求传输的结构体</li>
+<li><code>Username</code> 和 <code>Password</code>：进行简单认证的用户名和密码</li>
+</ul>
+<p>其他还有一些参数这里就不说了，使用默认值就行。为了完整性，我们会处理 etcd server 开启了简单认证和 TLS 的情况，首先创建一个自定义的结构体保存所有需要的参数：</p>
+<figure class="highlight elm"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="type">EtcdConfig</span> struct &#123;</span><br><span class="line">	<span class="type">Endpoints</span> []string</span><br><span class="line">	<span class="type">KeyFile</span>   string</span><br><span class="line">	<span class="type">CertFile</span>  string</span><br><span class="line">	<span class="type">CAFile</span>    string</span><br><span class="line">	<span class="type">Username</span>  string</span><br><span class="line">	<span class="type">Password</span>  string</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意这是我们自己定义的结构体，不是客户端程序提供的。</p>
+<p>然后构建能进行 TLS 处理的 transport，<code>transport</code> 是 etcd 提供的库，它内部会处理证书的读取和验证工作：</p>
+<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">tlsInfo := transport.TLSInfo&#123;</span><br><span class="line">	CertFile: c<span class="selector-class">.CertFile</span>,</span><br><span class="line">	KeyFile:  c<span class="selector-class">.KeyFile</span>,</span><br><span class="line">	CAFile:   c<span class="selector-class">.CAFile</span>,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">t, err := transport.NewTransport(tlsInfo, <span class="selector-tag">time</span>.Second)</span><br></pre></td></tr></table></figure>
+<p>然后就能构建 client：</p>
+<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">client, err := etcd.New(etcd.Config&#123;</span><br><span class="line">	Endpoints: c<span class="selector-class">.Endpoints</span>,</span><br><span class="line">	Transport: t,</span><br><span class="line">	Username:  c<span class="selector-class">.Username</span>,</span><br><span class="line">	Password:  c<span class="selector-class">.Password</span>,</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>这个 client 主要负责 HTTP API 交互的逻辑，同时也负责从多个 endpoints 中选择一个可用的来调用。但是和 keys 交互的逻辑并没有直接在这个 client 中，而是需要另外一个对象 <code>KeysAPI</code>：</p>
+<figure class="highlight makefile"><table><tr><td class="code"><pre><span class="line">kapi := etcd.NewKeysAPI(client)</span><br></pre></td></tr></table></figure>
+<p>所有键值对有关的操作都是这个 <code>kapi</code> 对象的方法提供的，它会实现接口的如下方法：</p>
+<figure class="highlight elm"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="type">KeysAPI</span> interface &#123;</span><br><span class="line">	// <span class="type">Get</span> 从 etcd 中获取 <span class="type">Node</span> 的信息</span><br><span class="line">	<span class="type">Get</span>(ctx context.<span class="type">Context</span>, key string, opts *<span class="type">GetOptions</span>) (*<span class="type">Response</span>, error)</span><br><span class="line"></span><br><span class="line">	// <span class="type">Set</span> 设置对应 key 的值为 value，这个方法也可以用来创建目录</span><br><span class="line">	<span class="type">Set</span>(ctx context.<span class="type">Context</span>, key, value string, opts *<span class="type">SetOptions</span>) (*<span class="type">Response</span>, error)</span><br><span class="line"></span><br><span class="line">	// <span class="type">Delete</span> 删除节点，包括目录和文件节点</span><br><span class="line">	<span class="type">Delete</span>(ctx context.<span class="type">Context</span>, key string, opts *<span class="type">DeleteOptions</span>) (*<span class="type">Response</span>, error)</span><br><span class="line"></span><br><span class="line">	// <span class="type">Create</span> 是 set 的一种特殊形式，只有之前节点不存在时才会创建成功</span><br><span class="line">	<span class="type">Create</span>(ctx context.<span class="type">Context</span>, key, value string) (*<span class="type">Response</span>, error)</span><br><span class="line"></span><br><span class="line">	// <span class="type">CreateInOrder</span> 在目录下面创建递增的键值对</span><br><span class="line">	<span class="type">CreateInOrder</span>(ctx context.<span class="type">Context</span>, dir, value string, opts *<span class="type">CreateInOrderOptions</span>) (*<span class="type">Response</span>, error)</span><br><span class="line"></span><br><span class="line">	// <span class="type">Update</span> 也是 <span class="type">Set</span> 的一种特殊形式，只有对应的节点存在时才会更新成功</span><br><span class="line">	<span class="type">Update</span>(ctx context.<span class="type">Context</span>, key, value string) (*<span class="type">Response</span>, error)</span><br><span class="line"></span><br><span class="line">	// <span class="type">Watcher</span> 返回一个 <span class="type">Watcher</span> 对象，监听某个节点下面的变化</span><br><span class="line">	<span class="type">Watcher</span>(key string, opts *<span class="type">WatcherOptions</span>) <span class="type">Watcher</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="创建值"><a href="#创建值" class="headerlink" title="创建值"></a>创建值</h3><p>先来看看设置一个 key value 的操作，第一个是 context 对象，后面两个分别是 key 和 value 值，最后是额外的参数，目前并不需要设置为 nil：</p>
+<figure class="highlight mipsasm"><table><tr><td class="code"><pre><span class="line">resp, err := client<span class="meta">.Set</span>(<span class="built_in">context</span>.<span class="keyword">Background(), </span><span class="string">"/user/name"</span>, <span class="string">"cizixs"</span>, nil)</span><br></pre></td></tr></table></figure>
+<p>如果要为某个值设置超时时间，可以添加选项 <code>TTL</code>：</p>
+<figure class="highlight vbscript"><table><tr><td class="code"><pre><span class="line">resp, <span class="built_in">err</span> := client.<span class="keyword">Set</span>(context.Background(), <span class="string">"/user/name"</span>, <span class="string">""</span>,</span><br><span class="line">	&amp;etcd.SetOptions&#123;</span><br><span class="line">		TTL: <span class="built_in">time</span>.Duration(ttl) * <span class="built_in">time</span>.<span class="built_in">Second</span>,</span><br><span class="line">		Refresh: <span class="literal">true</span>,</span><br><span class="line">	&#125;,</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p><code>SetOptions</code> 可选的字段有：</p>
+<ul>
+<li><code>Dir</code>：布尔值，表示要创建的是一个目录</li>
+<li><code>Refresh</code>：如果设置为 true，则表明只是更新某个 key 的 TTL 时间，不会重置它的值</li>
+<li><code>PrevValue</code>：原子操作，只有节点的值和这个字段指定的值相同时才会执行更新操作</li>
+<li><code>PrevIndex</code>：原子操作，只有节点的 ModifiedIndex 和这个字段指定的值相同时才会执行更新操作</li>
+<li><code>PrevExist</code>：原子操作，只有节点存在或者不存在时才会执行更新操作，支持的值有 <code>PrevIgnore</code>、<code>PrevExist</code> 和 <code>PrevNoExist</code></li>
+</ul>
+<p>这里要先讲一下返回值 <code>Response</code> 的构成，它包含了返回中节点的信息以及 index 信息：</p>
+<figure class="highlight crmsh"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Response struct &#123;</span><br><span class="line">	// Action 操作的动作名称，可以是 set、delete</span><br><span class="line">	Action <span class="keyword">string</span> `json:<span class="string">"action"</span>`</span><br><span class="line"></span><br><span class="line">	// <span class="keyword">Node</span> <span class="title">代表操作的节点</span></span><br><span class="line"><span class="title">	Node</span> *<span class="keyword">Node</span> <span class="title">`json</span>:<span class="string">"node"</span>`</span><br><span class="line"></span><br><span class="line">	// PrevNode 节点之前的值</span><br><span class="line">	PrevNode *<span class="keyword">Node</span> <span class="title">`json</span>:<span class="string">"prevNode"</span>`</span><br><span class="line"></span><br><span class="line">	// Index：response 生成是 cluster index 的值</span><br><span class="line">	Index uint64 `json:<span class="string">"-"</span>`</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中节点的定义如下：</p>
+<figure class="highlight clean"><table><tr><td class="code"><pre><span class="line">type Node struct &#123;</span><br><span class="line">	<span class="comment">//  节点的位置，目录名称，比如 `/foo/bar`</span></span><br><span class="line">	Key string `json:<span class="string">"key"</span>`</span><br><span class="line"></span><br><span class="line">	<span class="comment">//  节点是否为一个目录</span></span><br><span class="line">	Dir bool `json:<span class="string">"dir,omitempty"</span>`</span><br><span class="line"></span><br><span class="line">	<span class="comment">//  节点存储的对象值，如果是目录，则忽略这个字段</span></span><br><span class="line">	Value string `json:<span class="string">"value"</span>`</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Nodes 子节点，如果是目录，则这个字段保存了目录下面的所有节点内容</span></span><br><span class="line">	Nodes Nodes `json:<span class="string">"nodes"</span>`</span><br><span class="line"></span><br><span class="line">	<span class="comment">//  节点创建时候的 etcd  index</span></span><br><span class="line">	CreatedIndex uint64 `json:<span class="string">"createdIndex"</span>`</span><br><span class="line"></span><br><span class="line">	<span class="comment">//  节点更新时候的 etcd index</span></span><br><span class="line">	ModifiedIndex uint64 `json:<span class="string">"modifiedIndex"</span>`</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 节点的过期时间</span></span><br><span class="line">	Expiration *time.Time `json:<span class="string">"expiration,omitempty"</span>`</span><br><span class="line"></span><br><span class="line">	<span class="comment">// TTL 节点设置的 time to live，单位是秒</span></span><br><span class="line">	TTL int64 `json:<span class="string">"ttl,omitempty"</span>`</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="获取值"><a href="#获取值" class="headerlink" title="获取值"></a>获取值</h3><p>获取值是通过 <code>Get</code> 方法，和 <code>Set</code> 一样，它也支持选项。如果只是简单获取某个键的值，直接设置选项为空就行：</p>
+<figure class="highlight routeros"><table><tr><td class="code"><pre><span class="line">resp, err := client.<span class="builtin-name">Get</span>(context.Background(), key, <span class="literal">nil</span>)</span><br></pre></td></tr></table></figure>
+<p>如果要递归地获取某个目录下面所有的内容，可以使用 <code>Recursive</code> 参数：</p>
+<figure class="highlight maxima"><table><tr><td class="code"><pre><span class="line">resp, err := client.Get(<span class="built_in">context</span>.Background(), <span class="built_in">key</span>, &amp;etcd.GetOptions&#123;</span><br><span class="line">    Recursive: <span class="literal">true</span>,   </span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>然后通过 resp 就能遍历所有的子节点的值。</p>
+<h3 id="删除值"><a href="#删除值" class="headerlink" title="删除值"></a>删除值</h3><p>删除操作通过 <code>Delete</code> 方法完成，简单删除一个文件节点，可以忽略参数：</p>
+<figure class="highlight maxima"><table><tr><td class="code"><pre><span class="line"><span class="symbol">_</span>, err := client.Delete(<span class="built_in">context</span>.Background(), <span class="built_in">key</span>, nil)</span><br></pre></td></tr></table></figure>
+<p>如果要删除某个非空的目录，需要 <code>Recursive</code> 参数：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="string">_,</span> <span class="string">err</span> <span class="string">:=</span> <span class="string">client.Delete(context.Background(),</span> <span class="string">key,</span> <span class="string">&amp;etcd.DeleteOptions&#123;</span></span><br><span class="line"><span class="attr">    Dir:</span> <span class="literal">true</span><span class="string">,</span></span><br><span class="line"><span class="attr">    Recursive:</span> <span class="literal">true</span><span class="string">,</span></span><br><span class="line"><span class="string">&#125;)</span></span><br></pre></td></tr></table></figure>
+<p>其他字段包括：</p>
+<ul>
+<li><code>PrevValue</code>：只有节点值和给定的值相同时才执行删除操作</li>
+<li><code>PrevIndex</code>：只有节点的 index 和给定的 index 相同时，才执行删除操作</li>
+</ul>
+<h3 id="监听值"><a href="#监听值" class="headerlink" title="监听值"></a>监听值</h3><p>etcd 另外一个重要的功能是监听目录或者文件的变化，<code>Watcher</code> 方法会返回一个对象，调用它的 <code>Next()</code> 方法会阻塞，一直到监听的对象有变化，它才会返回变化节点的情况：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">watcher := client.Watcher(key, &amp;etcd.WatcherOptions&#123;</span><br><span class="line">	Recursive: <span class="literal">true</span>,</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> &#123;</span><br><span class="line">	resp, err := watcher.Next(context.Background())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中 <code>WatcherOptions</code> 接受 <code>AfterIndex</code> 和 <code>Recursive</code> 两个参数，分别表示才某个 Index 之后开始监听，以及递归监听某个目录下面所有的节点。</p>
+<p>完整的 demo 代码在<a href="https://github.com/cizixs/etcd-demo/tree/master/v2" target="_blank" rel="noopener"> github 上</a>，请前往阅读。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://godoc.org/github.com/coreos/etcd/client" target="_blank" rel="noopener">etcd client v2 godoc 文档</a></li>
+<li><a href="https://github.com/coreos/etcd/tree/master/client" target="_blank" rel="noopener">etcd client 源码</a></li>
+<li><a href="http://dockone.io/article/801" target="_blank" rel="noopener">谈谈CoreOS的etcd</a></li>
+</ul>
+
+                </div>
+            </section>
+        </article>
+    </div>
+    
+<nav class="pagination">
+    
+    
+    <a class="prev-post" title="raft 一致性算法" href="/2017/12/04/raft-consensus-algorithm/">
+        ← raft 一致性算法
+    </a>
+    
+    <span class="prev-next-post">•</span>
+    
+    <a class="next-post" title="OCI 和 runc：容器标准化和 docker" href="/2017/11/05/oci-and-runc/">
+        OCI 和 runc：容器标准化和 docker →
+    </a>
+    
+    
+</nav>
+    
+</main>
+
+<div class="t-g-control">
+    <div class="gotop">
+        <svg class="icon" width="32px" height="32px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M793.024 710.272a32 32 0 1 0 45.952-44.544l-310.304-320a32 32 0 0 0-46.4 0.48l-297.696 320a32 32 0 0 0 46.848 43.584l274.752-295.328 286.848 295.808z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="toc-control">
+        <svg class="icon toc-icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M779.776 480h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M779.776 672h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M256 288a32 32 0 1 0 0 64 32 32 0 0 0 0-64M392.576 352h387.2a32 32 0 0 0 0-64h-387.2a32 32 0 0 0 0 64M256 480a32 32 0 1 0 0 64 32 32 0 0 0 0-64M256 672a32 32 0 1 0 0 64 32 32 0 0 0 0-64" fill="#8a8a8a" /></svg>
+        <svg class="icon toc-close" style="display: none;" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 960c-247.039484 0-448-200.960516-448-448S264.960516 64 512 64 960 264.960516 960 512 759.039484 960 512 960zM512 128.287273c-211.584464 0-383.712727 172.128262-383.712727 383.712727 0 211.551781 172.128262 383.712727 383.712727 383.712727 211.551781 0 383.712727-172.159226 383.712727-383.712727C895.712727 300.415536 723.551781 128.287273 512 128.287273z" fill="#8a8a8a" /><path d="M557.05545 513.376159l138.367639-136.864185c12.576374-12.416396 12.672705-32.671738 0.25631-45.248112s-32.704421-12.672705-45.248112-0.25631l-138.560301 137.024163-136.447897-136.864185c-12.512727-12.512727-32.735385-12.576374-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.248112l136.255235 136.671523-137.376804 135.904314c-12.576374 12.447359-12.672705 32.671738-0.25631 45.248112 6.271845 6.335493 14.496116 9.504099 22.751351 9.504099 8.12794 0 16.25588-3.103239 22.496761-9.247789l137.567746-136.064292 138.687596 139.136568c6.240882 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.05545 513.376159z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="gobottom">
+        <svg class="icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M231.424 346.208a32 32 0 0 0-46.848 43.584l297.696 320a32 32 0 0 0 46.4 0.48l310.304-320a32 32 0 1 0-45.952-44.544l-286.848 295.808-274.752-295.36z" fill="#8a8a8a" /></svg>
+    </div>
+</div>
+<div class="toc-main" style="right: -100%">
+    <div class="post-toc">
+        <span>TOC</span>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#etcd-介绍"><span class="toc-text">etcd 介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#v2-版本使用"><span class="toc-text">v2 版本使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#创建-client-客户端"><span class="toc-text">创建 client 客户端</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#创建值"><span class="toc-text">创建值</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#获取值"><span class="toc-text">获取值</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#删除值"><span class="toc-text">删除值</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#监听值"><span class="toc-text">监听值</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-text">参考资料</span></a></li></ol>
+    </div>
+</div>
+
+
+
+        
+
+<aside class="read-next outer">
+    <div class="inner">
+        <div class="read-next-feed">
+            
+            
+
+<article class="read-next-card"  style="background-image: url(https://i.loli.net/2017/11/26/5a19c56faa29f.jpg)"  >
+  <header class="read-next-card-header">
+    <small class="read-next-card-header-sitetitle">&mdash; Cizixs Write Here &mdash;</small>
+    <h3 class="read-next-card-header-title">Recent Posts</h3>
+  </header>
+  <div class="read-next-divider">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M13 14.5s2 3 5 3 5.5-2.463 5.5-5.5S21 6.5 18 6.5c-5 0-7 11-12 11C2.962 17.5.5 15.037.5 12S3 6.5 6 6.5s4.5 3.5 4.5 3.5"/>
+    </svg>
+  </div>
+  <div class="read-next-card-content">
+    <ul>
+      
+      
+      
+      <li>
+        <a href="/2018/08/26/what-is-istio/">什么是 istio</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/08/25/knative-serverless-platform/">serverless 平台 knative 简介</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/06/25/kubernetes-resource-management/">kubernetes 资源管理概述</a>
+      </li>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+  </div>
+  <footer class="read-next-card-footer">
+    <a href="/archives">  MORE  → </a>
+  </footer>
+</article>
+
+            
+            
+            
+        </div>
+    </div>
+</aside>
+
+<footer class="site-footer outer">
+	<div class="site-footer-content inner">
+		<section class="copyright">
+			<a href="/" title="Cizixs Write Here">Cizixs Write Here</a>
+			&copy; 2018
+		</section>
+		<nav class="site-footer-nav">
+			
+            <a href="https://hexo.io" title="Hexo" target="_blank" rel="noopener">Hexo</a>
+            <a href="https://github.com/xzhih/hexo-theme-casper" title="Casper" target="_blank" rel="noopener">Casper</a>
+        </nav>
+    </div>
+</footer>
+
+
+
+
+
+
+<div class="floating-header" >
+	<div class="floating-header-logo">
+        <a href="/" title="Cizixs Write Here">
+			
+                <img src="https://i.loli.net/2017/11/26/5a19c0b50432e.png" alt="Cizixs Write Here icon" />
+			
+            <span>Cizixs Write Here</span>
+        </a>
+    </div>
+    <span class="floating-header-divider">&mdash;</span>
+    <div class="floating-header-title">etcd go 语言 v2 客户端开发介绍</div>
+    <progress class="progress" value="0">
+        <div class="progress-container">
+            <span class="progress-bar"></span>
+        </div>
+    </progress>
+</div>
+<script>
+   $(document).ready(function () {
+    var progressBar = document.querySelector('progress');
+    var header = document.querySelector('.floating-header');
+    var title = document.querySelector('.post-full-title');
+    var lastScrollY = window.scrollY;
+    var lastWindowHeight = window.innerHeight;
+    var lastDocumentHeight = $(document).height();
+    var ticking = false;
+
+    function onScroll() {
+        lastScrollY = window.scrollY;
+        requestTick();
+    }
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(update);
+        }
+        ticking = true;
+    }
+    function update() {
+        var rect = title.getBoundingClientRect();
+        var trigger = rect.top + window.scrollY;
+        var triggerOffset = title.offsetHeight + 35;
+        var progressMax = lastDocumentHeight - lastWindowHeight;
+            // show/hide floating header
+            if (lastScrollY >= trigger + triggerOffset) {
+                header.classList.add('floating-active');
+            } else {
+                header.classList.remove('floating-active');
+            }
+            progressBar.setAttribute('max', progressMax);
+            progressBar.setAttribute('value', lastScrollY);
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', onScroll, {passive: true});
+        update();
+
+        // TOC
+        var width = $('.toc-main').width();
+        $('.toc-control').click(function () {
+            if ($('.t-g-control').css('width')=="50px") {
+                if ($('.t-g-control').css('right')=="0px") {
+                    $('.t-g-control').animate({right: width}, "slow");
+                    $('.toc-main').animate({right: 0}, "slow");
+                    toc_icon()
+                } else {
+                    $('.t-g-control').animate({right: 0}, "slow");
+                    $('.toc-main').animate({right: -width}, "slow");
+                    toc_icon()
+                }
+            } else {
+                if ($('.toc-main').css('right')=="0px") {
+                    $('.toc-main').slideToggle("fast", toc_icon());
+                } else {
+                    $('.toc-main').css('right', '0px');
+                    toc_icon()
+                }
+            }
+        })
+
+        function toc_icon() {
+            if ($('.toc-icon').css('display')=="none") {
+                $('.toc-close').hide();
+                $('.toc-icon').show();
+            } else {
+                $('.toc-icon').hide();
+                $('.toc-close').show();
+            }
+        }
+
+        $('.gotop').click(function(){
+            $('html,body').animate({scrollTop:$('.post-full-header').offset().top}, 800);
+        });
+        $('.gobottom').click(function () {
+            $('html,body').animate({scrollTop:$('.pagination').offset().top}, 800);
+        });
+
+        // highlight
+        // https://highlightjs.org
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+        $('td.code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+
+        console.log("this theme is from https://github.com/xzhih/hexo-theme-casper")
+    });
+</script>
+
+
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/1.3.9/css/lightgallery.min.css">
+
+
+
+<script src="https://cdn.staticfile.org/lightgallery/1.3.9/js/lightgallery.min.js"></script>
+
+
+<script>
+	$(function () {
+		var postImg = $('#lightgallery').find('img');
+		postImg.addClass('post-img');
+		postImg.each(function () {
+			var imgSrc = $(this).attr('src');
+			$(this).attr('data-src', imgSrc);
+		});
+		$('#lightgallery').lightGallery({selector: '.post-img'});
+	});
+</script>
+
+
+
+
+    </div>
+</body>
+</html>

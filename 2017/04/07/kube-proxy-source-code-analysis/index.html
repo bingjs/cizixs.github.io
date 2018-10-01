@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html CN>
+
+
+
+
+
+
+
+<head>
+	
+	
+	<link rel="stylesheet" href="/css/allinone.min.css"> 
+
+	
+
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+	<title>kube-proxy 源码解析 | Cizixs Write Here</title>
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta name="generator" content="hexo">
+	<meta name="author" content="Cizixs Wu">
+	<meta name="description" content="">
+
+	
+	<meta name="keywords" content="">
+	
+
+	
+	<link rel="shortcut icon" href="https://i.loli.net/2017/11/26/5a19c0b50432e.png">
+	
+
+	
+	<meta name="theme-color" content="#3c484e">
+	<meta name="msapplication-TileColor" content="#3c484e">
+	
+
+	
+
+	
+
+	<meta property="og:site_name" content="Cizixs Write Here">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="kube-proxy 源码解析 | Cizixs Write Here">
+	<meta property="og:description" content="">
+	<meta property="og:url" content="http://cizixs.com/2017/04/07/kube-proxy-source-code-analysis/">
+
+	
+	<meta property="article:published_time" content="2017-04-07T00:04:00+08:00"/> 
+	<meta property="article:author" content="Cizixs Wu">
+	<meta property="article:published_first" content="Cizixs Write Here, /2017/04/07/kube-proxy-source-code-analysis/" />
+	
+
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	
+
+	
+	<script src="https://cdn.staticfile.org/highlight.js/9.10.0/highlight.min.js"></script>
+	
+
+	
+	
+</head>
+<body class="post-template">
+    <div class="site-wrapper">
+        
+
+
+
+
+<header class="site-header outer" style="z-index: 999">
+    <div class="inner">
+        
+<nav class="site-nav"> 
+    <div class="site-nav-left">
+        <ul class="nav">
+            <li>
+                
+                <a href="/" title="Home">Home</a>
+                
+            </li>
+            
+            
+            <li>
+                <a href="/about" title="About">About</a>
+            </li>
+            
+            <li>
+                <a href="/archives" title="Archives">Archives</a>
+            </li>
+            
+            
+        </ul> 
+    </div>
+    <div class="site-nav-right">
+        
+<div class="social-links" >
+    
+    
+    
+    
+    <a class="social-link" title="twitter" href="https://twitter.com/cizixs" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30.063 7.313c-.813 1.125-1.75 2.125-2.875 2.938v.75c0 1.563-.188 3.125-.688 4.625a15.088 15.088 0 0 1-2.063 4.438c-.875 1.438-2 2.688-3.25 3.813a15.015 15.015 0 0 1-4.625 2.563c-1.813.688-3.75 1-5.75 1-3.25 0-6.188-.875-8.875-2.625.438.063.875.125 1.375.125 2.688 0 5.063-.875 7.188-2.5-1.25 0-2.375-.375-3.375-1.125s-1.688-1.688-2.063-2.875c.438.063.813.125 1.125.125.5 0 1-.063 1.5-.25-1.313-.25-2.438-.938-3.313-1.938a5.673 5.673 0 0 1-1.313-3.688v-.063c.813.438 1.688.688 2.625.688a5.228 5.228 0 0 1-1.875-2c-.5-.875-.688-1.813-.688-2.75 0-1.063.25-2.063.75-2.938 1.438 1.75 3.188 3.188 5.25 4.25s4.313 1.688 6.688 1.813a5.579 5.579 0 0 1 1.5-5.438c1.125-1.125 2.5-1.688 4.125-1.688s3.063.625 4.188 1.813a11.48 11.48 0 0 0 3.688-1.375c-.438 1.375-1.313 2.438-2.563 3.188 1.125-.125 2.188-.438 3.313-.875z"/></svg>
+
+    </a>
+    
+    
+</div>
+    </div>
+</nav>
+    </div>
+</header>
+
+
+<main id="site-main" class="site-main outer" role="main">
+    <div class="inner">
+        <header class="post-full-header">
+            <section class="post-full-meta">
+                <time  class="post-full-meta-date" datetime="2017-04-06T16:00:00.000Z" itemprop="datePublished">
+                    2017-04-7
+                </time>
+                
+                <span class="date-divider">/</span>
+                
+                <a href="/categories/blog/">blog</a>&nbsp;&nbsp;
+                
+                
+            </section>
+            <h1 class="post-full-title">kube-proxy 源码解析</h1>
+        </header>
+        <article class="post-full no-image">
+            
+            <section class="post-full-content">
+                <div id="lightgallery" class="markdown-body">
+                    <h2 id="kube-proxy-功能简介"><a href="#kube-proxy-功能简介" class="headerlink" title="kube-proxy 功能简介"></a>kube-proxy 功能简介</h2><p>我们在之前的文章中<a href="http://cizixs.com/2017/03/30/kubernetes-introduction-service-and-kube-proxy">介绍过 kube-proxy 和 service</a>的工作原理，以及它们的使用方法和功能。我们再来总结一下，<code>kube-proxy</code> 运行在 kubernetes 集群中每个 worker 节点上，负责实现 service 这个概念提供的功能。<code>kube-proxy</code> 会把访问 service VIP 的请求转发到运行的 pods 上，实现负载均衡。</p>
+<p><img src="https://ww3.sinaimg.cn/large/006tNc79gy1fee5voyscmj31hm0p0gnm.jpg" alt=""></p>
+<p>当用户创建 service 的时候，endpointController 会根据 service 的 selector 找到对应的 pod，然后生成 endpoints 对象保存到 etcd 中。kube-proxy 的主要工作就是监听 etcd（通过 apiserver 的接口，而不是直接读取 etcd），来实时更新节点上的 iptables。</p>
+<p>service 有关的信息保存在 etcd 的 <code>/registry/services</code> 目录，比如在我的集群中，这个目录的内容是这样的：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">~]$ etcdctl ls --recursive  /registry/services</span><br><span class="line">/registry/services/endpoints</span><br><span class="line">/registry/services/endpoints/default</span><br><span class="line">/registry/services/endpoints/default/whoami</span><br><span class="line">/registry/services/endpoints/default/kubernetes</span><br><span class="line">/registry/services/endpoints/kube-system</span><br><span class="line">/registry/services/endpoints/kube-system/kube-controller-manager</span><br><span class="line">/registry/services/endpoints/kube-system/container-log</span><br><span class="line">/registry/services/endpoints/kube-system/container-terminal</span><br><span class="line">/registry/services/endpoints/kube-system/kube-scheduler</span><br><span class="line">/registry/services/endpoints/kube-system/kube-dns</span><br><span class="line">/registry/services/specs</span><br><span class="line">/registry/services/specs/default</span><br><span class="line">/registry/services/specs/default/kubernetes</span><br><span class="line">/registry/services/specs/default/whoami</span><br><span class="line">/registry/services/specs/kube-system</span><br><span class="line">/registry/services/specs/kube-system/kube-dns</span><br><span class="line">/registry/services/specs/kube-system/container-log</span><br><span class="line">/registry/services/specs/kube-system/container-terminal</span><br></pre></td></tr></table></figure>
+<p>这篇文章我们会分析 kube-proxy 的源码，讲解在 <code>iptables</code> 模式下它的原理。文章所有的代码基于 kubernetes 1.5.0，为了增强可读性会对某些部分做删减（错误处理、日志打印、无关的功能等）。</p>
+<h2 id="函数入口"><a href="#函数入口" class="headerlink" title="函数入口"></a>函数入口</h2><p>和 kubernetes 其他组件一样，<code>kube-proxy</code> 入口在 <code>kubernetes/cmd/kube-proxy</code>，具体的代码如下：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	config := options.NewProxyConfig()</span><br><span class="line">	config.AddFlags(pflag.CommandLine)</span><br><span class="line">	flag.InitFlags()</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">	s, err := app.NewProxyServerDefault(config)</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err = s.Run(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Fprintf(os.Stderr, <span class="string">"%v\n"</span>, err)</span><br><span class="line">		os.Exit(<span class="number">1</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上述代码的大概过程是：用 <code>options.NewProxyConfig()</code> 创建出默认的配置选项，然后用命令行的参数更新配置的内容；然后 <code>app.NewProxyServerDefault(config)</code> 利用配置创建服务，最后运行创建的服务，一直保持运行状态。</p>
+<h2 id="服务创建"><a href="#服务创建" class="headerlink" title="服务创建"></a>服务创建</h2><p>kube-proxy 入口很重要的一部分就是创建 ProxyServer，我们来看一下 <code>app.NewProxyServerDefault(config)</code> 内部的实现，这个函数定义是在 <code>cmd/kube-proxy/app/server.go</code>：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewProxyServerDefault</span><span class="params">(config *options.ProxyServerConfig)</span> <span class="params">(*ProxyServer, error)</span></span> &#123;</span><br><span class="line">	...</span><br><span class="line">	protocol := utiliptables.ProtocolIpv4</span><br><span class="line">	<span class="keyword">if</span> net.ParseIP(config.BindAddress).To4() == <span class="literal">nil</span> &#123;</span><br><span class="line">		protocol = utiliptables.ProtocolIpv6</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> netshInterface utilnetsh.Interface</span><br><span class="line">	<span class="keyword">var</span> iptInterface utiliptables.Interface</span><br><span class="line">	<span class="keyword">var</span> dbus utildbus.Interface</span><br><span class="line"></span><br><span class="line">	execer := exec.New()</span><br><span class="line">	...</span><br><span class="line">	<span class="comment">// Create event recorder</span></span><br><span class="line">	hostname := nodeutil.GetHostname(config.HostnameOverride)</span><br><span class="line">	eventBroadcaster := record.NewBroadcaster()</span><br><span class="line">	recorder := eventBroadcaster.NewRecorder(api.EventSource&#123;Component: <span class="string">"kube-proxy"</span>, Host: hostname&#125;)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> proxier proxy.ProxyProvider</span><br><span class="line">	<span class="keyword">var</span> endpointsHandler proxyconfig.EndpointsConfigHandler</span><br><span class="line"></span><br><span class="line">	proxyMode := getProxyMode(<span class="keyword">string</span>(config.Mode), client.Core().Nodes(), hostname, iptInterface, iptables.LinuxKernelCompatTester&#123;&#125;)</span><br><span class="line">	<span class="keyword">if</span> proxyMode == proxyModeIPTables &#123;</span><br><span class="line">		<span class="keyword">if</span> config.IPTablesMasqueradeBit == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">"Unable to read IPTablesMasqueradeBit from config"</span>)</span><br><span class="line">		&#125;</span><br><span class="line">		proxierIPTables, err := iptables.NewProxier(iptInterface, utilsysctl.New(), execer, config.IPTablesSyncPeriod.Duration, config.IPTablesMinSyncPeriod.Duration, config.MasqueradeAll, <span class="keyword">int</span>(*config.IPTablesMasqueradeBit), config.ClusterCIDR, hostname, getNodeIP(client, hostname))</span><br><span class="line"></span><br><span class="line">		proxier = proxierIPTables</span><br><span class="line">		endpointsHandler = proxierIPTables</span><br><span class="line">	    ...</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		glog.V(<span class="number">0</span>).Info(<span class="string">"Using userspace Proxier."</span>)</span><br><span class="line">		...</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	serviceConfig := proxyconfig.NewServiceConfig()</span><br><span class="line">	serviceConfig.RegisterHandler(proxier)</span><br><span class="line"></span><br><span class="line">	endpointsConfig := proxyconfig.NewEndpointsConfig()</span><br><span class="line">	endpointsConfig.RegisterHandler(endpointsHandler)</span><br><span class="line"></span><br><span class="line">	proxyconfig.NewSourceAPI(</span><br><span class="line">		client.Core().RESTClient(),</span><br><span class="line">		config.ConfigSyncPeriod,</span><br><span class="line">		serviceConfig.Channel(<span class="string">"api"</span>),</span><br><span class="line">		endpointsConfig.Channel(<span class="string">"api"</span>),</span><br><span class="line">	)</span><br><span class="line"></span><br><span class="line">	...</span><br><span class="line">	conntracker := realConntracker&#123;&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> NewProxyServer(client, config, iptInterface, proxier, eventBroadcaster, recorder, conntracker, proxyMode)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最终 <code>NewProxyServer()</code> 比较简单，把所有传给它的参数作为结构体的内容返回，这些参数中的解释如下：</p>
+<ul>
+<li><code>client</code>：连接到 kubernetes api server 的客户端对象</li>
+<li><code>config</code>: proxyServer 配置对象，包含了所有的配置信息</li>
+<li><code>iptInterface</code>: iptables 对象，运行执行所有的 iptables 操作</li>
+<li><code>proxier</code>: proxier 是具体执行转发逻辑的对象，不管 userspace 模式还是 iptables 模式，都是一个 proxier 对象</li>
+<li><code>eventBroadcaster</code>: 事件广播对象，把 kube-proxy 内部发生的事件发送到 apiserver</li>
+<li><code>recorder</code>: 事件记录对象</li>
+<li><code>conntracker</code>: connection track 有关的操作</li>
+<li><code>proxyMode</code>: 代理的模式，iptables 还是 userspace</li>
+</ul>
+<p>这里面有两个比较重要的变量：<code>proxier</code> 和 <code>endpointsHandler</code>，它们的值都是 <code>proxierIPTables</code>。</p>
+<h3 id="ServiceConfig-和-endpointsConfig"><a href="#ServiceConfig-和-endpointsConfig" class="headerlink" title="ServiceConfig 和 endpointsConfig"></a>ServiceConfig 和 endpointsConfig</h3><p>serviceConfig 和 endpointsConfig 分别负责服务和端点相关内容的同步，它们的原理都是一样的。我们这里只分析 serviceConfig，它的代码在 <code>pkg/proxy/config/config.go</code> 文件中。serviceConfig 结构如下：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> ServiceConfig <span class="keyword">struct</span> &#123;</span><br><span class="line">	mux     *config.Mux</span><br><span class="line">	bcaster *config.Broadcaster</span><br><span class="line">	store   *serviceStore</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它有三个结构：<code>mux</code> 是个汇聚器，可以把发送过来的更新统一保存到内部，<code>serviceStore</code> 保存了发生变化的 Service 对象，<code>Broadcaster</code> 在一旦有变化出现的时候通知对应的处理函数就行处理。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewServiceConfig</span><span class="params">()</span> *<span class="title">ServiceConfig</span></span> &#123;</span><br><span class="line">	updates := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;, <span class="number">1</span>)</span><br><span class="line">	store := &amp;serviceStore&#123;updates: updates, services: <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">map</span>[types.NamespacedName]api.Service)&#125;</span><br><span class="line">	mux := config.NewMux(store)</span><br><span class="line">	bcaster := config.NewBroadcaster()</span><br><span class="line">	<span class="keyword">go</span> watchForUpdates(bcaster, store, updates)</span><br><span class="line">	<span class="keyword">return</span> &amp;ServiceConfig&#123;mux, bcaster, store&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">watchForUpdates</span><span class="params">(bcaster *config.Broadcaster, accessor config.Accessor, updates &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> <span class="literal">true</span> &#123;</span><br><span class="line">		&lt;-updates</span><br><span class="line">		bcaster.Notify(accessor.MergedState())</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 注册 handler，有变化的时候会调用对应的 handler 进行处理</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *ServiceConfig)</span> <span class="title">RegisterHandler</span><span class="params">(handler ServiceConfigHandler)</span></span> &#123;</span><br><span class="line">	c.bcaster.Add(config.ListenerFunc(<span class="function"><span class="keyword">func</span><span class="params">(instance <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">		glog.V(<span class="number">3</span>).Infof(<span class="string">"Calling handler.OnServiceUpdate()"</span>)</span><br><span class="line">		handler.OnServiceUpdate(instance.([]api.Service))</span><br><span class="line">	&#125;))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面这段代码可以看到 <code>NewServiceConfig</code> 初始化的时候会在后台启动一个 goroutine 运行 <code>watchForUpdates</code>，这个 goroutine 不断循环的逻辑就是上面提到的：一旦 updates 可读（service 对象有变化），就调用 <code>bcaster.Notify()</code> 把变化的内容（通过 <code>accessor.MergedState()</code> 函数得到的结果）进行通知，最终会调用在内部注册的 handler 函数。</p>
+<p><strong>NOTE</strong>: 这个注册-触发的逻辑是通过 <code>Broadcaster</code> 实现的，对应的代码在 <code>pkg/util/config/config.go</code>，它提供了两个方法：<code>Add()</code> 是添加 handler，可以添加多个；<code>notify()</code> 会把参数交给所有的 handler 进行处理。</p>
+<p>注册 handler 的步骤是 <code>serviceConfig.RegisterHandler(proxier)</code>，所以最终会调用 <code>proxier.OnServiceUpdate（）</code>方法，这个方法就是 <code>pkg/proxy/iptables/proxier.go:Proxier</code> 定义的，会实现最终 iptables 规则的刷新。</p>
+<p>说道这里，还有两者问题需要解决：<strong>变化的内容是怎么获得的？谁会往 <code>updates channel</code> 中写东西？</strong></p>
+<p>第一个问题的答案在 <code>serviceStore.MergedState()</code> 方法中：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *serviceStore)</span> <span class="title">MergedState</span><span class="params">()</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">	s.serviceLock.RLock()</span><br><span class="line">	<span class="keyword">defer</span> s.serviceLock.RUnlock()</span><br><span class="line">	services := <span class="built_in">make</span>([]api.Service, <span class="number">0</span>)</span><br><span class="line">	<span class="keyword">for</span> _, sourceServices := <span class="keyword">range</span> s.services &#123;</span><br><span class="line">		<span class="keyword">for</span> _, value := <span class="keyword">range</span> sourceServices &#123;</span><br><span class="line">			services = <span class="built_in">append</span>(services, value)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> services</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>serviceStore</code> 结构体内部用一个嵌套字典 <code>map[string]map[types.NamespacedName]api.Service</code> 保存了所有的 Service 对象，这个嵌套字典外层的键是来源，内层是对应的服务名和服务对象。<code>MergedState</code> 方法删除了最外层的来源，返回所有的 Service 对象，也就是起到了汇聚不同来源 Service 的功能。至于这个字典是谁在什么时候写进去的，我们后面再说。</p>
+<p>第二个问题，我们要看下面这段代码的实现了：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">proxyconfig.NewSourceAPI(</span><br><span class="line">	client.Core().RESTClient(),</span><br><span class="line">	config.ConfigSyncPeriod,</span><br><span class="line">	serviceConfig.Channel(<span class="string">"api"</span>),</span><br><span class="line">	endpointsConfig.Channel(<span class="string">"api"</span>),</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p><code>NewSourceAPI</code> 有四个参数，第一个参数是 RESTClient，用来从 apiserver 获取请求；后面两个参数分别是 service 和 endpoints 的 channel，读取的数据最终会发送到这里。我们还是来看一下 <code>serviceConfig.Channel()</code> 的代码：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *ServiceConfig)</span> <span class="title">Channel</span><span class="params">(source <span class="keyword">string</span>)</span> <span class="title">chan</span> <span class="title">ServiceUpdate</span></span> &#123;</span><br><span class="line">	ch := c.mux.Channel(source)</span><br><span class="line">	serviceCh := <span class="built_in">make</span>(<span class="keyword">chan</span> ServiceUpdate)</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">for</span> update := <span class="keyword">range</span> serviceCh &#123;</span><br><span class="line">			ch &lt;- update</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="built_in">close</span>(ch)</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span> serviceCh</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码创建了两个 channel：一个是在 <code>c.mux</code> 中创建的，用来汇聚所有的 service 对象，一个是新建的 <code>ServiceUpdate</code> channel，最终作为返回值。在后台启动一个参数，会把 <code>ServiceUpdate</code> channel 中的东西，持续不断地转送到 <code>c.mux</code> channel 中。也就是说，任何写到 <code>serviceConfig.Channel(&quot;api&quot;)</code> 的内容最终都会被 <code>c.mux</code> 调用 <code>serviceStore.Merge()</code>，这个方法会把 channel 中的更新保存到字典中 <code>map[string]map[types.NamespacedName]api.Service</code>。这个可以回答我们上面留下的疑问，<code>serviceConfig</code> 中的数据是谁写进去的。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *serviceStore)</span> <span class="title">Merge</span><span class="params">(source <span class="keyword">string</span>, change <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	s.serviceLock.Lock()</span><br><span class="line">	services := s.services[source]</span><br><span class="line">	<span class="keyword">if</span> services == <span class="literal">nil</span> &#123;</span><br><span class="line">		services = <span class="built_in">make</span>(<span class="keyword">map</span>[types.NamespacedName]api.Service)</span><br><span class="line">	&#125;</span><br><span class="line">	update := change.(ServiceUpdate)</span><br><span class="line">	<span class="keyword">switch</span> update.Op &#123;</span><br><span class="line">	<span class="keyword">case</span> ADD:</span><br><span class="line">		glog.V(<span class="number">5</span>).Infof(<span class="string">"Adding new service from source %s : %s"</span>, source, spew.Sdump(update.Services))</span><br><span class="line">		<span class="keyword">for</span> _, value := <span class="keyword">range</span> update.Services &#123;</span><br><span class="line">			name := types.NamespacedName&#123;Namespace: value.Namespace, Name: value.Name&#125;</span><br><span class="line">			services[name] = value</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">case</span> REMOVE:</span><br><span class="line">		glog.V(<span class="number">5</span>).Infof(<span class="string">"Removing a service %s"</span>, spew.Sdump(update))</span><br><span class="line">		<span class="keyword">for</span> _, value := <span class="keyword">range</span> update.Services &#123;</span><br><span class="line">			name := types.NamespacedName&#123;Namespace: value.Namespace, Name: value.Name&#125;</span><br><span class="line">			<span class="built_in">delete</span>(services, name)</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">case</span> SET:</span><br><span class="line">		glog.V(<span class="number">5</span>).Infof(<span class="string">"Setting services %s"</span>, spew.Sdump(update))</span><br><span class="line">		<span class="comment">// Clear the old map entries by just creating a new map</span></span><br><span class="line">		services = <span class="built_in">make</span>(<span class="keyword">map</span>[types.NamespacedName]api.Service)</span><br><span class="line">		<span class="keyword">for</span> _, value := <span class="keyword">range</span> update.Services &#123;</span><br><span class="line">			name := types.NamespacedName&#123;Namespace: value.Namespace, Name: value.Name&#125;</span><br><span class="line">			services[name] = value</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">		glog.V(<span class="number">4</span>).Infof(<span class="string">"Received invalid update type: %s"</span>, spew.Sdump(update))</span><br><span class="line">	&#125;</span><br><span class="line">	s.services[source] = services</span><br><span class="line">	s.serviceLock.Unlock()</span><br><span class="line">	<span class="keyword">if</span> s.updates != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="comment">// Since we record the snapshot before sending this signal, it's</span></span><br><span class="line">		<span class="comment">// possible that the consumer ends up performing an extra update.</span></span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> s.updates &lt;- <span class="keyword">struct</span>&#123;&#125;&#123;&#125;:</span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">			glog.V(<span class="number">4</span>).Infof(<span class="string">"Service handler already has a pending interrupt."</span>)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>另外，在 <code>ServiceStore</code> 的最后，还会往 <code>s.updates</code> 写入一个数据，告诉监听在 channel 另一端说有数据更新，你可以调用处理函数来同步 iptables 了。</p>
+<p>整个 <code>serviceConfig</code> 的逻辑是这样的：</p>
+<p><img src="https://ww4.sinaimg.cn/large/006tNc79gy1fee66e8rbbj30wy0io40h.jpg" alt=""></p>
+<p>它对外暴露了一个 channel，任何写到这个 channel 中的数据，都会被 <code>mux</code> 自动保存到内部的 <code>serviceStore</code> 中，并往 <code>updates channel</code> 发一个通过，监听在 <code>updates channel</code> 另一端的 <code>bcaster</code> 接到通知，就调用处理函数 <code>proxier.OnServiceUpdate()</code> 去处理。</p>
+<p>不难猜测，在 <code>NewSourceAPI</code> 函数的内部一定会有把读取的数据写到 <code>serviceConfig.Channel(&quot;api&quot;)</code> 的逻辑。</p>
+<p><strong>NOTE:</strong> endpointsConfig 和 serviceConfig 的实现原理完全一样，只不过监听的对象是 etcd 中的 endpoints，而不是 services。</p>
+<h3 id="NewSourceAPI-和数据的真实来源"><a href="#NewSourceAPI-和数据的真实来源" class="headerlink" title="NewSourceAPI 和数据的真实来源"></a>NewSourceAPI 和数据的真实来源</h3><p>上面这部分我们看到了如果监听到的对象有变化，会执行对应的 iptables 同步处理函数，这部分我们讲讲 kube-proxy 是怎么监听 apiserver 的数据，并把结果转换成正确的格式的。</p>
+<p>继续看 <code>NewSourceAPI</code> 的代码：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewSourceAPI</span><span class="params">(c cache.Getter, period time.Duration, servicesChan <span class="keyword">chan</span>&lt;- ServiceUpdate, endpointsChan <span class="keyword">chan</span>&lt;- EndpointsUpdate)</span></span> &#123;</span><br><span class="line">	servicesLW := cache.NewListWatchFromClient(c, <span class="string">"services"</span>, api.NamespaceAll, fields.Everything())</span><br><span class="line">	cache.NewReflector(servicesLW, &amp;api.Service&#123;&#125;, NewServiceStore(<span class="literal">nil</span>, servicesChan), period).Run()</span><br><span class="line"></span><br><span class="line">	endpointsLW := cache.NewListWatchFromClient(c, <span class="string">"endpoints"</span>, api.NamespaceAll, fields.Everything())</span><br><span class="line">	cache.NewReflector(endpointsLW, &amp;api.Endpoints&#123;&#125;, NewEndpointsStore(<span class="literal">nil</span>, endpointsChan), period).Run()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>NewServiceAPI</code> 为 service 和 endpoints 分别创建了 <code>ListWatch</code> 和 <code>Reflector</code>，根据惯例，我们还是只分析 <code>Service</code> 有关的部分。</p>
+<p><code>cache.NewListWatchFromClient()</code> 方法定义在 <code>pkg/client/cache/listwatch.go</code> 文件，它主要的功能是从 apiserver 读取（list）和监听（watch）某个 uri 地址的数据。它的实现不是本文的重点，在此略过不表，有兴趣可以自行阅读，并不是很复杂。</p>
+<p><code>NewServiceStore</code> 是什么的呢？</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewServiceStore</span><span class="params">(store cache.Store, ch <span class="keyword">chan</span>&lt;- ServiceUpdate)</span> <span class="title">cache</span>.<span class="title">Store</span></span> &#123;</span><br><span class="line">	fn := <span class="function"><span class="keyword">func</span><span class="params">(objs []<span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">		<span class="keyword">var</span> services []api.Service</span><br><span class="line">		<span class="keyword">for</span> _, o := <span class="keyword">range</span> objs &#123;</span><br><span class="line">			services = <span class="built_in">append</span>(services, *(o.(*api.Service)))</span><br><span class="line">		&#125;</span><br><span class="line">		ch &lt;- ServiceUpdate&#123;Op: SET, Services: services&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> store == <span class="literal">nil</span> &#123;</span><br><span class="line">		store = cache.NewStore(cache.MetaNamespaceKeyFunc)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> &amp;cache.UndeltaStore&#123;</span><br><span class="line">		Store:    store,</span><br><span class="line">		PushFunc: fn,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>Reflector</code> 会从 <code>ListWatcher</code> 中读取要监听资源的变化，写到 <code>store</code> 对象中去。这部分的代码在 <code>pkg/client/cache/</code> ，不是本文的重点。简单说一下它的大致过程：它内部进入循环，调用 <code>servicesLW.wathc()</code> 方法，根据得到的数据更新 <code>serviceStore</code> 的值，这个 serviceStore 每次更新都会出发一个 <code>pushFunc</code> 把当前的数据写到 channel <code>ServiceUpdate</code> ，从而完成了和上面部分的对接！</p>
+<p><img src="https://ww4.sinaimg.cn/large/006tNc79gy1fee6z9jczrj30sg0ig75i.jpg" alt=""></p>
+<h3 id="OnServiceUpdate：最终干活的人"><a href="#OnServiceUpdate：最终干活的人" class="headerlink" title="OnServiceUpdate：最终干活的人"></a>OnServiceUpdate：最终干活的人</h3><p>前面说了数据是怎么从 api Server 被 kube-rpoxy 拿到，并一层层地传递的。最终拿到了 service 和 endpoints 的数据，最终还是要落到谁来处理这些数据。前面我们也提过，不管是 <code>iptables</code> 模式，还是 <code>userspace</code> 模式，最终的处理函数都是 <code>OnServiceUpdate()</code>，我们这里还是看一下 <code>iptables/proxier.go:OnServiceUpdate</code>：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(proxier *Proxier)</span> <span class="title">OnServiceUpdate</span><span class="params">(allServices []api.Service)</span></span> &#123;</span><br><span class="line">	proxier.mu.Lock()</span><br><span class="line">	<span class="keyword">defer</span> proxier.mu.Unlock()</span><br><span class="line">	proxier.haveReceivedServiceUpdate = <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">	activeServices := <span class="built_in">make</span>(<span class="keyword">map</span>[proxy.ServicePortName]<span class="keyword">bool</span>) <span class="comment">// use a map as a set</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="keyword">range</span> allServices &#123;</span><br><span class="line">		service := &amp;allServices[i]</span><br><span class="line">		svcName := types.NamespacedName&#123;</span><br><span class="line">			Namespace: service.Namespace,</span><br><span class="line">			Name:      service.Name,</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">for</span> i := <span class="keyword">range</span> service.Spec.Ports &#123;</span><br><span class="line">			servicePort := &amp;service.Spec.Ports[i]</span><br><span class="line"></span><br><span class="line">			serviceName := proxy.ServicePortName&#123;</span><br><span class="line">				NamespacedName: svcName,</span><br><span class="line">				Port:           servicePort.Name,</span><br><span class="line">			&#125;</span><br><span class="line">			activeServices[serviceName] = <span class="literal">true</span></span><br><span class="line">			info, exists := proxier.serviceMap[serviceName]</span><br><span class="line">			<span class="keyword">if</span> exists &amp;&amp; proxier.sameConfig(info, service, servicePort) &#123;</span><br><span class="line">				<span class="keyword">continue</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span> exists &#123;</span><br><span class="line">				glog.V(<span class="number">3</span>).Infof(<span class="string">"Something changed for service %q: removing it"</span>, serviceName)</span><br><span class="line">				<span class="built_in">delete</span>(proxier.serviceMap, serviceName)</span><br><span class="line">			&#125;</span><br><span class="line">			serviceIP := net.ParseIP(service.Spec.ClusterIP)</span><br><span class="line">			glog.V(<span class="number">1</span>).Infof(<span class="string">"Adding new service %q at %s:%d/%s"</span>, serviceName, serviceIP, servicePort.Port, servicePort.Protocol)</span><br><span class="line">			info = newServiceInfo(serviceName)</span><br><span class="line">			info.clusterIP = serviceIP</span><br><span class="line">			info.port = <span class="keyword">int</span>(servicePort.Port)</span><br><span class="line">			info.protocol = servicePort.Protocol</span><br><span class="line">			info.nodePort = <span class="keyword">int</span>(servicePort.NodePort)</span><br><span class="line">			info.externalIPs = service.Spec.ExternalIPs</span><br><span class="line">			<span class="comment">// Deep-copy in case the service instance changes</span></span><br><span class="line">			info.loadBalancerStatus = *api.LoadBalancerStatusDeepCopy(&amp;service.Status.LoadBalancer)</span><br><span class="line">			info.sessionAffinityType = service.Spec.SessionAffinity</span><br><span class="line">			info.loadBalancerSourceRanges = service.Spec.LoadBalancerSourceRanges</span><br><span class="line"></span><br><span class="line">			proxier.serviceMap[serviceName] = info</span><br><span class="line">			glog.V(<span class="number">4</span>).Infof(<span class="string">"added serviceInfo(%s): %s"</span>, serviceName, spew.Sdump(info))</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	staleUDPServices := sets.NewString()</span><br><span class="line">	<span class="comment">// Remove serviceports missing from the update.</span></span><br><span class="line">	<span class="keyword">for</span> name, info := <span class="keyword">range</span> proxier.serviceMap &#123;</span><br><span class="line">		<span class="keyword">if</span> !activeServices[name] &#123;</span><br><span class="line">			glog.V(<span class="number">1</span>).Infof(<span class="string">"Removing service %q"</span>, name)</span><br><span class="line">			<span class="keyword">if</span> info.protocol == api.ProtocolUDP &#123;</span><br><span class="line">				staleUDPServices.Insert(info.clusterIP.String())</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="built_in">delete</span>(proxier.serviceMap, name)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	proxier.syncProxyRules()</span><br><span class="line">	proxier.deleteServiceConnections(staleUDPServices.List())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码的核心是遍历作为参数传进来的 <code>api.Service</code> 数组，根据里面的信息构建 <code>proxier.serviceMap</code>（service 有改动，或者新建、删除），然后调用 <code>proxier.syncProxyRules()</code> 去同步 iptables 规则列表。</p>
+<p>通过这个部分的分析，我们明白了 <code>kube-proxy</code> 是如何保证 <code>apiserver</code> 中数据一旦变化，就立即更新节点的 iptables 规则的。</p>
+<p>这个过程的流程图如下：</p>
+<p><img src="https://ww3.sinaimg.cn/large/006tNc79gy1fee5sbtsraj31fy0oggnx.jpg" alt=""></p>
+<h2 id="服务的运行"><a href="#服务的运行" class="headerlink" title="服务的运行"></a>服务的运行</h2><p> <code>ProxyServer</code> 初始化结束之后，还会调用 <code>s.Run()</code>，我们来看一下里面的内容：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *ProxyServer)</span> <span class="title">Run</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Start up a webserver if requested</span></span><br><span class="line">	<span class="keyword">if</span> s.Config.HealthzPort &gt; <span class="number">0</span> &#123;</span><br><span class="line">		http.HandleFunc(<span class="string">"/proxyMode"</span>, <span class="function"><span class="keyword">func</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">			fmt.Fprintf(w, <span class="string">"%s"</span>, s.ProxyMode)</span><br><span class="line">		&#125;)</span><br><span class="line">		configz.InstallHandler(http.DefaultServeMux)</span><br><span class="line">		<span class="keyword">go</span> wait.Until(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			err := http.ListenAndServe(s.Config.HealthzBindAddress+<span class="string">":"</span>+strconv.Itoa(<span class="keyword">int</span>(s.Config.HealthzPort)), <span class="literal">nil</span>)</span><br><span class="line">			<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">				glog.Errorf(<span class="string">"Starting health server failed: %v"</span>, err)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;, <span class="number">5</span>*time.Second, wait.NeverStop)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Tune conntrack, if requested</span></span><br><span class="line">	<span class="keyword">if</span> s.Conntracker != <span class="literal">nil</span> &amp;&amp; runtime.GOOS != <span class="string">"windows"</span> &#123;</span><br><span class="line">		max, err := getConntrackMax(s.Config)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> err</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> max &gt; <span class="number">0</span> &#123;</span><br><span class="line">			err := s.Conntracker.SetMax(max)</span><br><span class="line">			<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">if</span> err != readOnlySysFSError &#123;</span><br><span class="line">					<span class="keyword">return</span> err</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">const</span> message = <span class="string">"DOCKER RESTART NEEDED (docker issue #24000): /sys is read-only: "</span> +</span><br><span class="line">					<span class="string">"cannot modify conntrack limits, problems may arise later."</span></span><br><span class="line">				s.Recorder.Eventf(s.Config.NodeRef, api.EventTypeWarning, err.Error(), message)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> s.Config.ConntrackTCPEstablishedTimeout.Duration &gt; <span class="number">0</span> &#123;</span><br><span class="line">			timeout := <span class="keyword">int</span>(s.Config.ConntrackTCPEstablishedTimeout.Duration / time.Second)</span><br><span class="line">			<span class="keyword">if</span> err := s.Conntracker.SetTCPEstablishedTimeout(timeout); err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span> err</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> s.Config.ConntrackTCPCloseWaitTimeout.Duration &gt; <span class="number">0</span> &#123;</span><br><span class="line">			timeout := <span class="keyword">int</span>(s.Config.ConntrackTCPCloseWaitTimeout.Duration / time.Second)</span><br><span class="line">			<span class="keyword">if</span> err := s.Conntracker.SetTCPCloseWaitTimeout(timeout); err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span> err</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Birth Cry after the birth is successful</span></span><br><span class="line">	s.birthCry()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Just loop forever for now...</span></span><br><span class="line">	s.Proxier.SyncLoop()</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这是个会一直运行的函数，前面的部分主要给 kube-proxy 做一些额外的补充，比如启动 <code>healthz</code> web 服务器，优化 <code>conntrack</code> 的参数。最后会调用 <code>s.Proxier.SyncLoop()</code> 进入主循环。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(proxier *Proxier)</span> <span class="title">Sync</span><span class="params">()</span></span> &#123;</span><br><span class="line">	proxier.mu.Lock()</span><br><span class="line">	<span class="keyword">defer</span> proxier.mu.Unlock()</span><br><span class="line">	proxier.syncProxyRules()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(proxier *Proxier)</span> <span class="title">SyncLoop</span><span class="params">()</span></span> &#123;</span><br><span class="line">	t := time.NewTicker(proxier.syncPeriod)</span><br><span class="line">	<span class="keyword">defer</span> t.Stop()</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		&lt;-t.C</span><br><span class="line">		glog.V(<span class="number">6</span>).Infof(<span class="string">"Periodic sync"</span>)</span><br><span class="line">		proxier.Sync()</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这是一个周期性的任务，每隔  <code>proxier.syncPeriod</code> 的时间周期（默认是 30s，可以通过启动参数 <code>--iptables-sync-period</code> 配置）就会调用 <code>proxier.syncProxyRules()</code> 对 iptables 进行更新。</p>
+<p>这里有个疑问：既然 <code>kube-proxy</code> 能够自动监听 apiserver 的变化，并更新 iptables，为什么这里还要再每隔一段时间强制同步一次呢？我的看法是这只是安全防护措施，来规避有些情况（比如代码 bug，或者网络、环境问题等原因）下数据可能没有及时同步。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="http://licyhust.com/%E5%AE%B9%E5%99%A8%E6%8A%80%E6%9C%AF/2016/11/05/kube-proxy/" target="_blank" rel="noopener">kube-proxy 源码解析</a></li>
+<li><a href="http://blog.csdn.net/waltonwang/article/details/55286724" target="_blank" rel="noopener">CSDN 博客：kube-proxy源码分析</a></li>
+</ul>
+
+                </div>
+            </section>
+        </article>
+    </div>
+    
+<nav class="pagination">
+    
+    
+    <a class="prev-post" title="kubernetes 简介：kube-dns 和服务发现" href="/2017/04/11/kubernetes-intro-kube-dns/">
+        ← kubernetes 简介：kube-dns 和服务发现
+    </a>
+    
+    <span class="prev-next-post">•</span>
+    
+    <a class="next-post" title="kubernetes 简介：service 和 kube-proxy 原理" href="/2017/03/30/kubernetes-introduction-service-and-kube-proxy/">
+        kubernetes 简介：service 和 kube-proxy 原理 →
+    </a>
+    
+    
+</nav>
+    
+</main>
+
+<div class="t-g-control">
+    <div class="gotop">
+        <svg class="icon" width="32px" height="32px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M793.024 710.272a32 32 0 1 0 45.952-44.544l-310.304-320a32 32 0 0 0-46.4 0.48l-297.696 320a32 32 0 0 0 46.848 43.584l274.752-295.328 286.848 295.808z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="toc-control">
+        <svg class="icon toc-icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M779.776 480h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M779.776 672h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M256 288a32 32 0 1 0 0 64 32 32 0 0 0 0-64M392.576 352h387.2a32 32 0 0 0 0-64h-387.2a32 32 0 0 0 0 64M256 480a32 32 0 1 0 0 64 32 32 0 0 0 0-64M256 672a32 32 0 1 0 0 64 32 32 0 0 0 0-64" fill="#8a8a8a" /></svg>
+        <svg class="icon toc-close" style="display: none;" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 960c-247.039484 0-448-200.960516-448-448S264.960516 64 512 64 960 264.960516 960 512 759.039484 960 512 960zM512 128.287273c-211.584464 0-383.712727 172.128262-383.712727 383.712727 0 211.551781 172.128262 383.712727 383.712727 383.712727 211.551781 0 383.712727-172.159226 383.712727-383.712727C895.712727 300.415536 723.551781 128.287273 512 128.287273z" fill="#8a8a8a" /><path d="M557.05545 513.376159l138.367639-136.864185c12.576374-12.416396 12.672705-32.671738 0.25631-45.248112s-32.704421-12.672705-45.248112-0.25631l-138.560301 137.024163-136.447897-136.864185c-12.512727-12.512727-32.735385-12.576374-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.248112l136.255235 136.671523-137.376804 135.904314c-12.576374 12.447359-12.672705 32.671738-0.25631 45.248112 6.271845 6.335493 14.496116 9.504099 22.751351 9.504099 8.12794 0 16.25588-3.103239 22.496761-9.247789l137.567746-136.064292 138.687596 139.136568c6.240882 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.05545 513.376159z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="gobottom">
+        <svg class="icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M231.424 346.208a32 32 0 0 0-46.848 43.584l297.696 320a32 32 0 0 0 46.4 0.48l310.304-320a32 32 0 1 0-45.952-44.544l-286.848 295.808-274.752-295.36z" fill="#8a8a8a" /></svg>
+    </div>
+</div>
+<div class="toc-main" style="right: -100%">
+    <div class="post-toc">
+        <span>TOC</span>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#kube-proxy-功能简介"><span class="toc-text">kube-proxy 功能简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#函数入口"><span class="toc-text">函数入口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#服务创建"><span class="toc-text">服务创建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ServiceConfig-和-endpointsConfig"><span class="toc-text">ServiceConfig 和 endpointsConfig</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NewSourceAPI-和数据的真实来源"><span class="toc-text">NewSourceAPI 和数据的真实来源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#OnServiceUpdate：最终干活的人"><span class="toc-text">OnServiceUpdate：最终干活的人</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#服务的运行"><span class="toc-text">服务的运行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-text">参考资料</span></a></li></ol>
+    </div>
+</div>
+
+
+
+        
+
+<aside class="read-next outer">
+    <div class="inner">
+        <div class="read-next-feed">
+            
+            
+
+<article class="read-next-card"  style="background-image: url(https://i.loli.net/2017/11/26/5a19c56faa29f.jpg)"  >
+  <header class="read-next-card-header">
+    <small class="read-next-card-header-sitetitle">&mdash; Cizixs Write Here &mdash;</small>
+    <h3 class="read-next-card-header-title">Recent Posts</h3>
+  </header>
+  <div class="read-next-divider">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M13 14.5s2 3 5 3 5.5-2.463 5.5-5.5S21 6.5 18 6.5c-5 0-7 11-12 11C2.962 17.5.5 15.037.5 12S3 6.5 6 6.5s4.5 3.5 4.5 3.5"/>
+    </svg>
+  </div>
+  <div class="read-next-card-content">
+    <ul>
+      
+      
+      
+      <li>
+        <a href="/2018/08/26/what-is-istio/">什么是 istio</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/08/25/knative-serverless-platform/">serverless 平台 knative 简介</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/06/25/kubernetes-resource-management/">kubernetes 资源管理概述</a>
+      </li>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+  </div>
+  <footer class="read-next-card-footer">
+    <a href="/archives">  MORE  → </a>
+  </footer>
+</article>
+
+            
+            
+            
+        </div>
+    </div>
+</aside>
+
+<footer class="site-footer outer">
+	<div class="site-footer-content inner">
+		<section class="copyright">
+			<a href="/" title="Cizixs Write Here">Cizixs Write Here</a>
+			&copy; 2018
+		</section>
+		<nav class="site-footer-nav">
+			
+            <a href="https://hexo.io" title="Hexo" target="_blank" rel="noopener">Hexo</a>
+            <a href="https://github.com/xzhih/hexo-theme-casper" title="Casper" target="_blank" rel="noopener">Casper</a>
+        </nav>
+    </div>
+</footer>
+
+
+
+
+
+
+<div class="floating-header" >
+	<div class="floating-header-logo">
+        <a href="/" title="Cizixs Write Here">
+			
+                <img src="https://i.loli.net/2017/11/26/5a19c0b50432e.png" alt="Cizixs Write Here icon" />
+			
+            <span>Cizixs Write Here</span>
+        </a>
+    </div>
+    <span class="floating-header-divider">&mdash;</span>
+    <div class="floating-header-title">kube-proxy 源码解析</div>
+    <progress class="progress" value="0">
+        <div class="progress-container">
+            <span class="progress-bar"></span>
+        </div>
+    </progress>
+</div>
+<script>
+   $(document).ready(function () {
+    var progressBar = document.querySelector('progress');
+    var header = document.querySelector('.floating-header');
+    var title = document.querySelector('.post-full-title');
+    var lastScrollY = window.scrollY;
+    var lastWindowHeight = window.innerHeight;
+    var lastDocumentHeight = $(document).height();
+    var ticking = false;
+
+    function onScroll() {
+        lastScrollY = window.scrollY;
+        requestTick();
+    }
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(update);
+        }
+        ticking = true;
+    }
+    function update() {
+        var rect = title.getBoundingClientRect();
+        var trigger = rect.top + window.scrollY;
+        var triggerOffset = title.offsetHeight + 35;
+        var progressMax = lastDocumentHeight - lastWindowHeight;
+            // show/hide floating header
+            if (lastScrollY >= trigger + triggerOffset) {
+                header.classList.add('floating-active');
+            } else {
+                header.classList.remove('floating-active');
+            }
+            progressBar.setAttribute('max', progressMax);
+            progressBar.setAttribute('value', lastScrollY);
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', onScroll, {passive: true});
+        update();
+
+        // TOC
+        var width = $('.toc-main').width();
+        $('.toc-control').click(function () {
+            if ($('.t-g-control').css('width')=="50px") {
+                if ($('.t-g-control').css('right')=="0px") {
+                    $('.t-g-control').animate({right: width}, "slow");
+                    $('.toc-main').animate({right: 0}, "slow");
+                    toc_icon()
+                } else {
+                    $('.t-g-control').animate({right: 0}, "slow");
+                    $('.toc-main').animate({right: -width}, "slow");
+                    toc_icon()
+                }
+            } else {
+                if ($('.toc-main').css('right')=="0px") {
+                    $('.toc-main').slideToggle("fast", toc_icon());
+                } else {
+                    $('.toc-main').css('right', '0px');
+                    toc_icon()
+                }
+            }
+        })
+
+        function toc_icon() {
+            if ($('.toc-icon').css('display')=="none") {
+                $('.toc-close').hide();
+                $('.toc-icon').show();
+            } else {
+                $('.toc-icon').hide();
+                $('.toc-close').show();
+            }
+        }
+
+        $('.gotop').click(function(){
+            $('html,body').animate({scrollTop:$('.post-full-header').offset().top}, 800);
+        });
+        $('.gobottom').click(function () {
+            $('html,body').animate({scrollTop:$('.pagination').offset().top}, 800);
+        });
+
+        // highlight
+        // https://highlightjs.org
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+        $('td.code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+
+        console.log("this theme is from https://github.com/xzhih/hexo-theme-casper")
+    });
+</script>
+
+
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/1.3.9/css/lightgallery.min.css">
+
+
+
+<script src="https://cdn.staticfile.org/lightgallery/1.3.9/js/lightgallery.min.js"></script>
+
+
+<script>
+	$(function () {
+		var postImg = $('#lightgallery').find('img');
+		postImg.addClass('post-img');
+		postImg.each(function () {
+			var imgSrc = $(this).attr('src');
+			$(this).attr('data-src', imgSrc);
+		});
+		$('#lightgallery').lightGallery({selector: '.post-img'});
+	});
+</script>
+
+
+
+
+    </div>
+</body>
+</html>

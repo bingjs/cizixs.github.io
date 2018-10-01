@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html CN>
+
+
+
+
+
+
+
+<head>
+	
+	
+	<link rel="stylesheet" href="/css/allinone.min.css"> 
+
+	
+
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+	<title>kubernetes 简介： kubelet 和 pod | Cizixs Write Here</title>
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta name="generator" content="hexo">
+	<meta name="author" content="Cizixs Wu">
+	<meta name="description" content="">
+
+	
+	<meta name="keywords" content="">
+	
+
+	
+	<link rel="shortcut icon" href="https://i.loli.net/2017/11/26/5a19c0b50432e.png">
+	
+
+	
+	<meta name="theme-color" content="#3c484e">
+	<meta name="msapplication-TileColor" content="#3c484e">
+	
+
+	
+
+	
+
+	<meta property="og:site_name" content="Cizixs Write Here">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="kubernetes 简介： kubelet 和 pod | Cizixs Write Here">
+	<meta property="og:description" content="">
+	<meta property="og:url" content="http://cizixs.com/2016/10/25/kubernetes-intro-kubelet/">
+
+	
+	<meta property="article:published_time" content="2016-10-25T00:10:00+08:00"/> 
+	<meta property="article:author" content="Cizixs Wu">
+	<meta property="article:published_first" content="Cizixs Write Here, /2016/10/25/kubernetes-intro-kubelet/" />
+	
+
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	
+
+	
+	<script src="https://cdn.staticfile.org/highlight.js/9.10.0/highlight.min.js"></script>
+	
+
+	
+	
+</head>
+<body class="post-template">
+    <div class="site-wrapper">
+        
+
+
+
+
+<header class="site-header outer" style="z-index: 999">
+    <div class="inner">
+        
+<nav class="site-nav"> 
+    <div class="site-nav-left">
+        <ul class="nav">
+            <li>
+                
+                <a href="/" title="Home">Home</a>
+                
+            </li>
+            
+            
+            <li>
+                <a href="/about" title="About">About</a>
+            </li>
+            
+            <li>
+                <a href="/archives" title="Archives">Archives</a>
+            </li>
+            
+            
+        </ul> 
+    </div>
+    <div class="site-nav-right">
+        
+<div class="social-links" >
+    
+    
+    
+    
+    <a class="social-link" title="twitter" href="https://twitter.com/cizixs" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30.063 7.313c-.813 1.125-1.75 2.125-2.875 2.938v.75c0 1.563-.188 3.125-.688 4.625a15.088 15.088 0 0 1-2.063 4.438c-.875 1.438-2 2.688-3.25 3.813a15.015 15.015 0 0 1-4.625 2.563c-1.813.688-3.75 1-5.75 1-3.25 0-6.188-.875-8.875-2.625.438.063.875.125 1.375.125 2.688 0 5.063-.875 7.188-2.5-1.25 0-2.375-.375-3.375-1.125s-1.688-1.688-2.063-2.875c.438.063.813.125 1.125.125.5 0 1-.063 1.5-.25-1.313-.25-2.438-.938-3.313-1.938a5.673 5.673 0 0 1-1.313-3.688v-.063c.813.438 1.688.688 2.625.688a5.228 5.228 0 0 1-1.875-2c-.5-.875-.688-1.813-.688-2.75 0-1.063.25-2.063.75-2.938 1.438 1.75 3.188 3.188 5.25 4.25s4.313 1.688 6.688 1.813a5.579 5.579 0 0 1 1.5-5.438c1.125-1.125 2.5-1.688 4.125-1.688s3.063.625 4.188 1.813a11.48 11.48 0 0 0 3.688-1.375c-.438 1.375-1.313 2.438-2.563 3.188 1.125-.125 2.188-.438 3.313-.875z"/></svg>
+
+    </a>
+    
+    
+</div>
+    </div>
+</nav>
+    </div>
+</header>
+
+
+<main id="site-main" class="site-main outer" role="main">
+    <div class="inner">
+        <header class="post-full-header">
+            <section class="post-full-meta">
+                <time  class="post-full-meta-date" datetime="2016-10-24T16:00:00.000Z" itemprop="datePublished">
+                    2016-10-25
+                </time>
+                
+                <span class="date-divider">/</span>
+                
+                <a href="/categories/blog/">blog</a>&nbsp;&nbsp;
+                
+                
+            </section>
+            <h1 class="post-full-title">kubernetes 简介： kubelet 和 pod</h1>
+        </header>
+        <article class="post-full no-image">
+            
+            <section class="post-full-content">
+                <div id="lightgallery" class="markdown-body">
+                    <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p><a href="http://cizixs.com/2016/07/12/kubernetes-intro">kubernetes</a> 是一个分布式的集群管理系统，在每个节点（node）上都要运行一个 worker 对容器进行生命周期的管理，这个 worker 程序就是 <code>kubelet</code>。</p>
+<p>简单地说，<code>kubelet</code> 的主要功能就是定时从某个地方获取节点上 pod/container 的期望状态（运行什么容器、运行的副本数量、网络或者存储如何配置等等），并调用对应的容器平台接口达到这个状态。</p>
+<p>集群状态下，kubelet 会从 master 上读取信息，但其实 kubelet 还可以从其他地方获取节点的 pod 信息。目前 kubelet 支持三种数据源：</p>
+<p><img src="http://ww2.sinaimg.cn/large/006y8lVagw1f8vkhdub9zj31hc0u0djl.jpg" alt="kubelet architecture"></p>
+<ol>
+<li>本地文件</li>
+<li>通过 url 从网络上某个地址来获取信息</li>
+<li>API Server：从 kubernetes master 节点获取信息</li>
+</ol>
+<p>从管理的对象来说，kubelet 目前支持 <a href="https://www.docker.com/" target="_blank" rel="noopener">docker</a> 和 <a href="https://coreos.com/rkt/" target="_blank" rel="noopener">rkt</a>，默认情况下使用的 docker。</p>
+<h2 id="kubelet-主要功能"><a href="#kubelet-主要功能" class="headerlink" title="kubelet 主要功能"></a>kubelet 主要功能</h2><h3 id="pod-管理"><a href="#pod-管理" class="headerlink" title="pod 管理"></a>pod 管理</h3><p> 在 kubernetes 的设计中，最基本的管理单位是 pod，而不是 container。pod 是 kubernetes 在容器上的一层封装，由一组运行在同一主机的一个或者多个容器组成。如果把容器比喻成传统机器上的一个进程（它可以执行任务，对外提供某种功能），那么 pod 可以类比为传统的主机：它包含了多个容器，为它们提供共享的一些资源。</p>
+<p><img src="http://ww4.sinaimg.cn/large/006y8lVagw1f93i3nzo9aj30yg0lptc6.jpg" alt=""></p>
+<p>之所以费功夫提供这一层封装，主要是因为容器推荐的用法是里面只运行一个进程，而一般情况下某个应用都由多个组件构成的。</p>
+<p>pod 中所有的容器最大的特性也是最大的好处就是共享了很多资源，比如网络空间。pod 下所有容器共享网络和端口空间，也就是它们之间可以通过 <code>localhost</code> 访问和通信，对外的通信方式也是一样的，省去了很多容器通信的麻烦。</p>
+<p>除了网络之外，定义在 pod 里的 volume 也可以 mount 到多个容器里，以实现共享的目的。</p>
+<p>最后，定义在 pod 的资源限制（比如 CPU 和 Memory） 也是所有容器共享的。</p>
+<h3 id="容器健康检查"><a href="#容器健康检查" class="headerlink" title="容器健康检查"></a>容器健康检查</h3><p>创建了容器之后，kubelet 还要查看容器是否正常运行，如果容器运行出错，就要根据设置的重启策略进行处理。检查容器是否健康主要有两种方式：在容器中执行命令和通过 HTTP 访问预定义的 endpoint。</p>
+<p>先来说说执行命令的方式，简单来说就是在容器中执行某个 shell 命令，根据它的 exit code 来判断容器是否正常工作：</p>
+<pre><code>livenessProbe:
+      exec:
+        command:
+        - cat
+        - /tmp/health
+      initialDelaySeconds: 15
+      timeoutSeconds: 1
+</code></pre><p>另外一种就是 HTTP 的方式，通过向某个 url 路径发送 HTTP GET 请求，根据 response code 判断容器是否正常工作：</p>
+<pre><code>livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+        httpHeaders:
+          - name: X-Custom-Header
+            value: Awesome
+      initialDelaySeconds: 15
+      timeoutSeconds: 1
+</code></pre><p>可以看到，你也可以自定义发送的 HTTP 请求的头部。</p>
+<p>不管用什么方式，如果检测到容器不健康，kubelet 会删除该容器，并根据容器的重启策略进行处理（比如重启，或者什么都不做）。</p>
+<h3 id="容器监控"><a href="#容器监控" class="headerlink" title="容器监控"></a>容器监控</h3><p>kubelet 还有一个重要的责任，就是监控所在节点的资源使用情况，并定时向 master 报告。知道整个集群所有节点的资源情况，对于 pod 的调度和正常运行至关重要。</p>
+<p>kubelet 使用 <a href="https://github.com/google/cadvisor" target="_blank" rel="noopener">cAdvisor</a> 进行资源使用率的监控。cAdvisor 是 google 开源的分析容器资源使用和性能特性的工具，在 kubernetes 项目中被集成到 kubelet 里，无需额外配置。默认情况下，你可以在 <code>http://&lt;host_ip&gt;:4194</code> 地址看到 cAdvisor 的管理界面。</p>
+<blockquote>
+<p>Analyzes resource usage and performance characteristics of running containers.</p>
+</blockquote>
+<p>除了系统使用的 CPU，Memory，存储和网络之外，cAdvisor 还记录了每个容器使用的上述资源情况。</p>
+<h2 id="运行和验证-kubelet"><a href="#运行和验证-kubelet" class="headerlink" title="运行和验证 kubelet"></a>运行和验证 kubelet</h2><h3 id="参数介绍"><a href="#参数介绍" class="headerlink" title="参数介绍"></a>参数介绍</h3><p>对于 kubelet 的配置，基本上都可以通过命令行启动时候的参数进行控制。因为 kubernetes 处于快速开发过程中，参数也可能会发生变化，这里给出 <code>1.4</code> 版本一些重要的参数含义：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>解释</th>
+<th>默认值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>–address</td>
+<td>kubelet 服务监听的地址</td>
+<td>0.0.0.0</td>
+</tr>
+<tr>
+<td>–port</td>
+<td>kubelet 服务监听的端口</td>
+<td>10250</td>
+</tr>
+<tr>
+<td>–read-only-port</td>
+<td>只读端口，可以不用验证和授权机制，直接访问</td>
+<td>10255</td>
+</tr>
+<tr>
+<td>–allow-privileged</td>
+<td>是否允许容器运行在 privileged 模式</td>
+<td>false</td>
+</tr>
+<tr>
+<td>–api-servers</td>
+<td>以逗号分割的 API Server 地址，用于和集群中数据交互</td>
+<td>[]</td>
+</tr>
+<tr>
+<td>–cadvisor-port</td>
+<td>当前节点 cadvisor 运行的端口</td>
+<td>4194</td>
+</tr>
+<tr>
+<td>–config</td>
+<td>本地 manifest 文件的路径或者目录</td>
+<td>“”</td>
+</tr>
+<tr>
+<td>–file-check-frequency</td>
+<td>轮询本地 manifest 文件的时间间隔</td>
+<td>20s</td>
+</tr>
+<tr>
+<td>–container-runtime</td>
+<td>后端容器 runtime，支持 docker 和 rkt</td>
+<td>docker</td>
+</tr>
+<tr>
+<td>–enable-server</td>
+<td>是否启动 kubelet HTTP server</td>
+<td>true</td>
+</tr>
+<tr>
+<td>–healthz-bind-address</td>
+<td>健康检查服务绑定的地址，设置成 0.0.0.0 可以监听在所有网络接口</td>
+<td>127.0.0.1</td>
+</tr>
+<tr>
+<td>–healthz-port</td>
+<td>健康检查服务的端口</td>
+<td>10248</td>
+</tr>
+<tr>
+<td>–hostname-override</td>
+<td>指定 hostname，如果非空会使用这个值作为节点在集群中的标识</td>
+<td>“”</td>
+</tr>
+<tr>
+<td>–log-dir</td>
+<td>日志文件，如果非空，会把 log 写到该文件</td>
+<td>“”</td>
+</tr>
+<tr>
+<td>–logtostderr</td>
+<td>是否打印 log 到终端</td>
+<td>true</td>
+</tr>
+<tr>
+<td>–max-open-files</td>
+<td>允许 kubelet 打开文件的最大值</td>
+<td>1000000</td>
+</tr>
+<tr>
+<td>–max-pods</td>
+<td>允许 kubelet 运行 pod 的最大值</td>
+<td>110</td>
+</tr>
+<tr>
+<td>–pod-infra-container-image</td>
+<td>基础镜像地址，每个 pod 最先启动的容器，会配置共享的网络</td>
+<td>gcr.io/google_containers/pause-amd64:3.0</td>
+</tr>
+<tr>
+<td>–root-dir</td>
+<td>kubelet 保存数据的目录</td>
+<td>/var/lib/kubelet</td>
+</tr>
+<tr>
+<td>–runonce</td>
+<td>从本地 manifest 或者 URL 指定的 manifest 读取并运行结束就退出，和 <code>--api-servers</code> 、<code>--enable-server</code> 参数不兼容</td>
+</tr>
+<tr>
+<td>–v</td>
+<td>日志 level</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<h3 id="启动-kubelet"><a href="#启动-kubelet" class="headerlink" title="启动 kubelet"></a>启动 kubelet</h3><p>在这篇教程中，我们会单独运行 kubelet，选择从本地目录中读取 pod manifest 信息去启动 pod。</p>
+<figure class="highlight routeros"><table><tr><td class="code"><pre><span class="line">[Unit]</span><br><span class="line"><span class="attribute">Description</span>=Kubelet Service</span><br><span class="line"><span class="attribute">Documentation</span>=http://kubernetes.com</span><br><span class="line"><span class="attribute">After</span>=network.target</span><br><span class="line"><span class="attribute">Wants</span>=network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line"><span class="attribute">Type</span>=simple</span><br><span class="line"><span class="attribute">EnvironmentFile</span>=-/etc/sysconfig/kubelet</span><br><span class="line"><span class="attribute">ExecStartPre</span>=/usr/bin/mkdir -p /etc/kubernetes/manifests</span><br><span class="line"><span class="attribute">ExecStart</span>=/usr/bin/kubelet \</span><br><span class="line">    <span class="attribute">--allow-privileged</span>=<span class="literal">true</span> \</span><br><span class="line">    <span class="attribute">--config</span>=/etc/kubernetes/manifests \</span><br><span class="line">    <span class="attribute">--pod-infra-container-image</span>=172.16.1.41:5000/google_containers/pause:0.8.0 \</span><br><span class="line">    <span class="attribute">--hostname-override</span>=192.168.8.100</span><br><span class="line"><span class="attribute">TimeoutStartSec</span>=0</span><br><span class="line"><span class="attribute">Restart</span>=on-abnormal</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line"><span class="attribute">WantedBy</span>=multi-user.target</span><br></pre></td></tr></table></figure>
+<p>在这篇文章的例子中，我们会运行一个 pod，这个 pod 有两个容器：nginx 和 busybox。<br>nginx 不做任何修改，只是提供简单的 HTTP 服务；busybox 运行命令，在终端打印出 nginx 的访问日志。为了实现两个容器之间共享数据，我们使用 kubernetes 提供的 Volume 功能，</p>
+<figure class="highlight less"><table><tr><td class="code"><pre><span class="line"><span class="attribute">apiVersion</span>: v1</span><br><span class="line"><span class="attribute">kind</span>: Pod</span><br><span class="line"><span class="attribute">metadata</span>:</span><br><span class="line">  <span class="attribute">name</span>: nginx-server</span><br><span class="line"><span class="attribute">spec</span>:</span><br><span class="line">  <span class="attribute">containers</span>:</span><br><span class="line">  - <span class="attribute">name</span>: nginx-server</span><br><span class="line">    <span class="attribute">image</span>: <span class="number">172.16</span>.<span class="number">1.41</span>:<span class="number">5000</span>/nginx</span><br><span class="line">    <span class="attribute">ports</span>:</span><br><span class="line">    - <span class="attribute">containerPort</span>: <span class="number">80</span></span><br><span class="line">    <span class="attribute">volumeMounts</span>:</span><br><span class="line">    - <span class="attribute">mountPath</span>: /var/log/nginx</span><br><span class="line">      <span class="attribute">name</span>: nginx-logs</span><br><span class="line">  - <span class="attribute">name</span>: log-output</span><br><span class="line">    <span class="attribute">image</span>: <span class="number">172.16</span>.<span class="number">1.41</span>:<span class="number">5000</span>/busybox</span><br><span class="line">    <span class="attribute">command</span>:</span><br><span class="line">    - bin/sh</span><br><span class="line">    <span class="attribute">args</span>: [-c, <span class="string">'tail -f /logdir/access.log'</span>]</span><br><span class="line">    <span class="attribute">volumeMounts</span>:</span><br><span class="line">    - <span class="attribute">mountPath</span>: /logdir</span><br><span class="line">      <span class="attribute">name</span>: nginx-logs</span><br><span class="line">  <span class="attribute">volumes</span>:</span><br><span class="line">  - <span class="attribute">name</span>: nginx-logs</span><br><span class="line">    <span class="attribute">emptyDir</span>: &#123;&#125;</span><br></pre></td></tr></table></figure>
+<p>把这个配置文件放到指定的目录，等待一段时间，我们就能 <code>docker ps</code> 看到有容器在运行了：</p>
+<figure class="highlight x86asm"><table><tr><td class="code"><pre><span class="line">[root@localhost vagrant]# docker ps</span><br><span class="line">CONTAINER ID        IMAGE                                            COMMAND                  CREATED             STATUS              PORTS               NAMES</span><br><span class="line">66474b8cc336        <span class="number">172.16</span><span class="meta">.1</span><span class="meta">.41</span>:<span class="number">5000</span>/busybox                         <span class="string">"bin/sh -c 'tail -f /"</span>   <span class="number">6</span> days ago          <span class="meta">Up</span> <span class="number">6</span> days                               k8s_log-output.b93a0be3_nginx-server-<span class="number">192.168</span><span class="meta">.8</span>.100_default_dae69c6f50364bf8fcf20bc67f42a416_22c30949</span><br><span class="line">90ab8ef86868        <span class="number">172.16</span><span class="meta">.1</span><span class="meta">.41</span>:<span class="number">5000</span>/nginx                           <span class="string">"nginx"</span>                  <span class="number">6</span> days ago          <span class="meta">Up</span> <span class="number">6</span> days                               k8s_nginx-server.b88325ae_nginx-server-<span class="number">192.168</span><span class="meta">.8</span>.100_default_dae69c6f50364bf8fcf20bc67f42a416_e152bb97</span><br><span class="line">db27cfa9f58f        <span class="number">172.16</span><span class="meta">.1</span><span class="meta">.41</span>:<span class="number">5000</span>/google_containers/<span class="keyword">pause</span>:<span class="number">0.8</span><span class="meta">.0</span>   <span class="string">"/pause"</span>                 <span class="number">6</span> days ago          <span class="meta">Up</span> <span class="number">6</span> days                               k8s_POD.b66e0279_nginx-server-<span class="number">192.168</span><span class="meta">.8</span>.100_default_dae69c6f50364bf8fcf20bc67f42a416_2236d469</span><br></pre></td></tr></table></figure>
+<p>我们可以看到三个容器：pause、nginx 和 busybox，容器的名字是 kubelet 自动生成的。通过 <code>docker inspect</code> 可以看到 nginx 和 busybox 的网络模式：</p>
+<figure class="highlight autoit"><table><tr><td class="code"><pre><span class="line">[root<span class="symbol">@localhost</span> vagrant]<span class="meta"># docker inspect -f <span class="string">'&#123;&#123; .HostConfig.NetworkMode &#125;&#125;'</span> 90ab</span></span><br><span class="line">container:db27cfa9f58f7b1047fb230da951453ca15e0961ca36ee7999ab3ed8ba5da814</span><br><span class="line"></span><br><span class="line">[root<span class="symbol">@localhost</span> vagrant]<span class="meta"># docker inspect -f <span class="string">'&#123;&#123; .HostConfig.NetworkMode &#125;&#125;'</span> 6647</span></span><br><span class="line">container:db27cfa9f58f7b1047fb230da951453ca15e0961ca36ee7999ab3ed8ba5da814</span><br></pre></td></tr></table></figure>
+<p>使用的是 <code>container</code> 模式，对应的 id 就是 pause 容器的。通过查看各个容器的网络配置也能验证这一点，所有的容器网络都是一样的：</p>
+<figure class="highlight routeros"><table><tr><td class="code"><pre><span class="line">[root@localhost vagrant]# docker exec 90ab<span class="built_in"> ip </span>addr</span><br><span class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN<span class="built_in"> group </span>default</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">    inet 127.0.0.1/8 scope host lo</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 ::1/128 scope host</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">9: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP<span class="built_in"> group </span>default</span><br><span class="line">    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 172.17.0.2/16 scope global eth0</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 fe80::42:acff:fe11:2/64 scope link tentative dadfailed</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br></pre></td></tr></table></figure>
+<p>而 nginx 和 busybox 的配置信息中并没有 ip 地址，pause 容器中有：</p>
+<figure class="highlight autoit"><table><tr><td class="code"><pre><span class="line">[root<span class="symbol">@localhost</span> vagrant]<span class="meta"># docker inspect -f <span class="string">'&#123;&#123; .NetworkSettings.IPAddress&#125;&#125;'</span> 6647</span></span><br><span class="line"></span><br><span class="line">[root<span class="symbol">@localhost</span> vagrant]<span class="meta"># docker inspect -f <span class="string">'&#123;&#123; .NetworkSettings.IPAddress&#125;&#125;'</span> 90ab</span></span><br><span class="line"></span><br><span class="line">[root<span class="symbol">@localhost</span> vagrant]<span class="meta"># docker inspect -f <span class="string">'&#123;&#123; .NetworkSettings.IPAddress&#125;&#125;'</span> db27</span></span><br><span class="line"><span class="number">172.17</span><span class="number">.0</span><span class="number">.2</span></span><br></pre></td></tr></table></figure>
+<p>好了，分析就这么多。我们看测试一下启动的容器是否正常，先通过 <code>curl</code> 访问几次 nginx：</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line">[root@localhost vagrant]# curl -s http://172.17.0.2 | head -n 5</span><br><span class="line"><span class="meta">&lt;!DOCTYPE html&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">title</span>&gt;</span>Welcome to nginx on Debian!<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">style</span>&gt;</span><span class="undefined"></span></span><br></pre></td></tr></table></figure>
+<p>然后通过 busybox 容器查看访问日志：</p>
+<figure class="highlight accesslog"><table><tr><td class="code"><pre><span class="line"><span class="string">[root@localhost vagrant]</span># docker logs -f <span class="number">6647</span></span><br><span class="line"><span class="number">172.17.0.1</span> - - <span class="string">[08/Sep/2016:03:29:47 +0000]</span> <span class="string">"<span class="keyword">GET</span> / HTTP/1.1"</span> <span class="number">200</span> <span class="number">867</span> <span class="string">"-"</span> <span class="string">"curl/7.29.0"</span></span><br><span class="line"><span class="number">172.17.0.1</span> - - <span class="string">[08/Sep/2016:03:49:57 +0000]</span> <span class="string">"<span class="keyword">GET</span> / HTTP/1.1"</span> <span class="number">200</span> <span class="number">867</span> <span class="string">"-"</span> <span class="string">"curl/7.29.0"</span></span><br><span class="line"><span class="number">172.17.0.1</span> - - <span class="string">[08/Sep/2016:03:50:18 +0000]</span> <span class="string">"<span class="keyword">GET</span> / HTTP/1.1"</span> <span class="number">200</span> <span class="number">867</span> <span class="string">"-"</span> <span class="string">"curl/7.29.0"</span></span><br><span class="line"><span class="number">172.17.0.1</span> - - <span class="string">[08/Sep/2016:03:50:23 +0000]</span> <span class="string">"<span class="keyword">GET</span> / HTTP/1.1"</span> <span class="number">200</span> <span class="number">867</span> <span class="string">"-"</span> <span class="string">"curl/7.29.0"</span></span><br></pre></td></tr></table></figure>
+<p>随着请求的发送，可以看到日志都打印出来了。</p>
+<h3 id="API-接口"><a href="#API-接口" class="headerlink" title="API 接口"></a>API 接口</h3><p>前面也提到了，kubelet 自身提供了几个 HTTP API 接口，供用户查看信息。<br>最简单的就是 10248 的健康检查：</p>
+<figure class="highlight 1c"><table><tr><td class="code"><pre><span class="line">[root@localhost vagrant]<span class="meta"># curl http:<span class="comment">//127.0.0.1:10248/healthz</span></span></span><br><span class="line">ok</span><br></pre></td></tr></table></figure>
+<p>而 10255 端口比较重要，提供了 pod 和机器的信息：</p>
+<figure class="highlight xquery"><table><tr><td class="code"><pre><span class="line">➜  ~ http http://<span class="number">192.168</span>.<span class="number">8.100</span>:<span class="number">10255</span>/pods</span><br><span class="line">HTTP/<span class="number">1.1</span> <span class="number">200</span> OK</span><br><span class="line">Content-Length: <span class="number">1345</span></span><br><span class="line">Content-Type: application/json</span><br><span class="line">Date: Thu, 08 Sep <span class="number">2016</span> <span class="number">04</span>:<span class="number">03</span>:<span class="number">38</span> GMT</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"apiVersion"</span>: <span class="string">"v1"</span>,</span><br><span class="line">    <span class="string">"items"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"metadata"</span>: &#123;</span><br><span class="line">                <span class="string">"annotations"</span>: &#123;</span><br><span class="line">                    <span class="string">"kubernetes.io/config.hash"</span>: <span class="string">"bf570970380d322fa28f20a8fe4b61bc"</span>,</span><br><span class="line">                    <span class="string">"kubernetes.io/config.seen"</span>: <span class="string">"2016-09-01T09:50:16.379538472+02:00"</span>,</span><br><span class="line">                    <span class="string">"kubernetes.io/config.source"</span>: <span class="string">"file"</span></span><br><span class="line">                &#125;,</span><br><span class="line">                <span class="string">"creationTimestamp"</span>: null,</span><br><span class="line">                <span class="string">"name"</span>: <span class="string">"nginx-server-192.168.8.100"</span>,</span><br><span class="line">                <span class="string">"namespace"</span>: <span class="string">"default"</span>,</span><br><span class="line">                <span class="string">"selfLink"</span>: <span class="string">"/api/v1/pods/namespaces/nginx-server-192.168.8.100/default"</span>,</span><br><span class="line">                <span class="string">"uid"</span>: <span class="string">"dae69c6f50364bf8fcf20bc67f42a416"</span></span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="string">"spec"</span>: &#123;</span><br><span class="line">                <span class="string">"containers"</span>: [</span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="string">"image"</span>: <span class="string">"172.16.1.41:5000/nginx"</span>,</span><br><span class="line">                        <span class="string">"imagePullPolicy"</span>: <span class="string">"Always"</span>,</span><br><span class="line">                        <span class="string">"name"</span>: <span class="string">"nginx-server"</span>,</span><br><span class="line">                        <span class="string">"ports"</span>: [</span><br><span class="line">                            &#123;</span><br><span class="line">                                <span class="string">"containerPort"</span>: <span class="number">80</span>,</span><br><span class="line">                                <span class="string">"protocol"</span>: <span class="string">"TCP"</span></span><br><span class="line">                            &#125;</span><br><span class="line">                        ],</span><br><span class="line">                        <span class="string">"resources"</span>: &#123;&#125;,</span><br><span class="line">                        <span class="string">"terminationMessagePath"</span>: <span class="string">"/dev/termination-log"</span>,</span><br><span class="line">                        <span class="string">"volumeMounts"</span>: [</span><br><span class="line">                            &#123;</span><br><span class="line">                                <span class="string">"mountPath"</span>: <span class="string">"/var/log/nginx"</span>,</span><br><span class="line">                                <span class="string">"name"</span>: <span class="string">"nginx-logs"</span></span><br><span class="line">                            &#125;</span><br><span class="line">                        ]</span><br><span class="line">                    &#125;,</span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="string">"args"</span>: [</span><br><span class="line">                            <span class="string">"-c"</span>,</span><br><span class="line">                            <span class="string">"tail -f /logdir/access.log"</span></span><br><span class="line">                        ],</span><br><span class="line">                        <span class="string">"command"</span>: [</span><br><span class="line">                            <span class="string">"bin/sh"</span></span><br><span class="line">                        ],</span><br><span class="line">                        <span class="string">"image"</span>: <span class="string">"172.16.1.41:5000/busybox"</span>,</span><br><span class="line">                        <span class="string">"imagePullPolicy"</span>: <span class="string">"Always"</span>,</span><br><span class="line">                        <span class="string">"name"</span>: <span class="string">"log-output"</span>,</span><br><span class="line">                        <span class="string">"resources"</span>: &#123;&#125;,</span><br><span class="line">                        <span class="string">"terminationMessagePath"</span>: <span class="string">"/dev/termination-log"</span>,</span><br><span class="line">                        <span class="string">"volumeMounts"</span>: [</span><br><span class="line">                            &#123;</span><br><span class="line">                                <span class="string">"mountPath"</span>: <span class="string">"/logdir"</span>,</span><br><span class="line">                                <span class="string">"name"</span>: <span class="string">"nginx-logs"</span></span><br><span class="line">                            &#125;</span><br><span class="line">                        ]</span><br><span class="line">                    &#125;</span><br><span class="line">                ],</span><br><span class="line">                <span class="string">"dnsPolicy"</span>: <span class="string">"ClusterFirst"</span>,</span><br><span class="line">                <span class="string">"nodeName"</span>: <span class="string">"192.168.8.100"</span>,</span><br><span class="line">                <span class="string">"restartPolicy"</span>: <span class="string">"Always"</span>,</span><br><span class="line">                <span class="string">"securityContext"</span>: &#123;&#125;,</span><br><span class="line">                <span class="string">"terminationGracePeriodSeconds"</span>: <span class="number">30</span>,</span><br><span class="line">                <span class="string">"volumes"</span>: [</span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="string">"emptyDir"</span>: &#123;&#125;,</span><br><span class="line">                        <span class="string">"name"</span>: <span class="string">"nginx-logs"</span></span><br><span class="line">                    &#125;</span><br><span class="line">                ]</span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="string">"status"</span>: &#123;</span><br><span class="line">                <span class="string">"conditions"</span>: [</span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="string">"lastProbeTime"</span>: null,</span><br><span class="line">                        <span class="string">"lastTransitionTime"</span>: <span class="string">"2016-09-01T07:52:36Z"</span>,</span><br><span class="line">                        <span class="string">"status"</span>: <span class="string">"True"</span>,</span><br><span class="line">                        <span class="string">"type"</span>: <span class="string">"PodScheduled"</span></span><br><span class="line">                    &#125;</span><br><span class="line">                ],</span><br><span class="line">                <span class="string">"phase"</span>: <span class="string">"Pending"</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    <span class="string">"kind"</span>: <span class="string">"PodList"</span>,</span><br><span class="line">    <span class="string">"metadata"</span>: &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>pods 列出了节点上运行的 pod 信息，包括里面有多少容器、pod 的状态、一些 metadata 等。 <code>/spec/</code> 路径返回节点的信息：</p>
+<figure class="highlight xquery"><table><tr><td class="code"><pre><span class="line">➜  ~ http http://<span class="number">192.168</span>.<span class="number">8.100</span>:<span class="number">10255</span>/spec/</span><br><span class="line">HTTP/<span class="number">1.1</span> <span class="number">200</span> OK</span><br><span class="line">Content-Type: application/json</span><br><span class="line">Date: Thu, 08 Sep <span class="number">2016</span> <span class="number">04</span>:<span class="number">06</span>:<span class="number">53</span> GMT</span><br><span class="line">Transfer-Encoding: chunked</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"boot_id"</span>: <span class="string">"48955926-11dd-4ad3-8bb0-2585b1c9215d"</span>,</span><br><span class="line">    <span class="string">"cloud_provider"</span>: <span class="string">"Unknown"</span>,</span><br><span class="line">    <span class="string">"cpu_frequency_khz"</span>: <span class="number">2194976</span>,</span><br><span class="line">    <span class="string">"disk_map"</span>: &#123;</span><br><span class="line">        <span class="string">"253:0"</span>: &#123;</span><br><span class="line">            <span class="string">"major"</span>: <span class="number">253</span>,</span><br><span class="line">            <span class="string">"minor"</span>: <span class="number">0</span>,</span><br><span class="line">            <span class="string">"name"</span>: <span class="string">"dm-0"</span>,</span><br><span class="line">            <span class="string">"scheduler"</span>: <span class="string">"none"</span>,</span><br><span class="line">            <span class="string">"size"</span>: <span class="number">1107296256</span></span><br><span class="line">        &#125;,</span><br><span class="line">       ...</span><br><span class="line">        <span class="string">"8:0"</span>: &#123;</span><br><span class="line">            <span class="string">"major"</span>: <span class="number">8</span>,</span><br><span class="line">            <span class="string">"minor"</span>: <span class="number">0</span>,</span><br><span class="line">            <span class="string">"name"</span>: <span class="string">"sda"</span>,</span><br><span class="line">            <span class="string">"scheduler"</span>: <span class="string">"cfq"</span>,</span><br><span class="line">            <span class="string">"size"</span>: <span class="number">42949672960</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">"8:16"</span>: &#123;</span><br><span class="line">            <span class="string">"major"</span>: <span class="number">8</span>,</span><br><span class="line">            <span class="string">"minor"</span>: <span class="number">16</span>,</span><br><span class="line">            <span class="string">"name"</span>: <span class="string">"sdb"</span>,</span><br><span class="line">            <span class="string">"scheduler"</span>: <span class="string">"cfq"</span>,</span><br><span class="line">            <span class="string">"size"</span>: <span class="number">21474836480</span></span><br><span class="line">        &#125;,</span><br><span class="line">     ...</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">"filesystems"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"capacity"</span>: <span class="number">41293721600</span>,</span><br><span class="line">            <span class="string">"device"</span>: <span class="string">"/dev/mapper/centos-root"</span>,</span><br><span class="line">            <span class="string">"inodes"</span>: <span class="number">40345600</span>,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"vfs"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"capacity"</span>: <span class="number">520794112</span>,</span><br><span class="line">            <span class="string">"device"</span>: <span class="string">"/dev/sda1"</span>,</span><br><span class="line">            <span class="string">"inodes"</span>: <span class="number">512000</span>,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"vfs"</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"capacity"</span>: <span class="number">21464350720</span>,</span><br><span class="line">            <span class="string">"device"</span>: <span class="string">"/dev/sdb"</span>,</span><br><span class="line">            <span class="string">"inodes"</span>: <span class="number">20971520</span>,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"vfs"</span></span><br><span class="line">        &#125;,</span><br><span class="line">       ...</span><br><span class="line">    ],</span><br><span class="line">    <span class="string">"instance_id"</span>: <span class="string">"None"</span>,</span><br><span class="line">    <span class="string">"instance_type"</span>: <span class="string">"Unknown"</span>,</span><br><span class="line">    <span class="string">"machine_id"</span>: <span class="string">"b9597c4ae5f24494833d35e806e00b29"</span>,</span><br><span class="line">    <span class="string">"memory_capacity"</span>: <span class="number">514215936</span>,</span><br><span class="line">    <span class="string">"network_devices"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"mac_address"</span>: <span class="string">"08:00:27:c0:9e:5b"</span>,</span><br><span class="line">            <span class="string">"mtu"</span>: <span class="number">1500</span>,</span><br><span class="line">            <span class="string">"name"</span>: <span class="string">"enp0s3"</span>,</span><br><span class="line">            <span class="string">"speed"</span>: <span class="number">1000</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"mac_address"</span>: <span class="string">"08:00:27:9b:5c:b5"</span>,</span><br><span class="line">            <span class="string">"mtu"</span>: <span class="number">1500</span>,</span><br><span class="line">            <span class="string">"name"</span>: <span class="string">"enp0s8"</span>,</span><br><span class="line">            <span class="string">"speed"</span>: <span class="number">1000</span></span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    <span class="string">"num_cores"</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="string">"system_uuid"</span>: <span class="string">"823EB67A-057E-4EFF-AE7F-A758140CD2F7"</span>,</span><br><span class="line">    <span class="string">"topology"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"caches"</span>: [</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="string">"level"</span>: <span class="number">3</span>,</span><br><span class="line">                    <span class="string">"size"</span>: <span class="number">3145728</span>,</span><br><span class="line">                    <span class="string">"type"</span>: <span class="string">"Unified"</span></span><br><span class="line">                &#125;</span><br><span class="line">            ],</span><br><span class="line">            <span class="string">"cores"</span>: [</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="string">"caches"</span>: [</span><br><span class="line">                        &#123;</span><br><span class="line">                            <span class="string">"level"</span>: <span class="number">1</span>,</span><br><span class="line">                            <span class="string">"size"</span>: <span class="number">32768</span>,</span><br><span class="line">                            <span class="string">"type"</span>: <span class="string">"Data"</span></span><br><span class="line">                        &#125;,</span><br><span class="line">                        &#123;</span><br><span class="line">                            <span class="string">"level"</span>: <span class="number">1</span>,</span><br><span class="line">                            <span class="string">"size"</span>: <span class="number">32768</span>,</span><br><span class="line">                            <span class="string">"type"</span>: <span class="string">"Instruction"</span></span><br><span class="line">                        &#125;,</span><br><span class="line">                        &#123;</span><br><span class="line">                            <span class="string">"level"</span>: <span class="number">2</span>,</span><br><span class="line">                            <span class="string">"size"</span>: <span class="number">262144</span>,</span><br><span class="line">                            <span class="string">"type"</span>: <span class="string">"Unified"</span></span><br><span class="line">                        &#125;</span><br><span class="line">                    ],</span><br><span class="line">                    <span class="string">"core_id"</span>: <span class="number">0</span>,</span><br><span class="line">                    <span class="string">"thread_ids"</span>: [</span><br><span class="line">                        <span class="number">0</span></span><br><span class="line">                    ]</span><br><span class="line">                &#125;</span><br><span class="line">            ],</span><br><span class="line">            <span class="string">"memory"</span>: <span class="number">536403968</span>,</span><br><span class="line">            <span class="string">"node_id"</span>: <span class="number">0</span></span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>磁盘、网络、CPU、内存等信息，这些东西是 kubernetes 集群调度的重要依据，在集群模式中会更新到 master 节点。</p>
+<h3 id="清理工作"><a href="#清理工作" class="headerlink" title="清理工作"></a>清理工作</h3><p>如果删除 <code>manifests/</code> 路径下的文件，等一段时间就会发现，kubelet 已经清空了所有的容器。</p>
+<figure class="highlight elixir"><table><tr><td class="code"><pre><span class="line"><span class="variable">$ </span>curl -s <span class="symbol">http:</span>/<span class="regexp">/localhost:10255/pods</span></span><br><span class="line">&#123;<span class="string">"kind"</span><span class="symbol">:<span class="string">"PodList"</span></span>,<span class="string">"apiVersion"</span><span class="symbol">:<span class="string">"v1"</span></span>,<span class="string">"metadata"</span><span class="symbol">:</span>&#123;&#125;,<span class="string">"items"</span><span class="symbol">:null</span>&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ul>
+<li><a href="https://coreos.com/kubernetes/docs/latest/deploy-master.html" target="_blank" rel="noopener">Deploy Kubernetes Master Node(s)</a></li>
+<li><a href="http://kamalmarhubi.com/blog/2015/08/27/what-even-is-a-kubelet/" target="_blank" rel="noopener">What even is a kubelet?</a></li>
+<li><a href="http://kubernetes.io/docs/admin/node/" target="_blank" rel="noopener">Kubernetes Node Documentation</a></li>
+<li><a href="https://coreos.com/kubernetes/docs/latest/pods.html" target="_blank" rel="noopener">Overview of a Pod</a></li>
+<li><a href="http://kubernetes.io/docs/user-guide/liveness/" target="_blank" rel="noopener">Checking Pod Health</a></li>
+</ul>
+
+                </div>
+            </section>
+        </article>
+    </div>
+    
+<nav class="pagination">
+    
+    
+    <a class="prev-post" title="kubernetes 简介：API Server 和 node" href="/2016/11/07/kubernetes-intro-api-server/">
+        ← kubernetes 简介：API Server 和 node
+    </a>
+    
+    <span class="prev-next-post">•</span>
+    
+    <a class="next-post" title="go http 服务器编程" href="/2016/08/17/golang-http-server-side/">
+        go http 服务器编程 →
+    </a>
+    
+    
+</nav>
+    
+</main>
+
+<div class="t-g-control">
+    <div class="gotop">
+        <svg class="icon" width="32px" height="32px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M793.024 710.272a32 32 0 1 0 45.952-44.544l-310.304-320a32 32 0 0 0-46.4 0.48l-297.696 320a32 32 0 0 0 46.848 43.584l274.752-295.328 286.848 295.808z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="toc-control">
+        <svg class="icon toc-icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M779.776 480h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M779.776 672h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M256 288a32 32 0 1 0 0 64 32 32 0 0 0 0-64M392.576 352h387.2a32 32 0 0 0 0-64h-387.2a32 32 0 0 0 0 64M256 480a32 32 0 1 0 0 64 32 32 0 0 0 0-64M256 672a32 32 0 1 0 0 64 32 32 0 0 0 0-64" fill="#8a8a8a" /></svg>
+        <svg class="icon toc-close" style="display: none;" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 960c-247.039484 0-448-200.960516-448-448S264.960516 64 512 64 960 264.960516 960 512 759.039484 960 512 960zM512 128.287273c-211.584464 0-383.712727 172.128262-383.712727 383.712727 0 211.551781 172.128262 383.712727 383.712727 383.712727 211.551781 0 383.712727-172.159226 383.712727-383.712727C895.712727 300.415536 723.551781 128.287273 512 128.287273z" fill="#8a8a8a" /><path d="M557.05545 513.376159l138.367639-136.864185c12.576374-12.416396 12.672705-32.671738 0.25631-45.248112s-32.704421-12.672705-45.248112-0.25631l-138.560301 137.024163-136.447897-136.864185c-12.512727-12.512727-32.735385-12.576374-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.248112l136.255235 136.671523-137.376804 135.904314c-12.576374 12.447359-12.672705 32.671738-0.25631 45.248112 6.271845 6.335493 14.496116 9.504099 22.751351 9.504099 8.12794 0 16.25588-3.103239 22.496761-9.247789l137.567746-136.064292 138.687596 139.136568c6.240882 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.05545 513.376159z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="gobottom">
+        <svg class="icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M231.424 346.208a32 32 0 0 0-46.848 43.584l297.696 320a32 32 0 0 0 46.4 0.48l310.304-320a32 32 0 1 0-45.952-44.544l-286.848 295.808-274.752-295.36z" fill="#8a8a8a" /></svg>
+    </div>
+</div>
+<div class="toc-main" style="right: -100%">
+    <div class="post-toc">
+        <span>TOC</span>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#简介"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kubelet-主要功能"><span class="toc-text">kubelet 主要功能</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#pod-管理"><span class="toc-text">pod 管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#容器健康检查"><span class="toc-text">容器健康检查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#容器监控"><span class="toc-text">容器监控</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#运行和验证-kubelet"><span class="toc-text">运行和验证 kubelet</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#参数介绍"><span class="toc-text">参数介绍</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#启动-kubelet"><span class="toc-text">启动 kubelet</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#API-接口"><span class="toc-text">API 接口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#清理工作"><span class="toc-text">清理工作</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考链接"><span class="toc-text">参考链接</span></a></li></ol>
+    </div>
+</div>
+
+
+
+        
+
+<aside class="read-next outer">
+    <div class="inner">
+        <div class="read-next-feed">
+            
+            
+
+<article class="read-next-card"  style="background-image: url(https://i.loli.net/2017/11/26/5a19c56faa29f.jpg)"  >
+  <header class="read-next-card-header">
+    <small class="read-next-card-header-sitetitle">&mdash; Cizixs Write Here &mdash;</small>
+    <h3 class="read-next-card-header-title">Recent Posts</h3>
+  </header>
+  <div class="read-next-divider">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M13 14.5s2 3 5 3 5.5-2.463 5.5-5.5S21 6.5 18 6.5c-5 0-7 11-12 11C2.962 17.5.5 15.037.5 12S3 6.5 6 6.5s4.5 3.5 4.5 3.5"/>
+    </svg>
+  </div>
+  <div class="read-next-card-content">
+    <ul>
+      
+      
+      
+      <li>
+        <a href="/2018/08/26/what-is-istio/">什么是 istio</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/08/25/knative-serverless-platform/">serverless 平台 knative 简介</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/06/25/kubernetes-resource-management/">kubernetes 资源管理概述</a>
+      </li>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+  </div>
+  <footer class="read-next-card-footer">
+    <a href="/archives">  MORE  → </a>
+  </footer>
+</article>
+
+            
+            
+            
+        </div>
+    </div>
+</aside>
+
+<footer class="site-footer outer">
+	<div class="site-footer-content inner">
+		<section class="copyright">
+			<a href="/" title="Cizixs Write Here">Cizixs Write Here</a>
+			&copy; 2018
+		</section>
+		<nav class="site-footer-nav">
+			
+            <a href="https://hexo.io" title="Hexo" target="_blank" rel="noopener">Hexo</a>
+            <a href="https://github.com/xzhih/hexo-theme-casper" title="Casper" target="_blank" rel="noopener">Casper</a>
+        </nav>
+    </div>
+</footer>
+
+
+
+
+
+
+<div class="floating-header" >
+	<div class="floating-header-logo">
+        <a href="/" title="Cizixs Write Here">
+			
+                <img src="https://i.loli.net/2017/11/26/5a19c0b50432e.png" alt="Cizixs Write Here icon" />
+			
+            <span>Cizixs Write Here</span>
+        </a>
+    </div>
+    <span class="floating-header-divider">&mdash;</span>
+    <div class="floating-header-title">kubernetes 简介： kubelet 和 pod</div>
+    <progress class="progress" value="0">
+        <div class="progress-container">
+            <span class="progress-bar"></span>
+        </div>
+    </progress>
+</div>
+<script>
+   $(document).ready(function () {
+    var progressBar = document.querySelector('progress');
+    var header = document.querySelector('.floating-header');
+    var title = document.querySelector('.post-full-title');
+    var lastScrollY = window.scrollY;
+    var lastWindowHeight = window.innerHeight;
+    var lastDocumentHeight = $(document).height();
+    var ticking = false;
+
+    function onScroll() {
+        lastScrollY = window.scrollY;
+        requestTick();
+    }
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(update);
+        }
+        ticking = true;
+    }
+    function update() {
+        var rect = title.getBoundingClientRect();
+        var trigger = rect.top + window.scrollY;
+        var triggerOffset = title.offsetHeight + 35;
+        var progressMax = lastDocumentHeight - lastWindowHeight;
+            // show/hide floating header
+            if (lastScrollY >= trigger + triggerOffset) {
+                header.classList.add('floating-active');
+            } else {
+                header.classList.remove('floating-active');
+            }
+            progressBar.setAttribute('max', progressMax);
+            progressBar.setAttribute('value', lastScrollY);
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', onScroll, {passive: true});
+        update();
+
+        // TOC
+        var width = $('.toc-main').width();
+        $('.toc-control').click(function () {
+            if ($('.t-g-control').css('width')=="50px") {
+                if ($('.t-g-control').css('right')=="0px") {
+                    $('.t-g-control').animate({right: width}, "slow");
+                    $('.toc-main').animate({right: 0}, "slow");
+                    toc_icon()
+                } else {
+                    $('.t-g-control').animate({right: 0}, "slow");
+                    $('.toc-main').animate({right: -width}, "slow");
+                    toc_icon()
+                }
+            } else {
+                if ($('.toc-main').css('right')=="0px") {
+                    $('.toc-main').slideToggle("fast", toc_icon());
+                } else {
+                    $('.toc-main').css('right', '0px');
+                    toc_icon()
+                }
+            }
+        })
+
+        function toc_icon() {
+            if ($('.toc-icon').css('display')=="none") {
+                $('.toc-close').hide();
+                $('.toc-icon').show();
+            } else {
+                $('.toc-icon').hide();
+                $('.toc-close').show();
+            }
+        }
+
+        $('.gotop').click(function(){
+            $('html,body').animate({scrollTop:$('.post-full-header').offset().top}, 800);
+        });
+        $('.gobottom').click(function () {
+            $('html,body').animate({scrollTop:$('.pagination').offset().top}, 800);
+        });
+
+        // highlight
+        // https://highlightjs.org
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+        $('td.code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+
+        console.log("this theme is from https://github.com/xzhih/hexo-theme-casper")
+    });
+</script>
+
+
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/1.3.9/css/lightgallery.min.css">
+
+
+
+<script src="https://cdn.staticfile.org/lightgallery/1.3.9/js/lightgallery.min.js"></script>
+
+
+<script>
+	$(function () {
+		var postImg = $('#lightgallery').find('img');
+		postImg.addClass('post-img');
+		postImg.each(function () {
+			var imgSrc = $(this).attr('src');
+			$(this).attr('data-src', imgSrc);
+		});
+		$('#lightgallery').lightGallery({selector: '.post-img'});
+	});
+</script>
+
+
+
+
+    </div>
+</body>
+</html>

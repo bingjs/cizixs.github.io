@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html CN>
+
+
+
+
+
+
+
+<head>
+	
+	
+	<link rel="stylesheet" href="/css/allinone.min.css"> 
+
+	
+
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+	<title>Go 语言 JSON 简介 | Cizixs Write Here</title>
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta name="generator" content="hexo">
+	<meta name="author" content="Cizixs Wu">
+	<meta name="description" content="">
+
+	
+	<meta name="keywords" content="">
+	
+
+	
+	<link rel="shortcut icon" href="https://i.loli.net/2017/11/26/5a19c0b50432e.png">
+	
+
+	
+	<meta name="theme-color" content="#3c484e">
+	<meta name="msapplication-TileColor" content="#3c484e">
+	
+
+	
+
+	
+
+	<meta property="og:site_name" content="Cizixs Write Here">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="Go 语言 JSON 简介 | Cizixs Write Here">
+	<meta property="og:description" content="">
+	<meta property="og:url" content="http://cizixs.com/2016/12/19/golang-json-guide/">
+
+	
+	<meta property="article:published_time" content="2016-12-19T00:12:00+08:00"/> 
+	<meta property="article:author" content="Cizixs Wu">
+	<meta property="article:published_first" content="Cizixs Write Here, /2016/12/19/golang-json-guide/" />
+	
+
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	
+
+	
+	<script src="https://cdn.staticfile.org/highlight.js/9.10.0/highlight.min.js"></script>
+	
+
+	
+	
+</head>
+<body class="post-template">
+    <div class="site-wrapper">
+        
+
+
+
+
+<header class="site-header outer" style="z-index: 999">
+    <div class="inner">
+        
+<nav class="site-nav"> 
+    <div class="site-nav-left">
+        <ul class="nav">
+            <li>
+                
+                <a href="/" title="Home">Home</a>
+                
+            </li>
+            
+            
+            <li>
+                <a href="/about" title="About">About</a>
+            </li>
+            
+            <li>
+                <a href="/archives" title="Archives">Archives</a>
+            </li>
+            
+            
+        </ul> 
+    </div>
+    <div class="site-nav-right">
+        
+<div class="social-links" >
+    
+    
+    
+    
+    <a class="social-link" title="twitter" href="https://twitter.com/cizixs" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30.063 7.313c-.813 1.125-1.75 2.125-2.875 2.938v.75c0 1.563-.188 3.125-.688 4.625a15.088 15.088 0 0 1-2.063 4.438c-.875 1.438-2 2.688-3.25 3.813a15.015 15.015 0 0 1-4.625 2.563c-1.813.688-3.75 1-5.75 1-3.25 0-6.188-.875-8.875-2.625.438.063.875.125 1.375.125 2.688 0 5.063-.875 7.188-2.5-1.25 0-2.375-.375-3.375-1.125s-1.688-1.688-2.063-2.875c.438.063.813.125 1.125.125.5 0 1-.063 1.5-.25-1.313-.25-2.438-.938-3.313-1.938a5.673 5.673 0 0 1-1.313-3.688v-.063c.813.438 1.688.688 2.625.688a5.228 5.228 0 0 1-1.875-2c-.5-.875-.688-1.813-.688-2.75 0-1.063.25-2.063.75-2.938 1.438 1.75 3.188 3.188 5.25 4.25s4.313 1.688 6.688 1.813a5.579 5.579 0 0 1 1.5-5.438c1.125-1.125 2.5-1.688 4.125-1.688s3.063.625 4.188 1.813a11.48 11.48 0 0 0 3.688-1.375c-.438 1.375-1.313 2.438-2.563 3.188 1.125-.125 2.188-.438 3.313-.875z"/></svg>
+
+    </a>
+    
+    
+</div>
+    </div>
+</nav>
+    </div>
+</header>
+
+
+<main id="site-main" class="site-main outer" role="main">
+    <div class="inner">
+        <header class="post-full-header">
+            <section class="post-full-meta">
+                <time  class="post-full-meta-date" datetime="2016-12-18T16:00:00.000Z" itemprop="datePublished">
+                    2016-12-19
+                </time>
+                
+                <span class="date-divider">/</span>
+                
+                <a href="/categories/blog/">blog</a>&nbsp;&nbsp;
+                
+                
+            </section>
+            <h1 class="post-full-title">Go 语言 JSON 简介</h1>
+        </header>
+        <article class="post-full no-image">
+            
+            <section class="post-full-content">
+                <div id="lightgallery" class="markdown-body">
+                    <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p><a href="http://json.org" target="_blank" rel="noopener">JSON</a>（JavaScript Object Notation） 是一种轻量级的数据交换格式，因为易读性、机器容易处理而变得流行。</p>
+<p>JSON 语言定义的内容非常简洁，主要分为三种类型：对象（object）、数组（array）和基本类型（value）。基本类型（value）包括：</p>
+<ul>
+<li>string 字符串，双引号括起来的 unciode 字符序列</li>
+<li>number 数字，可以是整数，也可以是浮点数，但是不支持八进制和十六进制表示的数字</li>
+<li>true，false 真值和假值，一般对应语言中的 bool 类型</li>
+<li>null 空值，对应于语言中的空指针等</li>
+</ul>
+<p>数组（array）就是方括号括<code>[]</code>起来的任意值的序列，中间以逗号 <code>,</code> 隔开。对象（object）是一系列无序的键值组合，<strong>键必须是字符串</strong>，键值对之间以逗号 <code>,</code> 隔开，键和值以冒号 <code>:</code> 隔开。数组和对象中的值都可以是嵌套的。</p>
+<p><a href="http://json.org" target="_blank" rel="noopener">JSON 官网</a> 有非常易懂的图示，进一步了解可以移步。</p>
+<p>JSON 不依赖于任何具体的语言，但是和大多数 C 家族的编程语言数据结构特别相似，所以 JSON 成了多语言之间数据交换的流行格式。Go 语言也不例外，标准库 <code>encoding/json</code> 就是专门处理 JSON 转换的。</p>
+<p>这篇文章就专门介绍 Go 语言中怎么和 JSON 打交道，常用的模式以及需要注意的事项。</p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>Golang 的 <code>encoding/json</code> 库已经提供了很好的封装，可以让我们很方便地进行 JSON 数据的转换。</p>
+<p>Go 语言中数据结构和 JSON 类型的对应关系如下表：</p>
+<table>
+<thead>
+<tr>
+<th>golang 类型</th>
+<th>JSON 类型</th>
+<th>注意事项</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bool</td>
+<td>JSON booleans</td>
+<td></td>
+</tr>
+<tr>
+<td>浮点数、整数</td>
+<td>JSON numbers</td>
+<td></td>
+</tr>
+<tr>
+<td>字符串</td>
+<td>JSON strings</td>
+<td>字符串会转换成 UTF-8 进行输出，无法转换的会打印对应的 unicode 值。而且为了防止浏览器把 json 输出当做 html， “&lt;”、”&gt;” 以及 “&amp;” 会被转义为 “\u003c”、”\u003e” 和 “\u0026”。</td>
+</tr>
+<tr>
+<td>array，slice</td>
+<td>JSON arrays</td>
+<td>[]byte 会被转换为 base64 字符串，nil slice 会被转换为 JSON null</td>
+</tr>
+<tr>
+<td>struct</td>
+<td>JSON objects</td>
+<td>只有导出的字段（以大写字母开头）才会在输出中</td>
+</tr>
+</tbody>
+</table>
+<p><strong>NOTE</strong>：Go 语言中一些特殊的类型，比如 Channel、complex、function 是不能被解析成 JSON 的。</p>
+<h3 id="Encode-和-Decode"><a href="#Encode-和-Decode" class="headerlink" title="Encode 和 Decode"></a>Encode 和 Decode</h3><p>要把 golang 的数据结构转换成 JSON 字符串（encode），可以使用 <code>Marshal</code>函数：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Marshal</span><span class="params">(v <span class="keyword">interface</span>&#123;&#125;)</span> <span class="params">([]<span class="keyword">byte</span>, error)</span></span></span><br></pre></td></tr></table></figure>
+<p>比如我们有结构体 <code>User</code></p>
+<figure class="highlight routeros"><table><tr><td class="code"><pre><span class="line">type<span class="built_in"> User </span>struct &#123;</span><br><span class="line">    Name string</span><br><span class="line">    IsAdmin bool</span><br><span class="line">    Followers uint</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以及一个实例：</p>
+<figure class="highlight crmsh"><table><tr><td class="code"><pre><span class="line"><span class="keyword">user</span> <span class="title">:= User</span>&#123;</span><br><span class="line">		Name:      <span class="string">"cizixs"</span>,</span><br><span class="line">		IsAdmin:   <span class="literal">true</span>,</span><br><span class="line">		Followers: <span class="number">36</span>,</span><br><span class="line">	&#125;</span><br><span class="line">data, err := json.Marshal(user)</span><br></pre></td></tr></table></figure>
+<p>那么 data 就是 <code>[]byte</code> 类型的数组，里面包含了解析为 JSON 之后的数据：</p>
+<figure class="highlight autohotkey"><table><tr><td class="code"><pre><span class="line">data == []byte(`&#123;<span class="string">"Name"</span>:<span class="string">"cizixs"</span>,<span class="string">"IsAdmin"</span>:<span class="literal">true</span>,<span class="string">"Followers"</span>:<span class="number">36</span>&#125;`)</span><br></pre></td></tr></table></figure>
+<p>相对应的，要把 JSON 数据转换成 Go 类型的值（Decode）， 可以使用 <code>json.Unmarshal</code>。它的定义是这样的：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Unmarshal</span><span class="params">(data []<span class="keyword">byte</span>, v <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">error</span></span></span><br></pre></td></tr></table></figure>
+<p>data 中存放的是 JSON 值，v 会存放解析后的数据，所以必须是指针，可以保证函数中做的修改能保存下来。</p>
+<p>下面看个例子：</p>
+<figure class="highlight vbscript"><table><tr><td class="code"><pre><span class="line">data = []byte(`&#123;<span class="string">"Name"</span>:<span class="string">"gopher"</span>,<span class="string">"IsAdmin"</span>:<span class="literal">false</span>,<span class="string">"Followers"</span>:<span class="number">8900</span>&#125;`)</span><br><span class="line">var newUser = <span class="keyword">new</span>(User)</span><br><span class="line"><span class="built_in">err</span> = json.Unmarshal(data, &amp;newUser)</span><br><span class="line"><span class="keyword">if</span> <span class="built_in">err</span> != nil &#123;</span><br><span class="line">	fmt.Errorf(<span class="string">"Can not decode data: %v\n"</span>, <span class="built_in">err</span>)</span><br><span class="line">&#125;</span><br><span class="line">fmt.Printf(<span class="string">"%v\n"</span>, newUser)</span><br></pre></td></tr></table></figure>
+<p>那么 <code>Unmarshal</code> 是怎么找到结构体中对应的值呢？比如给定一个 JSON key <code>Filed</code>，它是这样查找的：</p>
+<ul>
+<li>首先查找 tag 名字（关于 JSON tag 的解释参看下一节）为 <code>Field</code> 的字段</li>
+<li>然后查找名字为 <code>Field</code> 的字段</li>
+<li>最后再找名字为 <code>FiElD</code> 等大小写不敏感的匹配字段。</li>
+<li>如果都没有找到，就直接忽略这个 key，也不会报错。这对于要从众多数据中只选择部分来使用非常方便。</li>
+</ul>
+<h3 id="更多控制：Tag"><a href="#更多控制：Tag" class="headerlink" title="更多控制：Tag"></a>更多控制：Tag</h3><p>在定义 struct 字段的时候，可以在字段后面添加 tag，来控制 encode/decode 的过程：是否要 decode/encode 某个字段，JSON 中的字段名称是什么。</p>
+<p>可以选择的控制字段有三种：</p>
+<ul>
+<li><code>-</code>：不要解析这个字段</li>
+<li><code>omitempty</code>：当字段为空（默认值）时，不要解析这个字段。比如 false、0、nil、长度为 0 的 array，map，slice，string</li>
+<li><code>FieldName</code>：当解析 json 的时候，使用这个名字</li>
+</ul>
+<p>举例来说吧：</p>
+<figure class="highlight clean"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 解析的时候忽略该字段。默认情况下会解析这个字段，因为它是大写字母开头的</span></span><br><span class="line">Field int   `json:<span class="string">"-"</span>`</span><br><span class="line"></span><br><span class="line"><span class="comment">// 解析（encode/decode） 的时候，使用 `other_name`，而不是 `Field`</span></span><br><span class="line">Field int   `json:<span class="string">"other_name"</span>`</span><br><span class="line"></span><br><span class="line"><span class="comment">// 解析的时候使用 `other_name`，如果struct 中这个值为空，就忽略它</span></span><br><span class="line">Field int   `json:<span class="string">"other_name,omitempty"</span>`</span><br></pre></td></tr></table></figure>
+<h3 id="解析动态内容-interface"><a href="#解析动态内容-interface" class="headerlink" title="解析动态内容: interface{}"></a>解析动态内容: interface{}</h3><p>上面的解析过程有一个假设——你要事先知道要解析的 JSON 内容格式，然后定义好对应的数据结构。如果你不知道要解析的内容呢？ Go 提供了 <code>interface{}</code> 的格式，这个接口没有限定任何的方法，因此所有的类型都是满足这个接口的。在解析 JSON 的时候，任意动态的内容都可以解析成 <code>interface{}</code>。</p>
+<p>比如还是上面的数据，我们可以这样做：</p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="keyword">data</span> := []byte(`&#123;<span class="string">"Name"</span>:<span class="string">"cizixs"</span>,<span class="string">"IsAdmin"</span>:<span class="literal">true</span>,<span class="string">"Followers"</span>:<span class="number">36</span>&#125;`)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> f <span class="class"><span class="keyword">interface</span></span>&#123;&#125;</span><br><span class="line">json.Unmarshal(<span class="keyword">data</span>, &amp;f)</span><br></pre></td></tr></table></figure>
+<p>但是要使用 <code>f</code>，还是很麻烦的，我们要使用 <a href="https://golang.org/ref/spec#Type_assertions" target="_blank" rel="noopener">type assertion</a>：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">name := f.(<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">interface</span>&#123;&#125;)[<span class="string">"Name"</span>].(<span class="keyword">string</span>)</span><br></pre></td></tr></table></figure>
+<p>对于比较复杂的结构，这样的访问很麻烦，也很容易出错。</p>
+<p>如果已经知道 JSON 数据是对象，而不是基本类型（bool，number，string，array）等，因为 JSON 对象键都是字符串，所以可以把上面的例子修改为：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> f <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 省去了上面 f 的 type assertion 步骤</span></span><br><span class="line">name := f[<span class="string">"Name"</span>].(<span class="keyword">string</span>)</span><br></pre></td></tr></table></figure>
+<p>需要注意的是，尽管 <code>Followers</code> 字段没有小数点，我们希望它是整数值，解析的时候它还是会被解析成 <code>float64</code>，如果直接把它当做 <code>int</code> 访问，会出现错误：</p>
+<figure class="highlight nimrod"><table><tr><td class="code"><pre><span class="line">followers := f[<span class="string">"Followers"</span>].(<span class="built_in">int</span>)</span><br><span class="line"></span><br><span class="line">// panic: <span class="keyword">interface</span> conversion: <span class="keyword">interface</span> <span class="keyword">is</span> <span class="built_in">float64</span>, <span class="keyword">not</span> <span class="built_in">int</span></span><br></pre></td></tr></table></figure>
+<p>而必须自己做类型转换：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">followers := <span class="keyword">int</span>(f[<span class="string">"Followers"</span>].(<span class="keyword">float64</span>))</span><br></pre></td></tr></table></figure>
+<h3 id="延迟解析：json-RawMessage"><a href="#延迟解析：json-RawMessage" class="headerlink" title="延迟解析：json.RawMessage"></a>延迟解析：json.RawMessage</h3><p>在解析的时候，还可以把某部分先保留为 JSON 数据不要解析，等到后面得到更多信息的时候再去解析。继续拿 <code>User</code> 举例，比如我们要添加认证的信息，认证可以是用户名和密码，也可以是 token 认证。</p>
+<figure class="highlight routeros"><table><tr><td class="code"><pre><span class="line">type BasicAuth struct &#123;</span><br><span class="line">    Email string</span><br><span class="line">    Password string</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">type TokenAuth struct &#123;</span><br><span class="line">    Token string</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">type<span class="built_in"> User </span>struct &#123;</span><br><span class="line">    Name string</span><br><span class="line">    IsAdmin bool</span><br><span class="line">    Followers uint</span><br><span class="line">    Auth json.RawMessage</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们在定义 <code>User</code> 结构体的时候，把认证字段的类型定义为 <code>json.RawMessage</code>，这样解析 JSON 数据的时候，对应的字段会先不急着转换成 Go 数据结构。然后我们可以自己去再次调用 <code>Unmarshal</code> 去读取里面的值：</p>
+<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">err := json.Unmarshal(data, &amp;basicAuth)</span><br><span class="line"><span class="keyword">if</span> basicAuth<span class="selector-class">.Email</span> != <span class="string">""</span> &#123;</span><br><span class="line">    <span class="comment">// 这是用户名/密码认证方式，在这里继续做一些处理</span></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    json.Unmarshal(data, &amp;tokenAuth)</span><br><span class="line">    <span class="keyword">if</span> tokenAuth<span class="selector-class">.Token</span> != <span class="string">""</span> &#123;</span><br><span class="line">        <span class="comment">// 这是 token 认证方法</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="自定义解析方法"><a href="#自定义解析方法" class="headerlink" title="自定义解析方法"></a>自定义解析方法</h3><p>如果希望自己控制怎么解析成 JSON，或者把 JSON 解析成自定义的类型，只需要实现对应的接口（interface）。<code>encoding/json</code> 提供了两个接口：<code>Marshaler</code> 和 <code>Unmarshaler</code>：</p>
+<figure class="highlight aspectj"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Marshaler 接口定义了怎么把某个类型 encode 成 JSON 数据</span></span><br><span class="line">type Marshaler <span class="class"><span class="keyword">interface</span> </span>&#123;</span><br><span class="line">        MarshalJSON() ([]<span class="keyword">byte</span>, <span class="keyword">error</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Unmarshaler 接口定义了怎么把 JSON 数据 decode 成特定的类型数据。如果后续还要使用 JSON 数据，必须把数据拷贝一份</span></span><br><span class="line">type Unmarshaler <span class="class"><span class="keyword">interface</span> </span>&#123;</span><br><span class="line">        UnmarshalJSON([]<span class="keyword">byte</span>) <span class="keyword">error</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>标准库 <a href="https://golang.org/src/time/time.go#L928" target="_blank" rel="noopener"><code>time.Time</code></a> 就实现了这两个接口。另外一个简单的例子（这个例子来自于参考资料中 Go and JSON 文章）：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Month <span class="keyword">struct</span> &#123;</span><br><span class="line">    MonthNumber <span class="keyword">int</span></span><br><span class="line">    YearNumber <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m Month)</span> <span class="title">MarshalJSON</span><span class="params">()</span> <span class="params">([]<span class="keyword">byte</span>, error)</span></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> []<span class="keyword">byte</span>(fmt.Sprintf(<span class="string">"%d/%d"</span>, m.MonthNumber, m.YearNumber)), <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(m *Month)</span> <span class="title">UnmarshalJSON</span><span class="params">(value []<span class="keyword">byte</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">    parts := strings.Split(<span class="keyword">string</span>(value), <span class="string">"/"</span>)</span><br><span class="line">    m.MonthNumber = strconv.ParseInt(parts[<span class="number">0</span>], <span class="number">10</span>, <span class="number">32</span>)</span><br><span class="line">    m.YearNumber = strconv.ParseInt(parts[<span class="number">1</span>], <span class="number">10</span>, <span class="number">32</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="和-stream-中-JSON-打交道"><a href="#和-stream-中-JSON-打交道" class="headerlink" title="和 stream 中 JSON 打交道"></a>和 stream 中 JSON 打交道</h3><p>上面所有的 JSON 数据来源都是预先定义的 <code>[]byte</code> 缓存，在很多时候，如果能读取/写入其他地方的数据就好了。<code>encoding/json</code> 库中有两个专门处理这个事情的结构：<code>Decoder</code> 和 <code>Encoder</code>：</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Decoder 从 r io.Reader 中读取数据，`Decode(v interface&#123;&#125;)` 方法把数据转换成对应的数据结构</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewDecoder</span><span class="params">(r io.Reader)</span></span> *<span class="type">Decoder</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Encoder 的 `Encode(v interface&#123;&#125;)` 把数据结构转换成对应的 JSON 数据，然后写入到 w io.Writer 中</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewEncoder</span><span class="params">(w io.Writer)</span></span> *<span class="type">Encoder</span></span><br></pre></td></tr></table></figure>
+<p>下面的例子就是从标准输入流中读取数据，解析成数据结构，删除所有键不是 <code>Name</code> 的字段，然后再 encode 成 JSON 数据，打印到标准输出。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">"encoding/json"</span></span><br><span class="line">    <span class="string">"log"</span></span><br><span class="line">    <span class="string">"os"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    dec := json.NewDecoder(os.Stdin)</span><br><span class="line">    enc := json.NewEncoder(os.Stdout)</span><br><span class="line">    <span class="keyword">for</span> &#123;</span><br><span class="line">        <span class="keyword">var</span> v <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">        <span class="keyword">if</span> err := dec.Decode(&amp;v); err != <span class="literal">nil</span> &#123;</span><br><span class="line">            log.Println(err)</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> k := <span class="keyword">range</span> v &#123;</span><br><span class="line">            <span class="keyword">if</span> k != <span class="string">"Name"</span> &#123;</span><br><span class="line">                <span class="built_in">delete</span>(v, k)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> err := enc.Encode(&amp;v); err != <span class="literal">nil</span> &#123;</span><br><span class="line">            log.Println(err)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://blog.golang.org/json-and-go" target="_blank" rel="noopener">Go Blog: JSON and Go</a></li>
+<li><a href="http://eagain.net/articles/go-dynamic-json/" target="_blank" rel="noopener">Dynamic JSON in Go</a></li>
+<li><a href="https://eager.io/blog/go-and-json/" target="_blank" rel="noopener">Go and JSON</a></li>
+</ul>
+
+                </div>
+            </section>
+        </article>
+    </div>
+    
+<nav class="pagination">
+    
+    
+    <a class="prev-post" title="让 CPU 告诉你硬盘和网络到底有多慢" href="/2017/01/03/how-slow-is-disk-and-network/">
+        ← 让 CPU 告诉你硬盘和网络到底有多慢
+    </a>
+    
+    <span class="prev-next-post">•</span>
+    
+    <a class="next-post" title="跟着 Github 学习 Restful HTTP API 设计" href="/2016/12/12/restful-api-design-guide/">
+        跟着 Github 学习 Restful HTTP API 设计 →
+    </a>
+    
+    
+</nav>
+    
+</main>
+
+<div class="t-g-control">
+    <div class="gotop">
+        <svg class="icon" width="32px" height="32px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M793.024 710.272a32 32 0 1 0 45.952-44.544l-310.304-320a32 32 0 0 0-46.4 0.48l-297.696 320a32 32 0 0 0 46.848 43.584l274.752-295.328 286.848 295.808z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="toc-control">
+        <svg class="icon toc-icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M779.776 480h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M779.776 672h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M256 288a32 32 0 1 0 0 64 32 32 0 0 0 0-64M392.576 352h387.2a32 32 0 0 0 0-64h-387.2a32 32 0 0 0 0 64M256 480a32 32 0 1 0 0 64 32 32 0 0 0 0-64M256 672a32 32 0 1 0 0 64 32 32 0 0 0 0-64" fill="#8a8a8a" /></svg>
+        <svg class="icon toc-close" style="display: none;" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 960c-247.039484 0-448-200.960516-448-448S264.960516 64 512 64 960 264.960516 960 512 759.039484 960 512 960zM512 128.287273c-211.584464 0-383.712727 172.128262-383.712727 383.712727 0 211.551781 172.128262 383.712727 383.712727 383.712727 211.551781 0 383.712727-172.159226 383.712727-383.712727C895.712727 300.415536 723.551781 128.287273 512 128.287273z" fill="#8a8a8a" /><path d="M557.05545 513.376159l138.367639-136.864185c12.576374-12.416396 12.672705-32.671738 0.25631-45.248112s-32.704421-12.672705-45.248112-0.25631l-138.560301 137.024163-136.447897-136.864185c-12.512727-12.512727-32.735385-12.576374-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.248112l136.255235 136.671523-137.376804 135.904314c-12.576374 12.447359-12.672705 32.671738-0.25631 45.248112 6.271845 6.335493 14.496116 9.504099 22.751351 9.504099 8.12794 0 16.25588-3.103239 22.496761-9.247789l137.567746-136.064292 138.687596 139.136568c6.240882 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.05545 513.376159z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="gobottom">
+        <svg class="icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M231.424 346.208a32 32 0 0 0-46.848 43.584l297.696 320a32 32 0 0 0 46.4 0.48l310.304-320a32 32 0 1 0-45.952-44.544l-286.848 295.808-274.752-295.36z" fill="#8a8a8a" /></svg>
+    </div>
+</div>
+<div class="toc-main" style="right: -100%">
+    <div class="post-toc">
+        <span>TOC</span>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#简介"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用"><span class="toc-text">使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Encode-和-Decode"><span class="toc-text">Encode 和 Decode</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#更多控制：Tag"><span class="toc-text">更多控制：Tag</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#解析动态内容-interface"><span class="toc-text">解析动态内容: interface{}</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#延迟解析：json-RawMessage"><span class="toc-text">延迟解析：json.RawMessage</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#自定义解析方法"><span class="toc-text">自定义解析方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#和-stream-中-JSON-打交道"><span class="toc-text">和 stream 中 JSON 打交道</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-text">参考资料</span></a></li></ol>
+    </div>
+</div>
+
+
+
+        
+
+<aside class="read-next outer">
+    <div class="inner">
+        <div class="read-next-feed">
+            
+            
+
+<article class="read-next-card"  style="background-image: url(https://i.loli.net/2017/11/26/5a19c56faa29f.jpg)"  >
+  <header class="read-next-card-header">
+    <small class="read-next-card-header-sitetitle">&mdash; Cizixs Write Here &mdash;</small>
+    <h3 class="read-next-card-header-title">Recent Posts</h3>
+  </header>
+  <div class="read-next-divider">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M13 14.5s2 3 5 3 5.5-2.463 5.5-5.5S21 6.5 18 6.5c-5 0-7 11-12 11C2.962 17.5.5 15.037.5 12S3 6.5 6 6.5s4.5 3.5 4.5 3.5"/>
+    </svg>
+  </div>
+  <div class="read-next-card-content">
+    <ul>
+      
+      
+      
+      <li>
+        <a href="/2018/08/26/what-is-istio/">什么是 istio</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/08/25/knative-serverless-platform/">serverless 平台 knative 简介</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/06/25/kubernetes-resource-management/">kubernetes 资源管理概述</a>
+      </li>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+  </div>
+  <footer class="read-next-card-footer">
+    <a href="/archives">  MORE  → </a>
+  </footer>
+</article>
+
+            
+            
+            
+        </div>
+    </div>
+</aside>
+
+<footer class="site-footer outer">
+	<div class="site-footer-content inner">
+		<section class="copyright">
+			<a href="/" title="Cizixs Write Here">Cizixs Write Here</a>
+			&copy; 2018
+		</section>
+		<nav class="site-footer-nav">
+			
+            <a href="https://hexo.io" title="Hexo" target="_blank" rel="noopener">Hexo</a>
+            <a href="https://github.com/xzhih/hexo-theme-casper" title="Casper" target="_blank" rel="noopener">Casper</a>
+        </nav>
+    </div>
+</footer>
+
+
+
+
+
+
+<div class="floating-header" >
+	<div class="floating-header-logo">
+        <a href="/" title="Cizixs Write Here">
+			
+                <img src="https://i.loli.net/2017/11/26/5a19c0b50432e.png" alt="Cizixs Write Here icon" />
+			
+            <span>Cizixs Write Here</span>
+        </a>
+    </div>
+    <span class="floating-header-divider">&mdash;</span>
+    <div class="floating-header-title">Go 语言 JSON 简介</div>
+    <progress class="progress" value="0">
+        <div class="progress-container">
+            <span class="progress-bar"></span>
+        </div>
+    </progress>
+</div>
+<script>
+   $(document).ready(function () {
+    var progressBar = document.querySelector('progress');
+    var header = document.querySelector('.floating-header');
+    var title = document.querySelector('.post-full-title');
+    var lastScrollY = window.scrollY;
+    var lastWindowHeight = window.innerHeight;
+    var lastDocumentHeight = $(document).height();
+    var ticking = false;
+
+    function onScroll() {
+        lastScrollY = window.scrollY;
+        requestTick();
+    }
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(update);
+        }
+        ticking = true;
+    }
+    function update() {
+        var rect = title.getBoundingClientRect();
+        var trigger = rect.top + window.scrollY;
+        var triggerOffset = title.offsetHeight + 35;
+        var progressMax = lastDocumentHeight - lastWindowHeight;
+            // show/hide floating header
+            if (lastScrollY >= trigger + triggerOffset) {
+                header.classList.add('floating-active');
+            } else {
+                header.classList.remove('floating-active');
+            }
+            progressBar.setAttribute('max', progressMax);
+            progressBar.setAttribute('value', lastScrollY);
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', onScroll, {passive: true});
+        update();
+
+        // TOC
+        var width = $('.toc-main').width();
+        $('.toc-control').click(function () {
+            if ($('.t-g-control').css('width')=="50px") {
+                if ($('.t-g-control').css('right')=="0px") {
+                    $('.t-g-control').animate({right: width}, "slow");
+                    $('.toc-main').animate({right: 0}, "slow");
+                    toc_icon()
+                } else {
+                    $('.t-g-control').animate({right: 0}, "slow");
+                    $('.toc-main').animate({right: -width}, "slow");
+                    toc_icon()
+                }
+            } else {
+                if ($('.toc-main').css('right')=="0px") {
+                    $('.toc-main').slideToggle("fast", toc_icon());
+                } else {
+                    $('.toc-main').css('right', '0px');
+                    toc_icon()
+                }
+            }
+        })
+
+        function toc_icon() {
+            if ($('.toc-icon').css('display')=="none") {
+                $('.toc-close').hide();
+                $('.toc-icon').show();
+            } else {
+                $('.toc-icon').hide();
+                $('.toc-close').show();
+            }
+        }
+
+        $('.gotop').click(function(){
+            $('html,body').animate({scrollTop:$('.post-full-header').offset().top}, 800);
+        });
+        $('.gobottom').click(function () {
+            $('html,body').animate({scrollTop:$('.pagination').offset().top}, 800);
+        });
+
+        // highlight
+        // https://highlightjs.org
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+        $('td.code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+
+        console.log("this theme is from https://github.com/xzhih/hexo-theme-casper")
+    });
+</script>
+
+
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/1.3.9/css/lightgallery.min.css">
+
+
+
+<script src="https://cdn.staticfile.org/lightgallery/1.3.9/js/lightgallery.min.js"></script>
+
+
+<script>
+	$(function () {
+		var postImg = $('#lightgallery').find('img');
+		postImg.addClass('post-img');
+		postImg.each(function () {
+			var imgSrc = $(this).attr('src');
+			$(this).attr('data-src', imgSrc);
+		});
+		$('#lightgallery').lightGallery({selector: '.post-img'});
+	});
+</script>
+
+
+
+
+    </div>
+</body>
+</html>

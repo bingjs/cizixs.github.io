@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html CN>
+
+
+
+
+
+
+
+<head>
+	
+	
+	<link rel="stylesheet" href="/css/allinone.min.css"> 
+
+	
+
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+	<title>linux 网络虚拟化： ipvlan | Cizixs Write Here</title>
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta name="generator" content="hexo">
+	<meta name="author" content="Cizixs Wu">
+	<meta name="description" content="">
+
+	
+	<meta name="keywords" content="">
+	
+
+	
+	<link rel="shortcut icon" href="https://i.loli.net/2017/11/26/5a19c0b50432e.png">
+	
+
+	
+	<meta name="theme-color" content="#3c484e">
+	<meta name="msapplication-TileColor" content="#3c484e">
+	
+
+	
+
+	
+
+	<meta property="og:site_name" content="Cizixs Write Here">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="linux 网络虚拟化： ipvlan | Cizixs Write Here">
+	<meta property="og:description" content="">
+	<meta property="og:url" content="http://cizixs.com/2017/02/17/network-virtualization-ipvlan/">
+
+	
+	<meta property="article:published_time" content="2017-02-17T00:02:00+08:00"/> 
+	<meta property="article:author" content="Cizixs Wu">
+	<meta property="article:published_first" content="Cizixs Write Here, /2017/02/17/network-virtualization-ipvlan/" />
+	
+
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	
+
+	
+	<script src="https://cdn.staticfile.org/highlight.js/9.10.0/highlight.min.js"></script>
+	
+
+	
+	
+</head>
+<body class="post-template">
+    <div class="site-wrapper">
+        
+
+
+
+
+<header class="site-header outer" style="z-index: 999">
+    <div class="inner">
+        
+<nav class="site-nav"> 
+    <div class="site-nav-left">
+        <ul class="nav">
+            <li>
+                
+                <a href="/" title="Home">Home</a>
+                
+            </li>
+            
+            
+            <li>
+                <a href="/about" title="About">About</a>
+            </li>
+            
+            <li>
+                <a href="/archives" title="Archives">Archives</a>
+            </li>
+            
+            
+        </ul> 
+    </div>
+    <div class="site-nav-right">
+        
+<div class="social-links" >
+    
+    
+    
+    
+    <a class="social-link" title="twitter" href="https://twitter.com/cizixs" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30.063 7.313c-.813 1.125-1.75 2.125-2.875 2.938v.75c0 1.563-.188 3.125-.688 4.625a15.088 15.088 0 0 1-2.063 4.438c-.875 1.438-2 2.688-3.25 3.813a15.015 15.015 0 0 1-4.625 2.563c-1.813.688-3.75 1-5.75 1-3.25 0-6.188-.875-8.875-2.625.438.063.875.125 1.375.125 2.688 0 5.063-.875 7.188-2.5-1.25 0-2.375-.375-3.375-1.125s-1.688-1.688-2.063-2.875c.438.063.813.125 1.125.125.5 0 1-.063 1.5-.25-1.313-.25-2.438-.938-3.313-1.938a5.673 5.673 0 0 1-1.313-3.688v-.063c.813.438 1.688.688 2.625.688a5.228 5.228 0 0 1-1.875-2c-.5-.875-.688-1.813-.688-2.75 0-1.063.25-2.063.75-2.938 1.438 1.75 3.188 3.188 5.25 4.25s4.313 1.688 6.688 1.813a5.579 5.579 0 0 1 1.5-5.438c1.125-1.125 2.5-1.688 4.125-1.688s3.063.625 4.188 1.813a11.48 11.48 0 0 0 3.688-1.375c-.438 1.375-1.313 2.438-2.563 3.188 1.125-.125 2.188-.438 3.313-.875z"/></svg>
+
+    </a>
+    
+    
+</div>
+    </div>
+</nav>
+    </div>
+</header>
+
+
+<main id="site-main" class="site-main outer" role="main">
+    <div class="inner">
+        <header class="post-full-header">
+            <section class="post-full-meta">
+                <time  class="post-full-meta-date" datetime="2017-02-16T16:00:00.000Z" itemprop="datePublished">
+                    2017-02-17
+                </time>
+                
+                <span class="date-divider">/</span>
+                
+                <a href="/categories/blog/">blog</a>&nbsp;&nbsp;
+                
+                
+            </section>
+            <h1 class="post-full-title">linux 网络虚拟化： ipvlan</h1>
+        </header>
+        <article class="post-full no-image">
+            
+            <section class="post-full-content">
+                <div id="lightgallery" class="markdown-body">
+                    <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>IPVlan 和 macvlan 类似，都是从一个主机接口虚拟出多个虚拟网络接口。一个重要的区别就是所有的虚拟接口都有相同的 macv 地址，而拥有不同的 ip 地址。因为所有的虚拟接口要共享 mac 地址，所有有些需要注意的地方：</p>
+<ul>
+<li>DHCP 协议分配 ip 的时候一般会用 mac 地址作为机器的标识。这个情况下，客户端动态获取 ip 的时候需要配置唯一的 ClientID 字段，并且 DHCP server 也要正确配置使用该字段作为机器标识，而不是使用 mac 地址</li>
+</ul>
+<p><a href="https://lwn.net/Articles/620087/" target="_blank" rel="noopener">ipvlan</a> 是 linux kernel 比较新的特性，linux kernel 3.19 开始支持 ipvlan，但是比较稳定推荐的版本是 &gt;=4.2（因为 docker 对之前版本的支持有 bug）。</p>
+<h2 id="两种模式"><a href="#两种模式" class="headerlink" title="两种模式"></a>两种模式</h2><p>ipvlan 有两种不同的模式：L2 和 L3。一个父接口只能选择一种模式，依附于它的所有虚拟接口都运行在这个模式下，不能混用模式。</p>
+<h3 id="L2-模式"><a href="#L2-模式" class="headerlink" title="L2 模式"></a>L2 模式</h3><p>ipvlan L2 模式和 macvlan bridge 模式工作原理很相似，父接口作为交换机来转发子接口的数据。同一个网络的子接口可以通过父接口来转发数据，而如果想发送到其他网络，报文则会通过父接口的路由转发出去。</p>
+<h3 id="L3-模式"><a href="#L3-模式" class="headerlink" title="L3 模式"></a>L3 模式</h3><p>L3 模式下，ipvlan 有点像路由器的功能，它在各个虚拟网络和主机网络之间进行不同网络报文的路由转发工作。只要父接口相同，即使虚拟机/容器不在同一个网络，也可以互相 ping 通对方，因为 ipvlan 会在中间做报文的转发工作。</p>
+<p><img src="http://hicu.be/wp-content/uploads/2016/03/linux-ipvlan-l3-mode-1.png" alt=""></p>
+<p>L3 模式下的虚拟接口<strong>不会接收到多播或者广播的报文</strong>，为什么呢？这个模式下，所有的网络都会发送给父接口，所有的 ARP 过程或者其他多播报文都是在底层的父接口完成的。需要注意的是：外部网络默认情况下是不知道 ipvlan 虚拟出来的网络的，如果不在外部路由器上配置好对应的路由规则，ipvlan 的网络是不能被外部直接访问的。</p>
+<h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><p>实验环境：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜  ~ uname -a</span><br><span class="line">Linux cizixs-ThinkPad-T450 4.4.0-57-generic <span class="comment">#78-Ubuntu SMP Fri Dec 9 23:50:32 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux</span></span><br><span class="line">➜  ~ lsb_release -a</span><br><span class="line">No LSB modules are available.</span><br><span class="line">Distributor ID:	Ubuntu</span><br><span class="line">Description:	Ubuntu 16.04.2 LTS</span><br><span class="line">Release:	16.04</span><br><span class="line">Codename:	xenial</span><br></pre></td></tr></table></figure>
+<p>先创建两个用做测试的 network namespace，关于 namespace 可参考<a href="http://cizixs.com/2017/02/10/network-virtualization-network-namespace">之前的文章</a>：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜  ~ sudo ip netns add net1</span><br><span class="line">➜  ~ sudo ip netns add net2</span><br></pre></td></tr></table></figure>
+<p>然后创建出 ipvlan 的虚拟网卡接口，因为 L2 和 macvlan 功能相同，我们这里测试一下 L3 模式。创建 ipvlan 虚拟接口的命令和 macvlan 格式相同：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜  ~ sudo ip link add ipv1 link eth0 <span class="built_in">type</span> ipvlan mode l3</span><br><span class="line">➜  ~ sudo ip link add ipv2 link eth0 <span class="built_in">type</span> ipvlan mode l3</span><br></pre></td></tr></table></figure>
+<p>把 ipvlan 接口放到前面创建好的 namespace 中：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜  ~ sudo ip link <span class="built_in">set</span> ipv1 netns net1</span><br><span class="line">➜  ~ sudo ip link <span class="built_in">set</span> ipv2 netns net2</span><br><span class="line">➜  ~ sudo ip netns <span class="built_in">exec</span> net1 ip link <span class="built_in">set</span> ipv1 up</span><br><span class="line">➜  ~ sudo ip netns <span class="built_in">exec</span> net2 ip link <span class="built_in">set</span> ipv2 up</span><br></pre></td></tr></table></figure>
+<p>给两个虚拟网卡接口配置上不同网络的 ip 地址，并配置好路由项：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜  ~ sudo ip netns <span class="built_in">exec</span> net1 ip addr add 10.0.1.10/24 dev ipv1</span><br><span class="line">➜  ~ sudo ip netns <span class="built_in">exec</span> net2 ip addr add 192.168.1.10/24 dev ipv2</span><br><span class="line">➜  ~ sudo ip netns <span class="built_in">exec</span> net1 ip route add default dev ipv1</span><br><span class="line">➜  ~ sudo ip netns <span class="built_in">exec</span> net2 ip route add default dev ipv2</span><br></pre></td></tr></table></figure>
+<p>测试两个网络的连通性：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">➜  ~ sudo ip netns <span class="built_in">exec</span> net1 ping -c 3 192.168.1.10</span><br><span class="line">PING 192.168.1.10 (192.168.1.10) 56(84) bytes of data.</span><br><span class="line">64 bytes from 192.168.1.10: icmp_seq=1 ttl=64 time=0.053 ms</span><br><span class="line">64 bytes from 192.168.1.10: icmp_seq=2 ttl=64 time=0.035 ms</span><br><span class="line">64 bytes from 192.168.1.10: icmp_seq=3 ttl=64 time=0.036 ms</span><br><span class="line"></span><br><span class="line">--- 192.168.1.10 ping statistics ---</span><br><span class="line">3 packets transmitted, 3 received, 0% packet loss, time 1998ms</span><br><span class="line">rtt min/avg/max/mdev = 0.035/0.041/0.053/0.009 ms</span><br></pre></td></tr></table></figure>
+<h2 id="docker-ipvlan-网络"><a href="#docker-ipvlan-网络" class="headerlink" title="docker ipvlan 网络"></a>docker ipvlan 网络</h2><p>docker（v1.13） 也在开发对 ipvlan 的支持，不过目前只是 experiment 阶段。你可以安装最新版的 docker 来进行测试：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment"># 首先是创建 ipvlan 的网络，这和 macvlan 网络的操作基本一致，只是把 driver 修改成 `ipvlan`，然后选项中通过 `ipvlan_mode=l3` 设置 ipvlan 的工作模式：</span></span><br><span class="line"></span><br><span class="line">docker network  create  -d ipvlan \</span><br><span class="line">    --subnet=192.168.30.0/24 \</span><br><span class="line">    -o parent=eth0 \</span><br><span class="line">    -o ipvlan_mode=l3 ipvlan30</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动两个容器，可以发现在同一个 ipvlan 的两个容器可以互相 ping 通</span></span><br><span class="line">docker run --net=ipvlan30 -it --name ivlan_test3 --rm alpine /bin/sh</span><br><span class="line">docker run --net=ipvlan30 -it --name ivlan_test4 --rm alpine /bin/sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># 再创建另外一个 ipvlan 网络，和前面的网络不在同一个广播域</span></span><br><span class="line">docker network  create  -d ipvlan \</span><br><span class="line">    --subnet=192.168.110.0/24 \</span><br><span class="line">    -o parent=eth0 \</span><br><span class="line">    -o ipvlan_mode=l3 ipvlan110</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在新建的网络中运行容器，可以发现可以 ping 同前面网络中的容器</span></span><br><span class="line">docker run --net=ipvlan30 -it --name ivlan_test3 --rm alpine /bin/sh</span><br></pre></td></tr></table></figure>
+<p>这里只介绍了最基本的 ipvlan 在 docker 中的使用，更多可以参考 <a href="https://github.com/docker/docker/blob/master/experimental/vlan-networks.md" target="_blank" rel="noopener">docker 官方文档</a>。</p>
+<h2 id="ipvlan-还是-macvlan？"><a href="#ipvlan-还是-macvlan？" class="headerlink" title="ipvlan 还是 macvlan？"></a>ipvlan 还是 macvlan？</h2><p>ipvlan 和 macvlan 两个虚拟网络模型提供的功能，看起来差距并不大，那么什么时候需要用到 ipvlan 呢？要回答这个问题，我们先来看看 macvlan 存在的不足：</p>
+<ul>
+<li>需要大量 mac 地址。每个虚拟接口都有自己的 mac 地址，而网络接口和交换机支持的 mac 地址有支持的上限</li>
+<li>无法和 802.11(wireless) 网络一起工作</li>
+</ul>
+<p>对应的，如果你遇到一下的情况，请考虑使用 ipvlan：</p>
+<ul>
+<li>父接口对 mac 地址数目有限制，或者在 mac 地址过多的情况下会造成严重的性能损失</li>
+<li>工作在无线网络中</li>
+<li>希望搭建比较复杂的网络拓扑（不是简单的二层网络和 VLAN），比如要和 BGP 网络一起工作</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="http://networkstatic.net/configuring-macvlan-ipvlan-linux-networking/" target="_blank" rel="noopener">Configuring Macvlan and Ipvlan Linux Networking</a></li>
+<li><a href="https://www.kernel.org/doc/Documentation/networking/ipvlan.txt" target="_blank" rel="noopener">Linux Kernel ipvlan documentation</a></li>
+<li><a href="https://github.com/docker/docker/blob/master/experimental/vlan-networks.md" target="_blank" rel="noopener">Docker IPVlan Network Driver Doc</a></li>
+<li><a href="http://hustcat.github.io/ipvlan-practice-and-implementation/" target="_blank" rel="noopener">ipvlan practice and implementation</a></li>
+<li><a href="https://sreeninet.wordpress.com/2016/05/29/macvlan-and-ipvlan/" target="_blank" rel="noopener">Macvlan and IPvlan basics</a></li>
+</ul>
+
+                </div>
+            </section>
+        </article>
+    </div>
+    
+<nav class="pagination">
+    
+    
+    <a class="prev-post" title="flask 源码解析：session" href="/2017/03/08/flask-insight-session/">
+        ← flask 源码解析：session
+    </a>
+    
+    <span class="prev-next-post">•</span>
+    
+    <a class="next-post" title="linux 网络虚拟化： macvlan" href="/2017/02/14/network-virtualization-macvlan/">
+        linux 网络虚拟化： macvlan →
+    </a>
+    
+    
+</nav>
+    
+</main>
+
+<div class="t-g-control">
+    <div class="gotop">
+        <svg class="icon" width="32px" height="32px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M793.024 710.272a32 32 0 1 0 45.952-44.544l-310.304-320a32 32 0 0 0-46.4 0.48l-297.696 320a32 32 0 0 0 46.848 43.584l274.752-295.328 286.848 295.808z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="toc-control">
+        <svg class="icon toc-icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M779.776 480h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M779.776 672h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M256 288a32 32 0 1 0 0 64 32 32 0 0 0 0-64M392.576 352h387.2a32 32 0 0 0 0-64h-387.2a32 32 0 0 0 0 64M256 480a32 32 0 1 0 0 64 32 32 0 0 0 0-64M256 672a32 32 0 1 0 0 64 32 32 0 0 0 0-64" fill="#8a8a8a" /></svg>
+        <svg class="icon toc-close" style="display: none;" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 960c-247.039484 0-448-200.960516-448-448S264.960516 64 512 64 960 264.960516 960 512 759.039484 960 512 960zM512 128.287273c-211.584464 0-383.712727 172.128262-383.712727 383.712727 0 211.551781 172.128262 383.712727 383.712727 383.712727 211.551781 0 383.712727-172.159226 383.712727-383.712727C895.712727 300.415536 723.551781 128.287273 512 128.287273z" fill="#8a8a8a" /><path d="M557.05545 513.376159l138.367639-136.864185c12.576374-12.416396 12.672705-32.671738 0.25631-45.248112s-32.704421-12.672705-45.248112-0.25631l-138.560301 137.024163-136.447897-136.864185c-12.512727-12.512727-32.735385-12.576374-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.248112l136.255235 136.671523-137.376804 135.904314c-12.576374 12.447359-12.672705 32.671738-0.25631 45.248112 6.271845 6.335493 14.496116 9.504099 22.751351 9.504099 8.12794 0 16.25588-3.103239 22.496761-9.247789l137.567746-136.064292 138.687596 139.136568c6.240882 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.05545 513.376159z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="gobottom">
+        <svg class="icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M231.424 346.208a32 32 0 0 0-46.848 43.584l297.696 320a32 32 0 0 0 46.4 0.48l310.304-320a32 32 0 1 0-45.952-44.544l-286.848 295.808-274.752-295.36z" fill="#8a8a8a" /></svg>
+    </div>
+</div>
+<div class="toc-main" style="right: -100%">
+    <div class="post-toc">
+        <span>TOC</span>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#简介"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#两种模式"><span class="toc-text">两种模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#L2-模式"><span class="toc-text">L2 模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#L3-模式"><span class="toc-text">L3 模式</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实验"><span class="toc-text">实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#docker-ipvlan-网络"><span class="toc-text">docker ipvlan 网络</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ipvlan-还是-macvlan？"><span class="toc-text">ipvlan 还是 macvlan？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-text">参考资料</span></a></li></ol>
+    </div>
+</div>
+
+
+
+        
+
+<aside class="read-next outer">
+    <div class="inner">
+        <div class="read-next-feed">
+            
+            
+
+<article class="read-next-card"  style="background-image: url(https://i.loli.net/2017/11/26/5a19c56faa29f.jpg)"  >
+  <header class="read-next-card-header">
+    <small class="read-next-card-header-sitetitle">&mdash; Cizixs Write Here &mdash;</small>
+    <h3 class="read-next-card-header-title">Recent Posts</h3>
+  </header>
+  <div class="read-next-divider">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M13 14.5s2 3 5 3 5.5-2.463 5.5-5.5S21 6.5 18 6.5c-5 0-7 11-12 11C2.962 17.5.5 15.037.5 12S3 6.5 6 6.5s4.5 3.5 4.5 3.5"/>
+    </svg>
+  </div>
+  <div class="read-next-card-content">
+    <ul>
+      
+      
+      
+      <li>
+        <a href="/2018/08/26/what-is-istio/">什么是 istio</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/08/25/knative-serverless-platform/">serverless 平台 knative 简介</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/06/25/kubernetes-resource-management/">kubernetes 资源管理概述</a>
+      </li>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+  </div>
+  <footer class="read-next-card-footer">
+    <a href="/archives">  MORE  → </a>
+  </footer>
+</article>
+
+            
+            
+            
+        </div>
+    </div>
+</aside>
+
+<footer class="site-footer outer">
+	<div class="site-footer-content inner">
+		<section class="copyright">
+			<a href="/" title="Cizixs Write Here">Cizixs Write Here</a>
+			&copy; 2018
+		</section>
+		<nav class="site-footer-nav">
+			
+            <a href="https://hexo.io" title="Hexo" target="_blank" rel="noopener">Hexo</a>
+            <a href="https://github.com/xzhih/hexo-theme-casper" title="Casper" target="_blank" rel="noopener">Casper</a>
+        </nav>
+    </div>
+</footer>
+
+
+
+
+
+
+<div class="floating-header" >
+	<div class="floating-header-logo">
+        <a href="/" title="Cizixs Write Here">
+			
+                <img src="https://i.loli.net/2017/11/26/5a19c0b50432e.png" alt="Cizixs Write Here icon" />
+			
+            <span>Cizixs Write Here</span>
+        </a>
+    </div>
+    <span class="floating-header-divider">&mdash;</span>
+    <div class="floating-header-title">linux 网络虚拟化： ipvlan</div>
+    <progress class="progress" value="0">
+        <div class="progress-container">
+            <span class="progress-bar"></span>
+        </div>
+    </progress>
+</div>
+<script>
+   $(document).ready(function () {
+    var progressBar = document.querySelector('progress');
+    var header = document.querySelector('.floating-header');
+    var title = document.querySelector('.post-full-title');
+    var lastScrollY = window.scrollY;
+    var lastWindowHeight = window.innerHeight;
+    var lastDocumentHeight = $(document).height();
+    var ticking = false;
+
+    function onScroll() {
+        lastScrollY = window.scrollY;
+        requestTick();
+    }
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(update);
+        }
+        ticking = true;
+    }
+    function update() {
+        var rect = title.getBoundingClientRect();
+        var trigger = rect.top + window.scrollY;
+        var triggerOffset = title.offsetHeight + 35;
+        var progressMax = lastDocumentHeight - lastWindowHeight;
+            // show/hide floating header
+            if (lastScrollY >= trigger + triggerOffset) {
+                header.classList.add('floating-active');
+            } else {
+                header.classList.remove('floating-active');
+            }
+            progressBar.setAttribute('max', progressMax);
+            progressBar.setAttribute('value', lastScrollY);
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', onScroll, {passive: true});
+        update();
+
+        // TOC
+        var width = $('.toc-main').width();
+        $('.toc-control').click(function () {
+            if ($('.t-g-control').css('width')=="50px") {
+                if ($('.t-g-control').css('right')=="0px") {
+                    $('.t-g-control').animate({right: width}, "slow");
+                    $('.toc-main').animate({right: 0}, "slow");
+                    toc_icon()
+                } else {
+                    $('.t-g-control').animate({right: 0}, "slow");
+                    $('.toc-main').animate({right: -width}, "slow");
+                    toc_icon()
+                }
+            } else {
+                if ($('.toc-main').css('right')=="0px") {
+                    $('.toc-main').slideToggle("fast", toc_icon());
+                } else {
+                    $('.toc-main').css('right', '0px');
+                    toc_icon()
+                }
+            }
+        })
+
+        function toc_icon() {
+            if ($('.toc-icon').css('display')=="none") {
+                $('.toc-close').hide();
+                $('.toc-icon').show();
+            } else {
+                $('.toc-icon').hide();
+                $('.toc-close').show();
+            }
+        }
+
+        $('.gotop').click(function(){
+            $('html,body').animate({scrollTop:$('.post-full-header').offset().top}, 800);
+        });
+        $('.gobottom').click(function () {
+            $('html,body').animate({scrollTop:$('.pagination').offset().top}, 800);
+        });
+
+        // highlight
+        // https://highlightjs.org
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+        $('td.code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+
+        console.log("this theme is from https://github.com/xzhih/hexo-theme-casper")
+    });
+</script>
+
+
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/1.3.9/css/lightgallery.min.css">
+
+
+
+<script src="https://cdn.staticfile.org/lightgallery/1.3.9/js/lightgallery.min.js"></script>
+
+
+<script>
+	$(function () {
+		var postImg = $('#lightgallery').find('img');
+		postImg.addClass('post-img');
+		postImg.each(function () {
+			var imgSrc = $(this).attr('src');
+			$(this).attr('data-src', imgSrc);
+		});
+		$('#lightgallery').lightGallery({selector: '.post-img'});
+	});
+</script>
+
+
+
+
+    </div>
+</body>
+</html>

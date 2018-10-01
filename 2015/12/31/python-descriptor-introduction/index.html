@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html CN>
+
+
+
+
+
+
+
+<head>
+	
+	
+	<link rel="stylesheet" href="/css/allinone.min.css"> 
+
+	
+
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+	<title>python 描述器简介 | Cizixs Write Here</title>
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta name="generator" content="hexo">
+	<meta name="author" content="Cizixs Wu">
+	<meta name="description" content="">
+
+	
+	<meta name="keywords" content="">
+	
+
+	
+	<link rel="shortcut icon" href="https://i.loli.net/2017/11/26/5a19c0b50432e.png">
+	
+
+	
+	<meta name="theme-color" content="#3c484e">
+	<meta name="msapplication-TileColor" content="#3c484e">
+	
+
+	
+
+	
+
+	<meta property="og:site_name" content="Cizixs Write Here">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="python 描述器简介 | Cizixs Write Here">
+	<meta property="og:description" content="">
+	<meta property="og:url" content="http://cizixs.com/2015/12/31/python-descriptor-introduction/">
+
+	
+	<meta property="article:published_time" content="2015-12-31T00:12:00+08:00"/> 
+	<meta property="article:author" content="Cizixs Wu">
+	<meta property="article:published_first" content="Cizixs Write Here, /2015/12/31/python-descriptor-introduction/" />
+	
+
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	
+
+	
+	<script src="https://cdn.staticfile.org/highlight.js/9.10.0/highlight.min.js"></script>
+	
+
+	
+	
+</head>
+<body class="post-template">
+    <div class="site-wrapper">
+        
+
+
+
+
+<header class="site-header outer" style="z-index: 999">
+    <div class="inner">
+        
+<nav class="site-nav"> 
+    <div class="site-nav-left">
+        <ul class="nav">
+            <li>
+                
+                <a href="/" title="Home">Home</a>
+                
+            </li>
+            
+            
+            <li>
+                <a href="/about" title="About">About</a>
+            </li>
+            
+            <li>
+                <a href="/archives" title="Archives">Archives</a>
+            </li>
+            
+            
+        </ul> 
+    </div>
+    <div class="site-nav-right">
+        
+<div class="social-links" >
+    
+    
+    
+    
+    <a class="social-link" title="twitter" href="https://twitter.com/cizixs" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30.063 7.313c-.813 1.125-1.75 2.125-2.875 2.938v.75c0 1.563-.188 3.125-.688 4.625a15.088 15.088 0 0 1-2.063 4.438c-.875 1.438-2 2.688-3.25 3.813a15.015 15.015 0 0 1-4.625 2.563c-1.813.688-3.75 1-5.75 1-3.25 0-6.188-.875-8.875-2.625.438.063.875.125 1.375.125 2.688 0 5.063-.875 7.188-2.5-1.25 0-2.375-.375-3.375-1.125s-1.688-1.688-2.063-2.875c.438.063.813.125 1.125.125.5 0 1-.063 1.5-.25-1.313-.25-2.438-.938-3.313-1.938a5.673 5.673 0 0 1-1.313-3.688v-.063c.813.438 1.688.688 2.625.688a5.228 5.228 0 0 1-1.875-2c-.5-.875-.688-1.813-.688-2.75 0-1.063.25-2.063.75-2.938 1.438 1.75 3.188 3.188 5.25 4.25s4.313 1.688 6.688 1.813a5.579 5.579 0 0 1 1.5-5.438c1.125-1.125 2.5-1.688 4.125-1.688s3.063.625 4.188 1.813a11.48 11.48 0 0 0 3.688-1.375c-.438 1.375-1.313 2.438-2.563 3.188 1.125-.125 2.188-.438 3.313-.875z"/></svg>
+
+    </a>
+    
+    
+</div>
+    </div>
+</nav>
+    </div>
+</header>
+
+
+<main id="site-main" class="site-main outer" role="main">
+    <div class="inner">
+        <header class="post-full-header">
+            <section class="post-full-meta">
+                <time  class="post-full-meta-date" datetime="2015-12-30T16:00:00.000Z" itemprop="datePublished">
+                    2015-12-31
+                </time>
+                
+                <span class="date-divider">/</span>
+                
+                <a href="/categories/blog/">blog</a>&nbsp;&nbsp;
+                
+                
+            </section>
+            <h1 class="post-full-title">python 描述器简介</h1>
+        </header>
+        <article class="post-full no-image">
+            
+            <section class="post-full-content">
+                <div id="lightgallery" class="markdown-body">
+                    <h2 id="什么是-descriptor"><a href="#什么是-descriptor" class="headerlink" title="什么是 descriptor"></a>什么是 descriptor</h2><p>python 的描述器是在 python 2.2 版本引入的一个特性，那么我们要搞清楚它添加进来要解决什么样的问题。</p>
+<p>有时候，我们希望对对象的属性有更强的控制：比如希望某个值在一定的范围内（比如温度，年龄等），或者希望赋值的时候要是某个类型的值，再比如希望某个值根据另外的属性值动态地调整（表示身体健康状况的属性要根据体温变化）。如果你想到了 python 的 property 装饰器，很好！不过 property 的内部就是用描述器实现的，而且，如果我们希望属性是通用的，不仅仅依附于某个特定的类，这时候 property 就不能满足需求了。</p>
+<p>描述器的功能能强大，python 内部的类方法，前面提到的 property，还有static method 和  classmethod 都是描述器实现的。这篇文章后面也会简单分析这些特性。</p>
+<p>说简单点，描述器就是把类的某个属性转换成一个特殊类，访问这个属性的时候会调用这个特殊类的某些内部函数，来达到灵活控制属性的目的。可能说的有些玄乎，还是继续往下看吧。</p>
+<h2 id="descriptor-的定义和使用"><a href="#descriptor-的定义和使用" class="headerlink" title="descriptor 的定义和使用"></a>descriptor 的定义和使用</h2><p>前面说了，描述器是一个特殊的类，如果某个类定义了下面这些方法的任意一个或者多个，那么它就是一个描述器：</p>
+<ul>
+<li><code>__get__(self, instance, owner)</code>：获取这个属性的值，返回属性的值或者抛出 AttributeError 异常</li>
+<li><code>__set__(self, instace, value)</code>：设置这个属性的值，没有返回值</li>
+<li><code>__delete__(self, instance)</code>：删除这个属性，也没有返回值</li>
+</ul>
+<p>举个简单的例子，我们来写个姓名属性的描述器：</p>
+<pre><code>class NameProperty(object):
+
+    def __init__(self):
+        self._name = &apos;&apos;
+
+    def __get__(self, instance, owner):
+        print(&quot;Getting {}&quot;.format(self._name))
+        print instance, owner
+        return self._name
+
+    def __set__(self, instance, name):
+        print(&quot;Setting {}&quot;.format(name))
+        if not isinstance(name, string):
+            raise TypeError(&quot;name must be a string, but got {}&quot;.format(type(name))
+        self._name = name.title()
+
+    def __del__(self, instance):
+        print(&quot;Deleteing {}&quot;.format(self._name))
+        del self._name
+
+
+class Person(object):
+    name = NameProperty()
+    age = 23
+</code></pre><p>然后就可以调用这个类：</p>
+<pre><code>In [23]: p = Person()
+
+In [24]: p.name
+Getting
+&lt;descriptor.Person object at 0x10f09a8d0&gt; &lt;class &apos;descriptor.Person&apos;&gt;
+Out[24]: &apos;&apos;
+
+In [25]: p.name = &apos;cizixs&apos;
+Setting cizixs
+
+In [26]: p.name
+Getting Cizixs
+&lt;descriptor.Person object at 0x10f09a8d0&gt; &lt;class &apos;descriptor.Person&apos;&gt;
+Out[27]: &apos;Cizixs&apos;
+</code></pre><p>这个例子中，我们简单地把用户赋值的 name，转换了大小写，并且保证赋值的名字是字符串。可以看到，当我们使用 <code>p.name</code> 的时候，实际上调用的是我们之前定义的函数。其中传过去的两个参数 instance 就是实例（这里的 p），owner 就是定义的类（这里的 Person）。</p>
+<p>如果一个类同时定义了 <code>__get__()</code> 和 <code>__set__()</code> 方法，我们称之为数据描述器（data descriptor）；如果只定义了 <code>__get__()</code> 方法，我们称之为非数据描述器（non-data descriptor），python 内部的 static method 和 classmethod 都是后者。</p>
+<p>需要注意的是：<strong>描述器是赋值给类的，而不是实例的。</strong></p>
+<h2 id="descriptor-的调用顺序"><a href="#descriptor-的调用顺序" class="headerlink" title="descriptor 的调用顺序"></a>descriptor 的调用顺序</h2><p>我们知道当访问实例 <code>a</code> 属性 <code>x</code> 的时候，python 会先查看 <code>a.__dict__[&#39;x&#39;]</code>，然后会访问 <code>type(a).__dict__[&#39;x&#39;]</code>，然后依次访问 <code>type(a)</code> 的基类。</p>
+<p>当我们调用 <code>obj.x</code>的时候，如果 <code>x</code> 是描述器，会根据 obj 是对象还是类有不同的调用顺序：</p>
+<p>如果是对象，自动访问是在 <code>obj.__getattribute__()</code> 函数中完成的，这个函数会把 <code>a.x</code> 转化成 <code>type(a).__dict__[&#39;x&#39;].__get__(a, type(a))</code>。这个调用的优先级如下：</p>
+<ol>
+<li>首先调用数据描述符（如果定义了的话）</li>
+<li>其次调用实例变量</li>
+<li>然后是非数据描述符（如果定义了的话）</li>
+<li>最后是 <code>__getattr__</code> 内部函数（当以上调用都没有返回的时候）</li>
+</ol>
+<p>具体的 CPython 实现可以在 <code>Objects/object.c</code> 文件的 <code>PyObject_GenericGetAttr()</code> 函数中找到。</p>
+<p>如果是类，那么自动访问是在 <code>type.__getattribute__()</code>，它会把 <code>A.x</code> 转换成 <code>A.__dict__[&#39;x&#39;].__get__(None, A)</code>，描述器的值会覆盖掉类的属性值，用 python 代码可以近似表示为：</p>
+<pre><code>def __getattribute__(self, key):
+    &quot;Emulate type_getattro() in Objects/typeobject.c&quot;
+    v = object.__getattribute__(self, key)
+    if hasattr(v, &apos;__get__&apos;):
+       return v.__get__(None, self)
+    return v
+</code></pre><p>总结一下，需要记住以下几点：</p>
+<ul>
+<li>描述器是在 <code>__getattribute__</code> 内部方法中被调用的</li>
+<li>覆写 <code>__getattribute__</code> 可以防止描述器被自动调用</li>
+<li>调用优先级：数据描述器 &gt; 实例变量 &gt; 非数据描述器</li>
+</ul>
+<h2 id="python-内部的-descriptor"><a href="#python-内部的-descriptor" class="headerlink" title="python 内部的 descriptor"></a>python 内部的 descriptor</h2><p>其实在 python 内部有很多描述器的用处，下面会依次介绍一下。</p>
+<h3 id="属性：property"><a href="#属性：property" class="headerlink" title="属性：property"></a>属性：property</h3><p>python 提供 property 来把自定义的方法变成属性的 getter 和 setter，比如：</p>
+<pre><code>class C(object):
+    def getx(self): return self.__x
+    def setx(self, value): self.__x = value
+    def delx(self): del self.__x
+    x = property(getx, setx, delx, &quot;I&apos;m the &apos;x&apos; property.&quot;)
+</code></pre><p>此外，还提供了装饰器来简化这个过程，比如上面的代码也可以写成：</p>
+<p>  class C(object):<br>      @property<br>      def x(self): return self.__x</p>
+<pre><code>@x.setter
+def setx(self, value): self.__x = value
+
+@x.deleter
+def delx(self): del self.__x
+</code></pre><p>  其实这很容易通过描述器实现，python descriptor HOWTO 官方教程中就给出了如下的代码：</p>
+<pre><code>class Property(object):
+  &quot;Emulate PyProperty_Type() in Objects/descrobject.c&quot;
+
+  def __init__(self, fget=None, fset=None, fdel=None, doc=None):
+      self.fget = fget
+      self.fset = fset
+      self.fdel = fdel
+      if doc is None and fget is not None:
+          doc = fget.__doc__
+      self.__doc__ = doc
+
+  def __get__(self, obj, objtype=None):
+      if obj is None:
+          return self
+      if self.fget is None:
+          raise AttributeError(&quot;unreadable attribute&quot;)
+      return self.fget(obj)
+
+  def __set__(self, obj, value):
+      if self.fset is None:
+          raise AttributeError(&quot;can&apos;t set attribute&quot;)
+      self.fset(obj, value)
+
+  def __delete__(self, obj):
+      if self.fdel is None:
+          raise AttributeError(&quot;can&apos;t delete attribute&quot;)
+      self.fdel(obj)
+
+  def getter(self, fget):
+      return type(self)(fget, self.fset, self.fdel, self.__doc__)
+
+  def setter(self, fset):
+      return type(self)(self.fget, fset, self.fdel, self.__doc__)
+
+  def deleter(self, fdel):
+      return type(self)(self.fget, self.fset, fdel, self.__doc__)
+</code></pre><h3 id="函数-VS-方法"><a href="#函数-VS-方法" class="headerlink" title="函数 VS 方法"></a>函数 VS 方法</h3><p>有了描述器的知识，我们就能更清楚地明白 python 中的函数和方法的区别，以及 bound 和 unbound 到底是怎么一回事了。</p>
+<p>先来看一下例子：</p>
+<pre><code>class Bar(object):
+    def __init__(self, name):
+        self.name = name
+
+    def pname(self):
+        print self.name
+
+In [71]: Bar.__dict__[&apos;pname&apos;]
+Out[71]: &lt;function __main__.pname&gt;
+
+In [72]: b.pname
+Out[72]: &lt;bound method Bar.pname of &lt;__main__.Bar object at 0x10f102550&gt;&gt;
+
+In [73]: Bar.pname
+Out[73]: &lt;unbound method Bar.pname&gt;
+</code></pre><p>我们看到，在 <code>Bar.__dict__</code> 存储的 <code>pname</code> 其实是个函数（function），到了 <code>Bar.pname</code> 变成了 unbound method，在 <code>b.pname</code> 有变成了 bound method。这个到底是怎么回事呢？</p>
+<p>如果从描述器这个视角来看，就清楚很多：</p>
+<ul>
+<li>当我们使用 <code>b.pname</code> 时候，因为 pname 是描述器，python 内部会调用 <code>pname.__get__(self, b, Bar)</code> 返回一个 bound method</li>
+<li>当我们使用 <code>Bar.pname</code> 的时候，python 调用 <code>pname.__get__(self, None, Bar)</code>，返回一个 unbound method</li>
+</ul>
+<p>一个近似的实现是（也是官方 HOWTO 提供的）：</p>
+<pre><code>class Function(object):
+    . . .
+    def __get__(self, obj, objtype=None):
+        &quot;Simulate func_descr_get() in Objects/funcobject.c&quot;
+        return types.MethodType(self, obj, objtype)
+</code></pre><p>而 self 在这里就是为了把实例传到特定的函数而定义的关键字。</p>
+<h3 id="静态方法和类方法：staticmethod-和-classmethod"><a href="#静态方法和类方法：staticmethod-和-classmethod" class="headerlink" title="静态方法和类方法：staticmethod 和 classmethod"></a>静态方法和类方法：staticmethod 和 classmethod</h3><p>类似的，staticmethod 会完全忽略 instance 和 owner 变量，而直接返回之前定义的函数：</p>
+<pre><code>class StaticMethod(object):
+ &quot;Emulate PyStaticMethod_Type() in Objects/funcobject.c&quot;
+
+   def __init__(self, f):
+        self.f = f
+
+   def __get__(self, obj, objtype=None):
+        return self.f
+</code></pre><p>classmethod 会把 owner 或者 type(instance) 传给原来的函数作为第一个参数 klass：</p>
+<pre><code>class ClassMethod(object):
+     &quot;Emulate PyClassMethod_Type() in Objects/funcobject.c&quot;
+
+     def __init__(self, f):
+          self.f = f
+
+     def __get__(self, obj, klass=None):
+          if klass is None:
+               klass = type(obj)
+          def newfunc(*args):
+               return self.f(klass, *args)
+          return newfunc
+</code></pre><h2 id="其他用法"><a href="#其他用法" class="headerlink" title="其他用法"></a>其他用法</h2><p>描述器另外一个比较常见的用法是某些属性的缓存：</p>
+<p>  class cached_property(object):<br>      def <strong>init</strong>(self, func):<br>          self.func = func</p>
+<pre><code>def __get__(self, obj, cls):
+    value = obj.__dict__[self.func.__name__] = self.func(obj)
+    return value
+</code></pre><p>使用起来也比较简单：</p>
+<p>  class Foo(object):</p>
+<pre><code>@cached_property
+def hello(self):
+  return calculate_value()
+</code></pre><p>如果某个属性初始化的时候需要计算，比如上面的 <code>calculate_value</code>，这个描述器只有在第一次使用的时候去计算，<br>然后把结果存到 <code>__dict__</code>（名字和方法名一样），下次再访问的时候，就会优先访问 <code>__dict__</code> 里面的值。</p>
+<h2 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h2><ul>
+<li><a href="https://docs.python.org/2/howto/descriptor.html" target="_blank" rel="noopener">Descriptor HowTo Guide</a></li>
+<li><a href="http://intermediatepythonista.com/classes-and-objects-ii-descriptors" target="_blank" rel="noopener">Classes and Objects II: Descriptors</a></li>
+</ul>
+
+                </div>
+            </section>
+        </article>
+    </div>
+    
+<nav class="pagination">
+    
+    
+    <a class="prev-post" title="bottle 源码解析" href="/2016/01/20/dive-into-bottle/">
+        ← bottle 源码解析
+    </a>
+    
+    <span class="prev-next-post">•</span>
+    
+    <a class="next-post" title="python 和消息机制（二）：Rabbitmq 概念和使用" href="/2015/11/23/rabbitmq-concept-and-usage/">
+        python 和消息机制（二）：Rabbitmq 概念和使用 →
+    </a>
+    
+    
+</nav>
+    
+</main>
+
+<div class="t-g-control">
+    <div class="gotop">
+        <svg class="icon" width="32px" height="32px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M793.024 710.272a32 32 0 1 0 45.952-44.544l-310.304-320a32 32 0 0 0-46.4 0.48l-297.696 320a32 32 0 0 0 46.848 43.584l274.752-295.328 286.848 295.808z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="toc-control">
+        <svg class="icon toc-icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M779.776 480h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M779.776 672h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M256 288a32 32 0 1 0 0 64 32 32 0 0 0 0-64M392.576 352h387.2a32 32 0 0 0 0-64h-387.2a32 32 0 0 0 0 64M256 480a32 32 0 1 0 0 64 32 32 0 0 0 0-64M256 672a32 32 0 1 0 0 64 32 32 0 0 0 0-64" fill="#8a8a8a" /></svg>
+        <svg class="icon toc-close" style="display: none;" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 960c-247.039484 0-448-200.960516-448-448S264.960516 64 512 64 960 264.960516 960 512 759.039484 960 512 960zM512 128.287273c-211.584464 0-383.712727 172.128262-383.712727 383.712727 0 211.551781 172.128262 383.712727 383.712727 383.712727 211.551781 0 383.712727-172.159226 383.712727-383.712727C895.712727 300.415536 723.551781 128.287273 512 128.287273z" fill="#8a8a8a" /><path d="M557.05545 513.376159l138.367639-136.864185c12.576374-12.416396 12.672705-32.671738 0.25631-45.248112s-32.704421-12.672705-45.248112-0.25631l-138.560301 137.024163-136.447897-136.864185c-12.512727-12.512727-32.735385-12.576374-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.248112l136.255235 136.671523-137.376804 135.904314c-12.576374 12.447359-12.672705 32.671738-0.25631 45.248112 6.271845 6.335493 14.496116 9.504099 22.751351 9.504099 8.12794 0 16.25588-3.103239 22.496761-9.247789l137.567746-136.064292 138.687596 139.136568c6.240882 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.05545 513.376159z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="gobottom">
+        <svg class="icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M231.424 346.208a32 32 0 0 0-46.848 43.584l297.696 320a32 32 0 0 0 46.4 0.48l310.304-320a32 32 0 1 0-45.952-44.544l-286.848 295.808-274.752-295.36z" fill="#8a8a8a" /></svg>
+    </div>
+</div>
+<div class="toc-main" style="right: -100%">
+    <div class="post-toc">
+        <span>TOC</span>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是-descriptor"><span class="toc-text">什么是 descriptor</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#descriptor-的定义和使用"><span class="toc-text">descriptor 的定义和使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#descriptor-的调用顺序"><span class="toc-text">descriptor 的调用顺序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#python-内部的-descriptor"><span class="toc-text">python 内部的 descriptor</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#属性：property"><span class="toc-text">属性：property</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#函数-VS-方法"><span class="toc-text">函数 VS 方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#静态方法和类方法：staticmethod-和-classmethod"><span class="toc-text">静态方法和类方法：staticmethod 和 classmethod</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#其他用法"><span class="toc-text">其他用法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文档"><span class="toc-text">参考文档</span></a></li></ol>
+    </div>
+</div>
+
+
+
+        
+
+<aside class="read-next outer">
+    <div class="inner">
+        <div class="read-next-feed">
+            
+            
+
+<article class="read-next-card"  style="background-image: url(https://i.loli.net/2017/11/26/5a19c56faa29f.jpg)"  >
+  <header class="read-next-card-header">
+    <small class="read-next-card-header-sitetitle">&mdash; Cizixs Write Here &mdash;</small>
+    <h3 class="read-next-card-header-title">Recent Posts</h3>
+  </header>
+  <div class="read-next-divider">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M13 14.5s2 3 5 3 5.5-2.463 5.5-5.5S21 6.5 18 6.5c-5 0-7 11-12 11C2.962 17.5.5 15.037.5 12S3 6.5 6 6.5s4.5 3.5 4.5 3.5"/>
+    </svg>
+  </div>
+  <div class="read-next-card-content">
+    <ul>
+      
+      
+      
+      <li>
+        <a href="/2018/08/26/what-is-istio/">什么是 istio</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/08/25/knative-serverless-platform/">serverless 平台 knative 简介</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/06/25/kubernetes-resource-management/">kubernetes 资源管理概述</a>
+      </li>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+  </div>
+  <footer class="read-next-card-footer">
+    <a href="/archives">  MORE  → </a>
+  </footer>
+</article>
+
+            
+            
+            
+        </div>
+    </div>
+</aside>
+
+<footer class="site-footer outer">
+	<div class="site-footer-content inner">
+		<section class="copyright">
+			<a href="/" title="Cizixs Write Here">Cizixs Write Here</a>
+			&copy; 2018
+		</section>
+		<nav class="site-footer-nav">
+			
+            <a href="https://hexo.io" title="Hexo" target="_blank" rel="noopener">Hexo</a>
+            <a href="https://github.com/xzhih/hexo-theme-casper" title="Casper" target="_blank" rel="noopener">Casper</a>
+        </nav>
+    </div>
+</footer>
+
+
+
+
+
+
+<div class="floating-header" >
+	<div class="floating-header-logo">
+        <a href="/" title="Cizixs Write Here">
+			
+                <img src="https://i.loli.net/2017/11/26/5a19c0b50432e.png" alt="Cizixs Write Here icon" />
+			
+            <span>Cizixs Write Here</span>
+        </a>
+    </div>
+    <span class="floating-header-divider">&mdash;</span>
+    <div class="floating-header-title">python 描述器简介</div>
+    <progress class="progress" value="0">
+        <div class="progress-container">
+            <span class="progress-bar"></span>
+        </div>
+    </progress>
+</div>
+<script>
+   $(document).ready(function () {
+    var progressBar = document.querySelector('progress');
+    var header = document.querySelector('.floating-header');
+    var title = document.querySelector('.post-full-title');
+    var lastScrollY = window.scrollY;
+    var lastWindowHeight = window.innerHeight;
+    var lastDocumentHeight = $(document).height();
+    var ticking = false;
+
+    function onScroll() {
+        lastScrollY = window.scrollY;
+        requestTick();
+    }
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(update);
+        }
+        ticking = true;
+    }
+    function update() {
+        var rect = title.getBoundingClientRect();
+        var trigger = rect.top + window.scrollY;
+        var triggerOffset = title.offsetHeight + 35;
+        var progressMax = lastDocumentHeight - lastWindowHeight;
+            // show/hide floating header
+            if (lastScrollY >= trigger + triggerOffset) {
+                header.classList.add('floating-active');
+            } else {
+                header.classList.remove('floating-active');
+            }
+            progressBar.setAttribute('max', progressMax);
+            progressBar.setAttribute('value', lastScrollY);
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', onScroll, {passive: true});
+        update();
+
+        // TOC
+        var width = $('.toc-main').width();
+        $('.toc-control').click(function () {
+            if ($('.t-g-control').css('width')=="50px") {
+                if ($('.t-g-control').css('right')=="0px") {
+                    $('.t-g-control').animate({right: width}, "slow");
+                    $('.toc-main').animate({right: 0}, "slow");
+                    toc_icon()
+                } else {
+                    $('.t-g-control').animate({right: 0}, "slow");
+                    $('.toc-main').animate({right: -width}, "slow");
+                    toc_icon()
+                }
+            } else {
+                if ($('.toc-main').css('right')=="0px") {
+                    $('.toc-main').slideToggle("fast", toc_icon());
+                } else {
+                    $('.toc-main').css('right', '0px');
+                    toc_icon()
+                }
+            }
+        })
+
+        function toc_icon() {
+            if ($('.toc-icon').css('display')=="none") {
+                $('.toc-close').hide();
+                $('.toc-icon').show();
+            } else {
+                $('.toc-icon').hide();
+                $('.toc-close').show();
+            }
+        }
+
+        $('.gotop').click(function(){
+            $('html,body').animate({scrollTop:$('.post-full-header').offset().top}, 800);
+        });
+        $('.gobottom').click(function () {
+            $('html,body').animate({scrollTop:$('.pagination').offset().top}, 800);
+        });
+
+        // highlight
+        // https://highlightjs.org
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+        $('td.code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+
+        console.log("this theme is from https://github.com/xzhih/hexo-theme-casper")
+    });
+</script>
+
+
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/1.3.9/css/lightgallery.min.css">
+
+
+
+<script src="https://cdn.staticfile.org/lightgallery/1.3.9/js/lightgallery.min.js"></script>
+
+
+<script>
+	$(function () {
+		var postImg = $('#lightgallery').find('img');
+		postImg.addClass('post-img');
+		postImg.each(function () {
+			var imgSrc = $(this).attr('src');
+			$(this).attr('data-src', imgSrc);
+		});
+		$('#lightgallery').lightGallery({selector: '.post-img'});
+	});
+</script>
+
+
+
+
+    </div>
+</body>
+</html>

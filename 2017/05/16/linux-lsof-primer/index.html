@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html CN>
+
+
+
+
+
+
+
+<head>
+	
+	
+	<link rel="stylesheet" href="/css/allinone.min.css"> 
+
+	
+
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+	<title>linux lsof 命令使用指南 | Cizixs Write Here</title>
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta name="generator" content="hexo">
+	<meta name="author" content="Cizixs Wu">
+	<meta name="description" content="">
+
+	
+	<meta name="keywords" content="">
+	
+
+	
+	<link rel="shortcut icon" href="https://i.loli.net/2017/11/26/5a19c0b50432e.png">
+	
+
+	
+	<meta name="theme-color" content="#3c484e">
+	<meta name="msapplication-TileColor" content="#3c484e">
+	
+
+	
+
+	
+
+	<meta property="og:site_name" content="Cizixs Write Here">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="linux lsof 命令使用指南 | Cizixs Write Here">
+	<meta property="og:description" content="">
+	<meta property="og:url" content="http://cizixs.com/2017/05/16/linux-lsof-primer/">
+
+	
+	<meta property="article:published_time" content="2017-05-16T00:05:00+08:00"/> 
+	<meta property="article:author" content="Cizixs Wu">
+	<meta property="article:published_first" content="Cizixs Write Here, /2017/05/16/linux-lsof-primer/" />
+	
+
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	
+
+	
+	<script src="https://cdn.staticfile.org/highlight.js/9.10.0/highlight.min.js"></script>
+	
+
+	
+	
+</head>
+<body class="post-template">
+    <div class="site-wrapper">
+        
+
+
+
+
+<header class="site-header outer" style="z-index: 999">
+    <div class="inner">
+        
+<nav class="site-nav"> 
+    <div class="site-nav-left">
+        <ul class="nav">
+            <li>
+                
+                <a href="/" title="Home">Home</a>
+                
+            </li>
+            
+            
+            <li>
+                <a href="/about" title="About">About</a>
+            </li>
+            
+            <li>
+                <a href="/archives" title="Archives">Archives</a>
+            </li>
+            
+            
+        </ul> 
+    </div>
+    <div class="site-nav-right">
+        
+<div class="social-links" >
+    
+    
+    
+    
+    <a class="social-link" title="twitter" href="https://twitter.com/cizixs" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30.063 7.313c-.813 1.125-1.75 2.125-2.875 2.938v.75c0 1.563-.188 3.125-.688 4.625a15.088 15.088 0 0 1-2.063 4.438c-.875 1.438-2 2.688-3.25 3.813a15.015 15.015 0 0 1-4.625 2.563c-1.813.688-3.75 1-5.75 1-3.25 0-6.188-.875-8.875-2.625.438.063.875.125 1.375.125 2.688 0 5.063-.875 7.188-2.5-1.25 0-2.375-.375-3.375-1.125s-1.688-1.688-2.063-2.875c.438.063.813.125 1.125.125.5 0 1-.063 1.5-.25-1.313-.25-2.438-.938-3.313-1.938a5.673 5.673 0 0 1-1.313-3.688v-.063c.813.438 1.688.688 2.625.688a5.228 5.228 0 0 1-1.875-2c-.5-.875-.688-1.813-.688-2.75 0-1.063.25-2.063.75-2.938 1.438 1.75 3.188 3.188 5.25 4.25s4.313 1.688 6.688 1.813a5.579 5.579 0 0 1 1.5-5.438c1.125-1.125 2.5-1.688 4.125-1.688s3.063.625 4.188 1.813a11.48 11.48 0 0 0 3.688-1.375c-.438 1.375-1.313 2.438-2.563 3.188 1.125-.125 2.188-.438 3.313-.875z"/></svg>
+
+    </a>
+    
+    
+</div>
+    </div>
+</nav>
+    </div>
+</header>
+
+
+<main id="site-main" class="site-main outer" role="main">
+    <div class="inner">
+        <header class="post-full-header">
+            <section class="post-full-meta">
+                <time  class="post-full-meta-date" datetime="2017-05-15T16:00:00.000Z" itemprop="datePublished">
+                    2017-05-16
+                </time>
+                
+                <span class="date-divider">/</span>
+                
+                <a href="/categories/blog/">blog</a>&nbsp;&nbsp;
+                
+                
+            </section>
+            <h1 class="post-full-title">linux lsof 命令使用指南</h1>
+        </header>
+        <article class="post-full no-image">
+            
+            <section class="post-full-content">
+                <div id="lightgallery" class="markdown-body">
+                    <h2 id="lsof-简介"><a href="#lsof-简介" class="headerlink" title="lsof 简介"></a>lsof 简介</h2><p><code>lsof</code> 是 <code>list open files</code> 的简称，正如名字所示，它的作用主要是列出系统中打开的文件。乍看起来，这是个功能非常简单，使用场景不多的命令，不过是 <code>ls</code> 的另一个版本。但是因为 unix 系统的 <code>everything is a file</code> 的哲学，基本上 *nix 系统所有的对象都可以看做对象，再加上这个命令提供的各种参数，使得它其实非常强大，能够轻松地获得很多非常有用的信息，有些用其他工具会非常麻烦。</p>
+<p>lsof 可以知道用户和进程操作了哪些文件，也可以查看系统中网络的使用情况，以及设备的信息。它的参数也非常多，manoage 显示的使用方法如下，这篇文章会介绍比较常见的使用方法。</p>
+<figure class="highlight inform7"><table><tr><td class="code"><pre><span class="line">lsof  <span class="comment">[ -?abChKlnNOPRtUvVX ]</span> <span class="comment">[ -A A ]</span> <span class="comment">[ -c c ]</span> <span class="comment">[ +c c ]</span> <span class="comment">[ +|-d d ]</span> <span class="comment">[ +|-D D ]</span> <span class="comment">[ +|-e s ]</span> <span class="comment">[ +|-f <span class="comment">[cfgGn]</span> ]</span> <span class="comment">[ -F <span class="comment">[f]</span> ]</span> <span class="comment">[ -g <span class="comment">[s]</span> ]</span> <span class="comment">[ -i <span class="comment">[i]</span> ]</span> <span class="comment">[ -k k ]</span> <span class="comment">[ +|-L <span class="comment">[l]</span> ]</span> <span class="comment">[ +|-m m ]</span> <span class="comment">[</span></span><br><span class="line"><span class="comment">       +|-M ]</span> <span class="comment">[ -o <span class="comment">[o]</span> ]</span> <span class="comment">[ -p s ]</span> <span class="comment">[ +|-r <span class="comment">[t<span class="comment">[m&lt;fmt&gt;]</span>]</span> ]</span> <span class="comment">[ -s <span class="comment">[p:s]</span> ]</span> <span class="comment">[ -S <span class="comment">[t]</span> ]</span> <span class="comment">[ -T <span class="comment">[t]</span> ]</span> <span class="comment">[ -u s ]</span> <span class="comment">[ +|-w ]</span> <span class="comment">[ -x <span class="comment">[fl]</span> ]</span> <span class="comment">[ -z <span class="comment">[z]</span> ]</span> <span class="comment">[ -Z <span class="comment">[Z]</span> ]</span> <span class="comment">[ -- ]</span> <span class="comment">[names]</span></span><br></pre></td></tr></table></figure>
+<p>直接运行 <code>lsof</code>，不使用任何的参数，会列出系统中所有的打开文件，每个文件一行。</p>
+<figure class="highlight crystal"><table><tr><td class="code"><pre><span class="line">➜  ~ sudo lsof | head</span><br><span class="line">COMMAND     PID   TID             USER   FD      TYPE             DEVICE    SIZE/OFF       NODE NAME</span><br><span class="line">systemd       <span class="number">1</span>                   root  cwd       DIR               <span class="number">8</span>,<span class="number">18</span>        <span class="number">4096</span>          <span class="number">2</span> /</span><br><span class="line">systemd       <span class="number">1</span>                   root  rtd       DIR               <span class="number">8</span>,<span class="number">18</span>        <span class="number">4096</span>          <span class="number">2</span> /</span><br><span class="line">systemd       <span class="number">1</span>                   root  txt       REG               <span class="number">8</span>,<span class="number">18</span>     <span class="number">1577232</span>    <span class="number">5247327</span> /<span class="class"><span class="keyword">lib</span>/<span class="title">systemd</span>/<span class="title">systemd</span></span></span><br><span class="line">systemd       <span class="number">1</span>                   root  mem       REG               <span class="number">8</span>,<span class="number">18</span>       <span class="number">18976</span>    <span class="number">5247628</span> /<span class="class"><span class="keyword">lib</span>/<span class="title">x86_64</span>-<span class="title">linux</span>-<span class="title">gnu</span>/<span class="title">libuuid</span>.<span class="title">so</span>.1.3.0</span></span><br><span class="line">systemd       <span class="number">1</span>                   root  mem       REG               <span class="number">8</span>,<span class="number">18</span>      <span class="number">262408</span>    <span class="number">5247436</span> /<span class="class"><span class="keyword">lib</span>/<span class="title">x86_64</span>-<span class="title">linux</span>-<span class="title">gnu</span>/<span class="title">libblkid</span>.<span class="title">so</span>.1.1.0</span></span><br><span class="line">systemd       <span class="number">1</span>                   root  mem       REG               <span class="number">8</span>,<span class="number">18</span>       <span class="number">14608</span>    <span class="number">5250746</span> /<span class="class"><span class="keyword">lib</span>/<span class="title">x86_64</span>-<span class="title">linux</span>-<span class="title">gnu</span>/<span class="title">libdl</span>-2.23.<span class="title">so</span></span></span><br></pre></td></tr></table></figure>
+<p>上面的输入每列的内容分别是：命令名称，进程 id、用户名、FD、文件类型、文件所在的设备、文件大小或者所在设备的偏移量、node/inode 编号、文件名。我们来介绍一下几个比较不那么容易理解的项，FD（file descriptor）表示文件描述符或者文件的描述，包括：</p>
+<ul>
+<li>cwd：当前工作目录</li>
+<li>mem：内存映射文件</li>
+<li>mmap：内存映射设备</li>
+<li>txt：应用文本（代码和数据）</li>
+<li>……</li>
+</ul>
+<p>TYPE 表示文件的类型，比如：</p>
+<ul>
+<li>IPv4：IPv4 socket</li>
+<li>IPv6：IPv6 socket</li>
+<li>inet：Internet Domain Socket</li>
+<li>unix：unix domain socket</li>
+<li>BLK：设备文件</li>
+<li>CHR：字符文件</li>
+<li>DIR：文件夹</li>
+<li>FIFO：FIFO 文件</li>
+<li>LINK：符号链接文件</li>
+<li>REG：普通文件</li>
+<li>……</li>
+</ul>
+<p>更多的选项可以参考 lsof manpage。</p>
+<p><strong>NOTE</strong>: 请使用 sudo 或者 root 用户来运行 <code>lsof</code>，以便查看所有的打开文件。</p>
+<h2 id="文件和进程信息"><a href="#文件和进程信息" class="headerlink" title="文件和进程信息"></a>文件和进程信息</h2><h3 id="列出某个进程打开的所有文件"><a href="#列出某个进程打开的所有文件" class="headerlink" title="列出某个进程打开的所有文件"></a>列出某个进程打开的所有文件</h3><figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">sudo lsof -<span class="selector-tag">p</span> <span class="number">1190</span></span><br></pre></td></tr></table></figure>
+<h3 id="列出某个用户打开的文件"><a href="#列出某个用户打开的文件" class="headerlink" title="列出某个用户打开的文件"></a>列出某个用户打开的文件</h3><figure class="highlight ebnf"><table><tr><td class="code"><pre><span class="line"><span class="attribute">sudo lsof -u cizixs</span></span><br></pre></td></tr></table></figure>
+<p>也可以取反，列出所有不是某个用户打开的文件，只要在用户名之前加上 <code>^</code> 符号：</p>
+<figure class="highlight cos"><table><tr><td class="code"><pre><span class="line">sudo lsof -u <span class="symbol">^cizixs</span></span><br></pre></td></tr></table></figure>
+<h3 id="列出某个文件被哪些进程打开（使用）"><a href="#列出某个文件被哪些进程打开（使用）" class="headerlink" title="列出某个文件被哪些进程打开（使用）"></a>列出某个文件被哪些进程打开（使用）</h3><figure class="highlight applescript"><table><tr><td class="code"><pre><span class="line">sudo lsof /path/<span class="keyword">to</span>/<span class="built_in">file</span></span><br></pre></td></tr></table></figure>
+<h3 id="列出访问某个目录的所有进程"><a href="#列出访问某个目录的所有进程" class="headerlink" title="列出访问某个目录的所有进程"></a>列出访问某个目录的所有进程</h3><figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">sudo lsof +d <span class="regexp">/path/</span>to<span class="regexp">/dir/</span></span><br></pre></td></tr></table></figure>
+<p>这个命令并不会递归地去访问子目录，如果想做到这一点，可以使用 <code>+D</code>：</p>
+<figure class="highlight stata"><table><tr><td class="code"><pre><span class="line">sudo <span class="keyword">ls</span> +<span class="keyword">D</span> /<span class="keyword">var</span>/<span class="keyword">log</span>/apache/</span><br></pre></td></tr></table></figure>
+<h3 id="列出某个命令使用的文件信息"><a href="#列出某个命令使用的文件信息" class="headerlink" title="列出某个命令使用的文件信息"></a>列出某个命令使用的文件信息</h3><figure class="highlight ebnf"><table><tr><td class="code"><pre><span class="line"><span class="attribute">sudo lsof -c nginx</span></span><br></pre></td></tr></table></figure>
+<p><code>-c</code> 参数后面跟着命令的开头字符串，不一定是具体的程序名称，比如 <code>sudo lsof -c n</code> 也是合法的，会列出所有名字开头字母是 <code>n</code> 的程序打开的文件信息。</p>
+<p>这个命令虽然没有 <code>-p</code> 查看某个进程更直接，但是对于不能直接查到进程号，或者程序包含多个进程的场景还是有用的。</p>
+<h2 id="网络信息"><a href="#网络信息" class="headerlink" title="网络信息"></a>网络信息</h2><p><code>lsof</code> 另一个比较常用的功能是查看网络信息，虽然有 <code>netstat</code> 这个专门的工具，但是 <code>lsof</code> 有时候会更方便，比如查看某个端口的使用情况。</p>
+<h3 id="列出所有的网络连接信息"><a href="#列出所有的网络连接信息" class="headerlink" title="列出所有的网络连接信息"></a>列出所有的网络连接信息</h3><figure class="highlight ebnf"><table><tr><td class="code"><pre><span class="line"><span class="attribute">sudo lsof -i</span></span><br></pre></td></tr></table></figure>
+<h3 id="只显示-TCP-或者-UDP-连接"><a href="#只显示-TCP-或者-UDP-连接" class="headerlink" title="只显示 TCP 或者 UDP 连接"></a>只显示 TCP 或者 UDP 连接</h3><p>在 <code>-i</code> 后面直接跟着协议的类型（TCP 或者 UDP）就能只显示该网络协议的连接信息：</p>
+<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">sudo lsof -<span class="selector-tag">i</span> TCP</span><br></pre></td></tr></table></figure>
+<h3 id="查看某个端口的网络连接情况"><a href="#查看某个端口的网络连接情况" class="headerlink" title="查看某个端口的网络连接情况"></a>查看某个端口的网络连接情况</h3><p>这个命令非常常用，一般要运行服务的时候发现网络冲突，或者需要了解某个端口被哪个进程使用的时候非常方便：</p>
+<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">sudo lsof -<span class="selector-tag">i</span> :<span class="number">80</span></span><br></pre></td></tr></table></figure>
+<h3 id="查看连接到某个主机的网络情况"><a href="#查看连接到某个主机的网络情况" class="headerlink" title="查看连接到某个主机的网络情况"></a>查看连接到某个主机的网络情况</h3><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="selector-tag">sudo</span> <span class="selector-tag">lsof</span> <span class="selector-tag">-i</span> @<span class="keyword">172</span>.<span class="keyword">16</span>.<span class="keyword">1</span>.<span class="keyword">14</span></span><br></pre></td></tr></table></figure>
+<p>端口和主机还可以放在一起使用，表示连接到某个主机特定端口的网络情况：</p>
+<figure class="highlight nginx"><table><tr><td class="code"><pre><span class="line"><span class="attribute">sudo</span> lsof -i @<span class="number">172.16.1.14:22</span></span><br></pre></td></tr></table></figure>
+<h3 id="列出当前机器监听的端口"><a href="#列出当前机器监听的端口" class="headerlink" title="列出当前机器监听的端口"></a>列出当前机器监听的端口</h3><figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">sudo lsof -<span class="selector-tag">i</span> -s TCP:LISTEN</span><br></pre></td></tr></table></figure>
+<p><code>-s p:s</code> 参数跟着两个字段：协议和状态，中间用冒号隔开。比如这里 <code>TCP:LISTEN</code> 表示处于监听状态的 TCP 协议，类似的，你也可以查看处于已连接的 TCP 网络：</p>
+<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">sudo lsof -<span class="selector-tag">i</span> -s TCP:ESTABLISHED</span><br></pre></td></tr></table></figure>
+<h2 id="组合用法"><a href="#组合用法" class="headerlink" title="组合用法"></a>组合用法</h2><p>lsof 的过滤参数是可以组合起来的，但是默认情况下是 OR 逻辑，也就是会列出所有过滤条件的总和。可以使用 <code>-a</code> 参数告诉 <code>lsof</code> 列出同时满足所有条件的结果，比如列出某个进程监听的所有网络连接：</p>
+<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">sudo lsof -<span class="selector-tag">a</span> -<span class="selector-tag">p</span> <span class="number">12345</span> -<span class="selector-tag">i</span> -s TCP:LISTEN</span><br></pre></td></tr></table></figure>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://danielmiessler.com/study/lsof/" target="_blank" rel="noopener">An lsof Primer</a></li>
+<li><a href="https://www.freebsd.org/cgi/man.cgi?query=lsof&amp;sektion=8&amp;manpath=freebsd-release-ports" target="_blank" rel="noopener">lsof manpage</a></li>
+</ul>
+
+                </div>
+            </section>
+        </article>
+    </div>
+    
+<nav class="pagination">
+    
+    
+    <a class="prev-post" title="kubernetes 亲和性调度" href="/2017/05/17/kubernetes-scheulder-affinity/">
+        ← kubernetes 亲和性调度
+    </a>
+    
+    <span class="prev-next-post">•</span>
+    
+    <a class="next-post" title="使用 sysdig 进行监控和调试 linux 机器" href="/2017/04/27/sysdig-for-linux-system-monitor-and-analysis/">
+        使用 sysdig 进行监控和调试 linux 机器 →
+    </a>
+    
+    
+</nav>
+    
+</main>
+
+<div class="t-g-control">
+    <div class="gotop">
+        <svg class="icon" width="32px" height="32px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M793.024 710.272a32 32 0 1 0 45.952-44.544l-310.304-320a32 32 0 0 0-46.4 0.48l-297.696 320a32 32 0 0 0 46.848 43.584l274.752-295.328 286.848 295.808z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="toc-control">
+        <svg class="icon toc-icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M779.776 480h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M779.776 672h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M256 288a32 32 0 1 0 0 64 32 32 0 0 0 0-64M392.576 352h387.2a32 32 0 0 0 0-64h-387.2a32 32 0 0 0 0 64M256 480a32 32 0 1 0 0 64 32 32 0 0 0 0-64M256 672a32 32 0 1 0 0 64 32 32 0 0 0 0-64" fill="#8a8a8a" /></svg>
+        <svg class="icon toc-close" style="display: none;" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 960c-247.039484 0-448-200.960516-448-448S264.960516 64 512 64 960 264.960516 960 512 759.039484 960 512 960zM512 128.287273c-211.584464 0-383.712727 172.128262-383.712727 383.712727 0 211.551781 172.128262 383.712727 383.712727 383.712727 211.551781 0 383.712727-172.159226 383.712727-383.712727C895.712727 300.415536 723.551781 128.287273 512 128.287273z" fill="#8a8a8a" /><path d="M557.05545 513.376159l138.367639-136.864185c12.576374-12.416396 12.672705-32.671738 0.25631-45.248112s-32.704421-12.672705-45.248112-0.25631l-138.560301 137.024163-136.447897-136.864185c-12.512727-12.512727-32.735385-12.576374-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.248112l136.255235 136.671523-137.376804 135.904314c-12.576374 12.447359-12.672705 32.671738-0.25631 45.248112 6.271845 6.335493 14.496116 9.504099 22.751351 9.504099 8.12794 0 16.25588-3.103239 22.496761-9.247789l137.567746-136.064292 138.687596 139.136568c6.240882 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.05545 513.376159z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="gobottom">
+        <svg class="icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M231.424 346.208a32 32 0 0 0-46.848 43.584l297.696 320a32 32 0 0 0 46.4 0.48l310.304-320a32 32 0 1 0-45.952-44.544l-286.848 295.808-274.752-295.36z" fill="#8a8a8a" /></svg>
+    </div>
+</div>
+<div class="toc-main" style="right: -100%">
+    <div class="post-toc">
+        <span>TOC</span>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#lsof-简介"><span class="toc-text">lsof 简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#文件和进程信息"><span class="toc-text">文件和进程信息</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#列出某个进程打开的所有文件"><span class="toc-text">列出某个进程打开的所有文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#列出某个用户打开的文件"><span class="toc-text">列出某个用户打开的文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#列出某个文件被哪些进程打开（使用）"><span class="toc-text">列出某个文件被哪些进程打开（使用）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#列出访问某个目录的所有进程"><span class="toc-text">列出访问某个目录的所有进程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#列出某个命令使用的文件信息"><span class="toc-text">列出某个命令使用的文件信息</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#网络信息"><span class="toc-text">网络信息</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#列出所有的网络连接信息"><span class="toc-text">列出所有的网络连接信息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#只显示-TCP-或者-UDP-连接"><span class="toc-text">只显示 TCP 或者 UDP 连接</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#查看某个端口的网络连接情况"><span class="toc-text">查看某个端口的网络连接情况</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#查看连接到某个主机的网络情况"><span class="toc-text">查看连接到某个主机的网络情况</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#列出当前机器监听的端口"><span class="toc-text">列出当前机器监听的端口</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#组合用法"><span class="toc-text">组合用法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-text">参考资料</span></a></li></ol>
+    </div>
+</div>
+
+
+
+        
+
+<aside class="read-next outer">
+    <div class="inner">
+        <div class="read-next-feed">
+            
+            
+
+<article class="read-next-card"  style="background-image: url(https://i.loli.net/2017/11/26/5a19c56faa29f.jpg)"  >
+  <header class="read-next-card-header">
+    <small class="read-next-card-header-sitetitle">&mdash; Cizixs Write Here &mdash;</small>
+    <h3 class="read-next-card-header-title">Recent Posts</h3>
+  </header>
+  <div class="read-next-divider">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M13 14.5s2 3 5 3 5.5-2.463 5.5-5.5S21 6.5 18 6.5c-5 0-7 11-12 11C2.962 17.5.5 15.037.5 12S3 6.5 6 6.5s4.5 3.5 4.5 3.5"/>
+    </svg>
+  </div>
+  <div class="read-next-card-content">
+    <ul>
+      
+      
+      
+      <li>
+        <a href="/2018/08/26/what-is-istio/">什么是 istio</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/08/25/knative-serverless-platform/">serverless 平台 knative 简介</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/06/25/kubernetes-resource-management/">kubernetes 资源管理概述</a>
+      </li>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+  </div>
+  <footer class="read-next-card-footer">
+    <a href="/archives">  MORE  → </a>
+  </footer>
+</article>
+
+            
+            
+            
+        </div>
+    </div>
+</aside>
+
+<footer class="site-footer outer">
+	<div class="site-footer-content inner">
+		<section class="copyright">
+			<a href="/" title="Cizixs Write Here">Cizixs Write Here</a>
+			&copy; 2018
+		</section>
+		<nav class="site-footer-nav">
+			
+            <a href="https://hexo.io" title="Hexo" target="_blank" rel="noopener">Hexo</a>
+            <a href="https://github.com/xzhih/hexo-theme-casper" title="Casper" target="_blank" rel="noopener">Casper</a>
+        </nav>
+    </div>
+</footer>
+
+
+
+
+
+
+<div class="floating-header" >
+	<div class="floating-header-logo">
+        <a href="/" title="Cizixs Write Here">
+			
+                <img src="https://i.loli.net/2017/11/26/5a19c0b50432e.png" alt="Cizixs Write Here icon" />
+			
+            <span>Cizixs Write Here</span>
+        </a>
+    </div>
+    <span class="floating-header-divider">&mdash;</span>
+    <div class="floating-header-title">linux lsof 命令使用指南</div>
+    <progress class="progress" value="0">
+        <div class="progress-container">
+            <span class="progress-bar"></span>
+        </div>
+    </progress>
+</div>
+<script>
+   $(document).ready(function () {
+    var progressBar = document.querySelector('progress');
+    var header = document.querySelector('.floating-header');
+    var title = document.querySelector('.post-full-title');
+    var lastScrollY = window.scrollY;
+    var lastWindowHeight = window.innerHeight;
+    var lastDocumentHeight = $(document).height();
+    var ticking = false;
+
+    function onScroll() {
+        lastScrollY = window.scrollY;
+        requestTick();
+    }
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(update);
+        }
+        ticking = true;
+    }
+    function update() {
+        var rect = title.getBoundingClientRect();
+        var trigger = rect.top + window.scrollY;
+        var triggerOffset = title.offsetHeight + 35;
+        var progressMax = lastDocumentHeight - lastWindowHeight;
+            // show/hide floating header
+            if (lastScrollY >= trigger + triggerOffset) {
+                header.classList.add('floating-active');
+            } else {
+                header.classList.remove('floating-active');
+            }
+            progressBar.setAttribute('max', progressMax);
+            progressBar.setAttribute('value', lastScrollY);
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', onScroll, {passive: true});
+        update();
+
+        // TOC
+        var width = $('.toc-main').width();
+        $('.toc-control').click(function () {
+            if ($('.t-g-control').css('width')=="50px") {
+                if ($('.t-g-control').css('right')=="0px") {
+                    $('.t-g-control').animate({right: width}, "slow");
+                    $('.toc-main').animate({right: 0}, "slow");
+                    toc_icon()
+                } else {
+                    $('.t-g-control').animate({right: 0}, "slow");
+                    $('.toc-main').animate({right: -width}, "slow");
+                    toc_icon()
+                }
+            } else {
+                if ($('.toc-main').css('right')=="0px") {
+                    $('.toc-main').slideToggle("fast", toc_icon());
+                } else {
+                    $('.toc-main').css('right', '0px');
+                    toc_icon()
+                }
+            }
+        })
+
+        function toc_icon() {
+            if ($('.toc-icon').css('display')=="none") {
+                $('.toc-close').hide();
+                $('.toc-icon').show();
+            } else {
+                $('.toc-icon').hide();
+                $('.toc-close').show();
+            }
+        }
+
+        $('.gotop').click(function(){
+            $('html,body').animate({scrollTop:$('.post-full-header').offset().top}, 800);
+        });
+        $('.gobottom').click(function () {
+            $('html,body').animate({scrollTop:$('.pagination').offset().top}, 800);
+        });
+
+        // highlight
+        // https://highlightjs.org
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+        $('td.code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+
+        console.log("this theme is from https://github.com/xzhih/hexo-theme-casper")
+    });
+</script>
+
+
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/1.3.9/css/lightgallery.min.css">
+
+
+
+<script src="https://cdn.staticfile.org/lightgallery/1.3.9/js/lightgallery.min.js"></script>
+
+
+<script>
+	$(function () {
+		var postImg = $('#lightgallery').find('img');
+		postImg.addClass('post-img');
+		postImg.each(function () {
+			var imgSrc = $(this).attr('src');
+			$(this).attr('data-src', imgSrc);
+		});
+		$('#lightgallery').lightGallery({selector: '.post-img'});
+	});
+</script>
+
+
+
+
+    </div>
+</body>
+</html>

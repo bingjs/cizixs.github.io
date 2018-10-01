@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html CN>
+
+
+
+
+
+
+
+<head>
+	
+	
+	<link rel="stylesheet" href="/css/allinone.min.css"> 
+
+	
+
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+	<title>c string function implementation | Cizixs Write Here</title>
+
+	<meta name="HandheldFriendly" content="True" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<meta name="generator" content="hexo">
+	<meta name="author" content="Cizixs Wu">
+	<meta name="description" content="">
+
+	
+	<meta name="keywords" content="">
+	
+
+	
+	<link rel="shortcut icon" href="https://i.loli.net/2017/11/26/5a19c0b50432e.png">
+	
+
+	
+	<meta name="theme-color" content="#3c484e">
+	<meta name="msapplication-TileColor" content="#3c484e">
+	
+
+	
+
+	
+
+	<meta property="og:site_name" content="Cizixs Write Here">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="c string function implementation | Cizixs Write Here">
+	<meta property="og:description" content="">
+	<meta property="og:url" content="http://cizixs.com/2014/03/05/c-string-function-implementation/">
+
+	
+	<meta property="article:published_time" content="2014-03-05T00:03:00+08:00"/> 
+	<meta property="article:author" content="Cizixs Wu">
+	<meta property="article:published_first" content="Cizixs Write Here, /2014/03/05/c-string-function-implementation/" />
+	
+
+	
+	
+	<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+	
+
+	
+	<script src="https://cdn.staticfile.org/highlight.js/9.10.0/highlight.min.js"></script>
+	
+
+	
+	
+</head>
+<body class="post-template">
+    <div class="site-wrapper">
+        
+
+
+
+
+<header class="site-header outer" style="z-index: 999">
+    <div class="inner">
+        
+<nav class="site-nav"> 
+    <div class="site-nav-left">
+        <ul class="nav">
+            <li>
+                
+                <a href="/" title="Home">Home</a>
+                
+            </li>
+            
+            
+            <li>
+                <a href="/about" title="About">About</a>
+            </li>
+            
+            <li>
+                <a href="/archives" title="Archives">Archives</a>
+            </li>
+            
+            
+        </ul> 
+    </div>
+    <div class="site-nav-right">
+        
+<div class="social-links" >
+    
+    
+    
+    
+    <a class="social-link" title="twitter" href="https://twitter.com/cizixs" target="_blank" rel="noopener">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30.063 7.313c-.813 1.125-1.75 2.125-2.875 2.938v.75c0 1.563-.188 3.125-.688 4.625a15.088 15.088 0 0 1-2.063 4.438c-.875 1.438-2 2.688-3.25 3.813a15.015 15.015 0 0 1-4.625 2.563c-1.813.688-3.75 1-5.75 1-3.25 0-6.188-.875-8.875-2.625.438.063.875.125 1.375.125 2.688 0 5.063-.875 7.188-2.5-1.25 0-2.375-.375-3.375-1.125s-1.688-1.688-2.063-2.875c.438.063.813.125 1.125.125.5 0 1-.063 1.5-.25-1.313-.25-2.438-.938-3.313-1.938a5.673 5.673 0 0 1-1.313-3.688v-.063c.813.438 1.688.688 2.625.688a5.228 5.228 0 0 1-1.875-2c-.5-.875-.688-1.813-.688-2.75 0-1.063.25-2.063.75-2.938 1.438 1.75 3.188 3.188 5.25 4.25s4.313 1.688 6.688 1.813a5.579 5.579 0 0 1 1.5-5.438c1.125-1.125 2.5-1.688 4.125-1.688s3.063.625 4.188 1.813a11.48 11.48 0 0 0 3.688-1.375c-.438 1.375-1.313 2.438-2.563 3.188 1.125-.125 2.188-.438 3.313-.875z"/></svg>
+
+    </a>
+    
+    
+</div>
+    </div>
+</nav>
+    </div>
+</header>
+
+
+<main id="site-main" class="site-main outer" role="main">
+    <div class="inner">
+        <header class="post-full-header">
+            <section class="post-full-meta">
+                <time  class="post-full-meta-date" datetime="2014-03-04T16:00:00.000Z" itemprop="datePublished">
+                    2014-03-5
+                </time>
+                
+                <span class="date-divider">/</span>
+                
+                <a href="/categories/程序技术/">程序技术</a>&nbsp;&nbsp;
+                
+                
+            </section>
+            <h1 class="post-full-title">c string function implementation</h1>
+        </header>
+        <article class="post-full no-image">
+            
+            <section class="post-full-content">
+                <div id="lightgallery" class="markdown-body">
+                    <p>本文主要讲述一下c语言里的字符串常用的函数以及一些经典的实现，讲解了数组和指针的用法。</p>
+<p><img src="http://cizixs.u.qiniudn.com/stringC-string-700x309.png" alt="string"></p>
+<h2 id="C-中的字符串"><a href="#C-中的字符串" class="headerlink" title="C 中的字符串"></a>C 中的字符串</h2><p>文字的处理是计算机重要的功能之一，C语言自然也提供了完备的机制。</p>
+<h3 id="字符串-VS-数组"><a href="#字符串-VS-数组" class="headerlink" title="字符串 VS 数组"></a>字符串 VS 数组</h3><p>c语言中并没有字符串类型，使用的字符串都是用数组实现的。比如，下面定义的str字符串，</p>
+<figure class="highlight axapta"><table><tr><td class="code"><pre><span class="line"><span class="keyword">char</span> <span class="keyword">str</span>[] = <span class="string">"Hello,world!"</span></span><br></pre></td></tr></table></figure>
+<p>实际上是如下的数组：</p>
+<figure class="highlight gherkin"><table><tr><td class="code"><pre><span class="line">——————————————————————————————————————————————————————</span><br><span class="line">|<span class="string"> h </span>|<span class="string"> e </span>|<span class="string"> l </span>|<span class="string"> l </span>|<span class="string"> o </span>|<span class="string"> , </span>|<span class="string"> w </span>|<span class="string"> o </span>|<span class="string"> r </span>|<span class="string"> l </span>|<span class="string"> d </span>|<span class="string"> ! </span>|<span class="string"> \0 </span>|</span><br><span class="line">——————————————————————————————————————————————————————</span><br></pre></td></tr></table></figure>
+<p>注意到末尾的<code>\0</code>，这是C语言用来标识字符串结束位置的字段，这样在处理字符串的时候就能避免超出范围的操作。所以，字符串占用的长度是<code>strlrn + 1</code>。</p>
+<blockquote>
+<p><strong>NOTE</strong>： 定义字符串时，系统会自动在末尾添加<code>\0</code>。但有些时候需要自己处理，请不要忘记，否则就会产生意想不到的错误。</p>
+</blockquote>
+<h3 id="字符串-VS-指针"><a href="#字符串-VS-指针" class="headerlink" title="字符串 VS 指针"></a>字符串 VS 指针</h3><p>在C语言中，数组和指针在使用上有很夺相似之处，可以简单地认为数组是一种特殊的指针：一旦赋值就不能再指向其他的地址。</p>
+<p>可以用数组的方式访问字符串里的内容，<br><figure class="highlight ini"><table><tr><td class="code"><pre><span class="line"><span class="attr">str[0]</span> = <span class="string">'H'</span>;</span><br></pre></td></tr></table></figure></p>
+<p>但是下面的方法是错误的：</p>
+<figure class="highlight axapta"><table><tr><td class="code"><pre><span class="line"><span class="keyword">str</span>++;</span><br></pre></td></tr></table></figure>
+<p>指针的话就比较灵活：</p>
+<figure class="highlight axapta"><table><tr><td class="code"><pre><span class="line"><span class="keyword">char</span> * p = <span class="keyword">str</span>;</span><br><span class="line">*++p = <span class="string">'E'</span>;</span><br></pre></td></tr></table></figure>
+<h2 id="字符串函数"><a href="#字符串函数" class="headerlink" title="字符串函数"></a>字符串函数</h2><p>在C语言的头文件<code>&lt;string.h&gt;</code>里定义了常用的字符串操作的函数，下面列出一些比较常用的，我们会在后面给出其实现。</p>
+<table>
+<thead>
+<tr>
+<th>函数原型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>size_t strlen(const char * s)</td>
+<td>计算字符串的长度</td>
+</tr>
+<tr>
+<td>char *strcpy(char *dest, const char *src)</td>
+<td>把src的内容复制到dest。</td>
+</tr>
+<tr>
+<td>char *strncpy(char *dest, const char *src, size_t n)</td>
+<td>把src最多n个字符复制到dest</td>
+</tr>
+<tr>
+<td>char *strcat(char *dest, const char *src)</td>
+<td>把src的内容连接到dest的尾部</td>
+</tr>
+<tr>
+<td>char *strncat(char *, const char *, size_t)</td>
+<td>把src的最多前n个字符连接到dest的尾部</td>
+</tr>
+<tr>
+<td>int strcmp(const char *cs, const char *ct)</td>
+<td>按照字典方式比较字符串cs和ct</td>
+</tr>
+<tr>
+<td>int strncmp(const char *cs, const char *ct, size_t count)</td>
+<td>同上，最多比较前n个字符</td>
+</tr>
+<tr>
+<td>char *strchr(const char *s, int c)</td>
+<td>返回字符c在字符串s中第一次出现的指针</td>
+</tr>
+<tr>
+<td>char *strrchr(const char *, int c)</td>
+<td>返回字符c在字符串s中最后一次出现的指针</td>
+</tr>
+<tr>
+<td>char *strstr(const char *cs, const char *ct)</td>
+<td>返回指向字符串ct第一次出现在字符串cs中位置的指针</td>
+</tr>
+<tr>
+<td>char *skip_spaces(const char *str)</td>
+<td>返回指向str第一个不为空格字符的指针</td>
+</tr>
+<tr>
+<td>char *strim(char *s)</td>
+<td>去除字符串s的前后空格，然后返回</td>
+</tr>
+<tr>
+<td>char *strpbrk(const char *cs, const char *ct)</td>
+<td>返回指向ct字符串中任何字符在cs中第一次出现的位置指针</td>
+</tr>
+<tr>
+<td>char *strsep(char **s, const char *ct)</td>
+<td>把字符串按照ct中的字符分割，并返回</td>
+</tr>
+</tbody>
+</table>
+<h2 id="linux中的实现"><a href="#linux中的实现" class="headerlink" title="linux中的实现"></a>linux中的实现</h2><p>下面的代码来源于<a href="https://github.com/torvalds/linux" target="_blank" rel="noopener">github上linux</a>的<code>lib\string.c</code>文件，使用或者转载请注明来源。</p>
+<h3 id="strlen：计算字符串的长度"><a href="#strlen：计算字符串的长度" class="headerlink" title="strlen：计算字符串的长度"></a>strlen：计算字符串的长度</h3><pre><code>size_t strlen(const char *s){
+    const char *sc；
+    for(sc = s; *sc != &apos;\0&apos;; sc++)
+    ;
+
+    return sc - s;
+}
+</code></pre><h3 id="strcpy：-拷贝字符串"><a href="#strcpy：-拷贝字符串" class="headerlink" title="strcpy： 拷贝字符串"></a>strcpy： 拷贝字符串</h3><pre><code>char *strcpy(char *dest, const char *src){
+    char *temp = dest;
+
+    while((*dest++ = *src++) != &apos;\0&apos;)
+    ;
+
+    return temp;
+}
+
+char *strncpy(char *dest, const char *src, size_t count){
+    char *tmp = dest;
+
+    while(count){
+        if((*tmp = *src) != 0)
+            src++;
+        tmp++;
+        count--;
+    }
+
+    return dest;
+}
+</code></pre><h3 id="strcmp：比较字符串"><a href="#strcmp：比较字符串" class="headerlink" title="strcmp：比较字符串"></a>strcmp：比较字符串</h3><pre><code>int strcmp(const char *cs, const char *ct){
+    unsigned char c1, c2;
+
+    while(1){
+        c1 = *cs++;
+        c2 = *ct++;
+        if(c1 != c2)
+            return c1 &lt; c2 ? -1 : 1;
+        if(!c1)
+            break;
+    }
+
+    return 0;
+}
+
+
+int strncmp(const char *cs, const char *ct, size_t count){
+    unsigned char c1, c2;
+
+    while(count){
+        c1 = *cs++;
+        c2 = *ct++;
+
+        if(c1 != c2)
+            return c1 &lt; c2 ? -1 : 1;
+        if(!c1)
+            break;
+        count--;
+    }
+
+    return 0;
+}
+
+int strcasecmp(const char *cs, const char *ct){
+    int c1, c2;
+
+    do{
+        c1 = tolower(*cs++);
+        c2 = tolower(*ct++);
+    }while(c1 == c2 &amp;&amp; c1 != &apos;\0&apos;);
+
+    return c1 - c2;
+}
+</code></pre><h3 id="strcat：拼接字符串"><a href="#strcat：拼接字符串" class="headerlink" title="strcat：拼接字符串"></a>strcat：拼接字符串</h3><pre><code>char *strcat(char *dest, const char *src){
+    char *tmp = dest;
+
+    while(*dest)
+        dest++;
+    while((*dest++ = *src++) != &apos;\0&apos;)
+    ;
+
+    return tmp;
+}
+
+char *strncat(char *dest, const char *src, size_t count){
+    char *tmp = dest;
+
+    while(count){
+        while(*dest)
+            dest++;
+        while((*dest++ = *src++) != &apos;\0&apos;){
+            if(--count == 0){
+                *dest = &apos;\0&apos;;
+                break;
+            }
+        }
+    }
+
+    return tmp;
+ }
+</code></pre><h3 id="strchr：查找字符串里的字符"><a href="#strchr：查找字符串里的字符" class="headerlink" title="strchr：查找字符串里的字符"></a>strchr：查找字符串里的字符</h3><pre><code>char *strchr(const char *s , int c){
+    for( ; *s != (char)c; ++s)
+        if(*s == &apos;\0&apos;)
+            return NULL;
+
+    return (char *)s;
+}
+
+char *strnchr(const char *s, size_t count, int c){
+    for(; count-- &amp;&amp; *s ! = (char)c; ++s)
+        if(*s == &apos;\0&apos;)
+            return NULL;
+
+    return (char *)s;
+}
+
+char *strrchr(const char *s, int c){
+    const char *p = s + strlen(s);
+    do{
+        if(*p == c)
+            return (char *)p;
+    }while(--p &gt;= s);
+
+    return NULL;
+}
+</code></pre><h3 id="strstr：查找字符串里的子字符串"><a href="#strstr：查找字符串里的子字符串" class="headerlink" title="strstr：查找字符串里的子字符串"></a>strstr：查找字符串里的子字符串</h3><pre><code>char *strstr(const char* s1, const char *s2){
+    size_t l1, l2;
+
+    l2 = strlen(l2);
+
+    if(!l2)
+        return (char *)s1;
+
+    l1 = strlen(s1);
+    while(l1 &gt; l2){
+        l1--;
+        if(!memcpmp(s1,s2,l2))
+            return (char *)s1;
+        s1++;
+    }
+
+    return NULL;
+}
+
+
+char *strnstr(const char *s1, const char *s2, size_t len){
+    size_t l2 = strlen(s2);
+
+    if(!l2)
+        return (char *) s1;
+
+    while(len &gt; l2){
+        len--;
+        if(!memcmp(s1,s2,l2))
+            return (char *) s1;
+        s1++;
+    }
+
+    return NULL;
+    }
+}
+</code></pre><h3 id="space-handle：处理字符串里的空格"><a href="#space-handle：处理字符串里的空格" class="headerlink" title="space_handle：处理字符串里的空格"></a>space_handle：处理字符串里的空格</h3><pre><code>char *skip_spaces(const char *s){
+    while(isspace(*s)){
+        s++;
+    }
+
+    return (char *)s;
+}
+
+char *strim(char *s){
+    size_t size;
+    char *end;
+
+    size = strlen(s);
+    if(!size)
+        return s;
+
+    end = s + size - 1;
+    while(end &gt;= s &amp;&amp; isspace(*end))
+        end--;
+    *(end+1) = &apos;\0&apos;;
+
+    return skip_spaces(s);
+}
+</code></pre><blockquote>
+<p>Written with <a href="https://stackedit.io/" target="_blank" rel="noopener">StackEdit</a>.</p>
+</blockquote>
+
+                </div>
+            </section>
+        </article>
+    </div>
+    
+<nav class="pagination">
+    
+    
+    <a class="prev-post" title="apt 背后的故事" href="/2014/04/10/ubuntu_repository_format_explained/">
+        ← apt 背后的故事
+    </a>
+    
+    <span class="prev-next-post">•</span>
+    
+    <a class="next-post" title="why evolution is true" href="/2013/12/08/why-evolution-is-true/">
+        why evolution is true →
+    </a>
+    
+    
+</nav>
+    
+</main>
+
+<div class="t-g-control">
+    <div class="gotop">
+        <svg class="icon" width="32px" height="32px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M793.024 710.272a32 32 0 1 0 45.952-44.544l-310.304-320a32 32 0 0 0-46.4 0.48l-297.696 320a32 32 0 0 0 46.848 43.584l274.752-295.328 286.848 295.808z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="toc-control">
+        <svg class="icon toc-icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M779.776 480h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M779.776 672h-387.2a32 32 0 0 0 0 64h387.2a32 32 0 0 0 0-64M256 288a32 32 0 1 0 0 64 32 32 0 0 0 0-64M392.576 352h387.2a32 32 0 0 0 0-64h-387.2a32 32 0 0 0 0 64M256 480a32 32 0 1 0 0 64 32 32 0 0 0 0-64M256 672a32 32 0 1 0 0 64 32 32 0 0 0 0-64" fill="#8a8a8a" /></svg>
+        <svg class="icon toc-close" style="display: none;" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 960c-247.039484 0-448-200.960516-448-448S264.960516 64 512 64 960 264.960516 960 512 759.039484 960 512 960zM512 128.287273c-211.584464 0-383.712727 172.128262-383.712727 383.712727 0 211.551781 172.128262 383.712727 383.712727 383.712727 211.551781 0 383.712727-172.159226 383.712727-383.712727C895.712727 300.415536 723.551781 128.287273 512 128.287273z" fill="#8a8a8a" /><path d="M557.05545 513.376159l138.367639-136.864185c12.576374-12.416396 12.672705-32.671738 0.25631-45.248112s-32.704421-12.672705-45.248112-0.25631l-138.560301 137.024163-136.447897-136.864185c-12.512727-12.512727-32.735385-12.576374-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.248112l136.255235 136.671523-137.376804 135.904314c-12.576374 12.447359-12.672705 32.671738-0.25631 45.248112 6.271845 6.335493 14.496116 9.504099 22.751351 9.504099 8.12794 0 16.25588-3.103239 22.496761-9.247789l137.567746-136.064292 138.687596 139.136568c6.240882 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.05545 513.376159z" fill="#8a8a8a" /></svg>
+    </div>
+    <div class="gobottom">
+        <svg class="icon" width="32px" height="32.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M231.424 346.208a32 32 0 0 0-46.848 43.584l297.696 320a32 32 0 0 0 46.4 0.48l310.304-320a32 32 0 1 0-45.952-44.544l-286.848 295.808-274.752-295.36z" fill="#8a8a8a" /></svg>
+    </div>
+</div>
+<div class="toc-main" style="right: -100%">
+    <div class="post-toc">
+        <span>TOC</span>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#C-中的字符串"><span class="toc-text">C 中的字符串</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#字符串-VS-数组"><span class="toc-text">字符串 VS 数组</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#字符串-VS-指针"><span class="toc-text">字符串 VS 指针</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#字符串函数"><span class="toc-text">字符串函数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#linux中的实现"><span class="toc-text">linux中的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#strlen：计算字符串的长度"><span class="toc-text">strlen：计算字符串的长度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#strcpy：-拷贝字符串"><span class="toc-text">strcpy： 拷贝字符串</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#strcmp：比较字符串"><span class="toc-text">strcmp：比较字符串</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#strcat：拼接字符串"><span class="toc-text">strcat：拼接字符串</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#strchr：查找字符串里的字符"><span class="toc-text">strchr：查找字符串里的字符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#strstr：查找字符串里的子字符串"><span class="toc-text">strstr：查找字符串里的子字符串</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#space-handle：处理字符串里的空格"><span class="toc-text">space_handle：处理字符串里的空格</span></a></li></ol></li></ol>
+    </div>
+</div>
+
+
+
+        
+
+<aside class="read-next outer">
+    <div class="inner">
+        <div class="read-next-feed">
+            
+            
+
+<article class="read-next-card"  style="background-image: url(https://i.loli.net/2017/11/26/5a19c56faa29f.jpg)"  >
+  <header class="read-next-card-header">
+    <small class="read-next-card-header-sitetitle">&mdash; Cizixs Write Here &mdash;</small>
+    <h3 class="read-next-card-header-title">Recent Posts</h3>
+  </header>
+  <div class="read-next-divider">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M13 14.5s2 3 5 3 5.5-2.463 5.5-5.5S21 6.5 18 6.5c-5 0-7 11-12 11C2.962 17.5.5 15.037.5 12S3 6.5 6 6.5s4.5 3.5 4.5 3.5"/>
+    </svg>
+  </div>
+  <div class="read-next-card-content">
+    <ul>
+      
+      
+      
+      <li>
+        <a href="/2018/08/26/what-is-istio/">什么是 istio</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/08/25/knative-serverless-platform/">serverless 平台 knative 简介</a>
+      </li>
+      
+      
+      
+      <li>
+        <a href="/2018/06/25/kubernetes-resource-management/">kubernetes 资源管理概述</a>
+      </li>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+    </ul>
+  </div>
+  <footer class="read-next-card-footer">
+    <a href="/archives">  MORE  → </a>
+  </footer>
+</article>
+
+            
+            
+            
+        </div>
+    </div>
+</aside>
+
+<footer class="site-footer outer">
+	<div class="site-footer-content inner">
+		<section class="copyright">
+			<a href="/" title="Cizixs Write Here">Cizixs Write Here</a>
+			&copy; 2018
+		</section>
+		<nav class="site-footer-nav">
+			
+            <a href="https://hexo.io" title="Hexo" target="_blank" rel="noopener">Hexo</a>
+            <a href="https://github.com/xzhih/hexo-theme-casper" title="Casper" target="_blank" rel="noopener">Casper</a>
+        </nav>
+    </div>
+</footer>
+
+
+
+
+
+
+<div class="floating-header" >
+	<div class="floating-header-logo">
+        <a href="/" title="Cizixs Write Here">
+			
+                <img src="https://i.loli.net/2017/11/26/5a19c0b50432e.png" alt="Cizixs Write Here icon" />
+			
+            <span>Cizixs Write Here</span>
+        </a>
+    </div>
+    <span class="floating-header-divider">&mdash;</span>
+    <div class="floating-header-title">c string function implementation</div>
+    <progress class="progress" value="0">
+        <div class="progress-container">
+            <span class="progress-bar"></span>
+        </div>
+    </progress>
+</div>
+<script>
+   $(document).ready(function () {
+    var progressBar = document.querySelector('progress');
+    var header = document.querySelector('.floating-header');
+    var title = document.querySelector('.post-full-title');
+    var lastScrollY = window.scrollY;
+    var lastWindowHeight = window.innerHeight;
+    var lastDocumentHeight = $(document).height();
+    var ticking = false;
+
+    function onScroll() {
+        lastScrollY = window.scrollY;
+        requestTick();
+    }
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(update);
+        }
+        ticking = true;
+    }
+    function update() {
+        var rect = title.getBoundingClientRect();
+        var trigger = rect.top + window.scrollY;
+        var triggerOffset = title.offsetHeight + 35;
+        var progressMax = lastDocumentHeight - lastWindowHeight;
+            // show/hide floating header
+            if (lastScrollY >= trigger + triggerOffset) {
+                header.classList.add('floating-active');
+            } else {
+                header.classList.remove('floating-active');
+            }
+            progressBar.setAttribute('max', progressMax);
+            progressBar.setAttribute('value', lastScrollY);
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', onScroll, {passive: true});
+        update();
+
+        // TOC
+        var width = $('.toc-main').width();
+        $('.toc-control').click(function () {
+            if ($('.t-g-control').css('width')=="50px") {
+                if ($('.t-g-control').css('right')=="0px") {
+                    $('.t-g-control').animate({right: width}, "slow");
+                    $('.toc-main').animate({right: 0}, "slow");
+                    toc_icon()
+                } else {
+                    $('.t-g-control').animate({right: 0}, "slow");
+                    $('.toc-main').animate({right: -width}, "slow");
+                    toc_icon()
+                }
+            } else {
+                if ($('.toc-main').css('right')=="0px") {
+                    $('.toc-main').slideToggle("fast", toc_icon());
+                } else {
+                    $('.toc-main').css('right', '0px');
+                    toc_icon()
+                }
+            }
+        })
+
+        function toc_icon() {
+            if ($('.toc-icon').css('display')=="none") {
+                $('.toc-close').hide();
+                $('.toc-icon').show();
+            } else {
+                $('.toc-icon').hide();
+                $('.toc-close').show();
+            }
+        }
+
+        $('.gotop').click(function(){
+            $('html,body').animate({scrollTop:$('.post-full-header').offset().top}, 800);
+        });
+        $('.gobottom').click(function () {
+            $('html,body').animate({scrollTop:$('.pagination').offset().top}, 800);
+        });
+
+        // highlight
+        // https://highlightjs.org
+        $('pre code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+        $('td.code').each(function(i, block) {
+            hljs.highlightBlock(block);
+        });
+
+        console.log("this theme is from https://github.com/xzhih/hexo-theme-casper")
+    });
+</script>
+
+
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/1.3.9/css/lightgallery.min.css">
+
+
+
+<script src="https://cdn.staticfile.org/lightgallery/1.3.9/js/lightgallery.min.js"></script>
+
+
+<script>
+	$(function () {
+		var postImg = $('#lightgallery').find('img');
+		postImg.addClass('post-img');
+		postImg.each(function () {
+			var imgSrc = $(this).attr('src');
+			$(this).attr('data-src', imgSrc);
+		});
+		$('#lightgallery').lightGallery({selector: '.post-img'});
+	});
+</script>
+
+
+
+
+    </div>
+</body>
+</html>
